@@ -1,0 +1,186 @@
+/* =========================================
+   Clientes - Formulario y Tabla
+   ========================================= */
+.clientes-view {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* 🔧 FIX: Formulario con estilos visibles */
+.simple-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  background: white;
+  padding: 24px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  align-items: end;
+}
+
+/* 🔧 FIX: Inputs con fondo blanco y texto oscuro */
+.simple-form input,
+.simple-form select,
+.simple-form textarea {
+  padding: 12px 16px;
+  border: 2px solid #e9ecef;
+  border-radius: 8px;
+  font-size: 14px;
+  outline: none;
+  transition: all 0.2s;
+  background: white;
+  color: #212529; /* 🔴 Texto oscuro visible */
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* 🔧 FIX: Placeholder visible */
+.simple-form input::placeholder {
+  color: #6c757d; /* 🔴 Gris oscuro visible */
+  opacity: 1;
+}
+
+.simple-form input:focus,
+.simple-form select:focus,
+.simple-form textarea:focus {
+  border-color: #0052cc;
+  box-shadow: 0 0 0 3px rgba(0,82,204,0.1);
+  background: white; /* 🔴 Mantener fondo blanco al hacer focus */
+}
+
+/* 🔧 FIX: Select personalizado */
+.simple-form select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23495057' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 16px center;
+  padding-right: 40px;
+  cursor: pointer;
+  color: #212529; /* 🔴 Texto oscuro */
+}
+
+.simple-form select option {
+  color: #212529; /* 🔴 Opciones visibles */
+  background: white;
+}
+
+.simple-form select:hover {
+  border-color: #ced4da;
+}
+
+/* 🔧 FIX: Botón del formulario */
+.simple-form button[type="submit"] {
+  width: auto;
+  padding: 12px 32px;
+  margin-top: 0;
+  background: #0052cc;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  transition: all 0.3s ease;
+}
+
+.simple-form button[type="submit"]:hover {
+  background: #003d99;
+  transform: translateY(-2px);
+}
+
+/* Tabla */
+.table-responsive {
+  overflow-x: auto;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 800px;
+}
+.data-table th,
+.data-table td {
+  padding: 16px 20px;
+  text-align: left;
+  border-bottom: 1px solid #f1f3f5;
+  color: #212529; /* 🔴 Texto visible */
+}
+.data-table th {
+  background: #f8f9fa;
+  font-weight: 600;
+  color: #495057;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.data-table tbody tr {
+  transition: background 0.2s;
+}
+.data-table tbody tr:hover {
+  background: #f8f9fa;
+}
+.data-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Badges */
+.badge {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: capitalize;
+  color: #212529; /* 🔴 Texto visible */
+}
+.badge-green { 
+  background: #d4edda; 
+  color: #155724; 
+}
+.badge-blue { 
+  background: #e3f2fd; 
+  color: #0052cc; 
+}
+.badge-gray { 
+  background: #e9ecef; 
+  color: #495057; 
+}
+
+.cell-bold { 
+  font-weight: 600; 
+  color: #212529; 
+}
+.data-table td a {
+  color: #0052cc;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+.data-table td a:hover {
+  text-decoration: underline;
+  color: #003d99;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .simple-form {
+    grid-template-columns: 1fr;
+  }
+  
+  .simple-form input,
+  .simple-form select,
+  .simple-form textarea {
+    width: 100%;
+  }
+  
+  .data-table {
+    font-size: 12px;
+  }
+  
+  .data-table th,
+  .data-table td {
+    padding: 10px 12px;
+  }
+}
