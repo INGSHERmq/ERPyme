@@ -1,12 +1,8 @@
 import { useMemo } from 'react';
-import { 
-  PieChart, Pie, Cell, 
-  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer 
-} from 'recharts';
+import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import useMarketing from '../../hooks/useMarketing';
 import './DashboardMarketing.css';
 
-// ✅ Colores usados en el JSX
 const STATUS_COLORS = { 
   Aceptada: '#28a745', 
   Pendiente: '#ffc107', 
@@ -17,13 +13,13 @@ const DashboardMarketing = () => {
   const { clientes, cotizaciones, proyectos, loading } = useMarketing();
 
   const stats = useMemo(() => {
-    if (!cotizaciones?.length || !proyectos?.length) return null;
+    if (!cotizaciones?.length || !proyectos?.length || !clientes?.length) return null;
 
     const aceptadas = cotizaciones.filter(c => c.estado === 'Aceptada');
-    const montoTotal = cotizaciones.reduce((sum, c) => sum + c.monto, 0);
-    const montoAceptado = aceptadas.reduce((sum, c) => sum + c.monto, 0);
+    const montoTotal = cotizaciones.reduce((sum, c) => sum + (c.monto || 0), 0);
+    const montoAceptado = aceptadas.reduce((sum, c) => sum + (c.monto || 0), 0);
     
-    // Distribución por estado (Pie Chart)
+    // Distribución por estado
     const statusDist = Object.entries(
       cotizaciones.reduce((acc, c) => {
         acc[c.estado] = (acc[c.estado] || 0) + 1;
@@ -35,14 +31,11 @@ const DashboardMarketing = () => {
       fill: STATUS_COLORS[name] || '#ccc' 
     }));
 
-    // Proyectos por cliente (Bar Chart)
+    // Proyectos por cliente
     const projectsByClient = clientes
       .map(cliente => ({
         name: cliente.nombre,
-        value: proyectos.filter(p => p.clienteId === cliente.id).length,
-        monto: proyectos
-          .filter(p => p.clienteId === cliente.id)
-          .reduce((sum, p) => sum + p.monto, 0)
+        value: proyectos.filter(p => p.cliente_id === cliente.id).length
       }))
       .filter(c => c.value > 0)
       .sort((a, b) => b.value - a.value);
@@ -65,7 +58,6 @@ const DashboardMarketing = () => {
 
   return (
     <div className="marketing-dashboard">
-      {/* KPIs */}
       <div className="kpi-grid">
         <div className="kpi-card">
           <span className="kpi-label">Total Cotizaciones</span>
@@ -85,81 +77,48 @@ const DashboardMarketing = () => {
         </div>
       </div>
 
-      {/* Gráficos */}
       <div className="charts-grid">
-        
-        {/* 🔵 GRÁFICO 1: Distribución por Estado (Pie Chart) */}
         <div className="chart-card">
           <h3>📊 Distribución por Estado</h3>
-          <ResponsiveContainer width="100%" height={280}>
-            <PieChart>
-              <Pie 
-                data={stats.statusDist} 
-                cx="50%" 
-                cy="50%" 
-                outerRadius={90} 
-                dataKey="value"
-                nameKey="name"
-                label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-              >
-                {stats.statusDist.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.fill} />
-                ))}
-              </Pie>
-              <Tooltip 
-                contentStyle={{ 
-                  backgroundColor: 'white', 
-                  border: '1px solid #e9ecef',
-                  borderRadius: '8px',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-                }}
-                formatter={(value) => [`${value} cotizaciones`, 'Cantidad']}
-              />
-            </PieChart>
-          </ResponsiveContainer>
+          {stats.statusDist.length > 0 ? (
+            <ResponsiveContainer width="100%" height={280}>
+              <PieChart>
+                <Pie 
+                  data={stats.statusDist} 
+                  cx="50%" 
+                  cy="50%" 
+                  outerRadius={90} 
+                  dataKey="value"
+                  nameKey="name"
+                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                >
+                  {stats.statusDist.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.fill} />
+                  ))}
+                </Pie>
+                <Tooltip />
+              </PieChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="empty-chart">Sin datos</div>
+          )}
         </div>
 
-        {/* 🟢 GRÁFICO 2: Proyectos por Cliente (Bar Chart) */}
         <div className="chart-card">
           <h3>👥 Proyectos por Cliente</h3>
-          <ResponsiveContainer width="100%" height={280}>
-            <BarChart 
-              data={stats.projectsByClient} 
-              layout="vertical"
-              margin={{ top: 20, right: 30, left: 80, bottom: 5 }}
-            >
-              <XAxis type="number" hide />
-              <YAxis 
-                dataKey="name" 
-                type="category" 
-                width={100} 
-                tick={{ fontSize: 11, fill: '#495057' }}
-                axisLine={false}
-                tickLine={false}
-              />
-              <Tooltip 
-                contentStyle={{ 
-                  backgroundColor: 'white', 
-                  border: '1px solid #e9ecef',
-                  borderRadius: '8px',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-                }}
-                formatter={(value) => [`${value} proyectos`, 'Cantidad']}
-              />
-              <Bar 
-                dataKey="value" 
-                fill="#0052cc" 
-                radius={[0, 4, 4, 0]} 
-                barSize={32}
-              >
-                {stats.projectsByClient.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill="#0052cc" />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
+          {stats.projectsByClient.length > 0 ? (
+            <ResponsiveContainer width="100%" height={280}>
+              <BarChart data={stats.projectsByClient} layout="vertical">
+                <XAxis type="number" />
+                <YAxis dataKey="name" type="category" width={100} />
+                <Tooltip />
+                <Bar dataKey="value" fill="#0052cc" radius={[0, 4, 4, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="empty-chart">Sin datos</div>
+          )}
         </div>
-
       </div>
     </div>
   );

@@ -1,5 +1,5 @@
 import { createContext, useState, useEffect } from 'react';
-import axios from 'axios';
+import { supabase } from '../lib/supabase';
 
 const FinanzasContext = createContext();
 
@@ -9,77 +9,96 @@ export const FinanzasProvider = ({ children }) => {
   const [cuentasPorCobrar, setCuentasPorCobrar] = useState([]);
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [ingresosRes, egresosRes, cuentasRes, dashboardRes] = await Promise.all([
-        axios.get('http://localhost:3001/api/finanzas/ingresos'),
-        axios.get('http://localhost:3001/api/finanzas/egresos'),
-        axios.get('http://localhost:3001/api/finanzas/cuentas-por-cobrar'),
-        axios.get('http://localhost:3001/api/finanzas/dashboard')
+      const [ingRes, egrRes, cpcRes] = await Promise.all([
+        supabase.from('ingresos').select('*').order('fecha', { ascending: false }),
+        supabase.from('egresos').select('*').order('fecha', { ascending: false }),
+        supabase.from('cuentas_por_cobrar').select('*').order('fecha_vencimiento')
       ]);
-      setIngresos(ingresosRes.data);
-      setEgresos(egresosRes.data);
-      setCuentasPorCobrar(cuentasRes.data);
-      setDashboardData(dashboardRes.data);
-    } catch (error) {
-      console.error('Error cargando datos de finanzas:', error);
+      if (ingRes.error) throw ingRes.error;
+      if (egrRes.error) throw egrRes.error;
+      if (cpcRes.error) throw cpcRes.error;
+
+      setIngresos(ingRes.data || []);
+      setEgresos(egrRes.data || []);
+      setCuentasPorCobrar(cpcRes.data || []);
+
+      // Calcular dashboard
+      const totalIngresos = ingRes.data?.reduce((s, i) => s + i.monto, 0) || 0;
+      const ingresosCobrados = ingRes.data?.filter(i => i.estado === 'Cobrado').reduce((s, i) => s + i.monto, 0) || 0;
+      const totalEgresos = egrRes.data?.reduce((s, e) => s + e.monto, 0) || 0;
+      const totalPorCobrar = cpcRes.data?.filter(c => c.estado === 'Pendiente').reduce((s, c) => s + c.monto, 0) || 0;
+
+      setDashboardData({
+        totalIngresos, ingresosCobrados, totalEgresos,
+        balance: ingresosCobrados - totalEgresos,
+        totalPorCobrar
+      });
+    } catch (err) {
+      console.error('Error cargando finanzas:', err);
+      setError(err.message);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    let isMounted = true;
-    
-    const loadData = async () => {
-      if (isMounted) await fetchData();
-    };
-    
-    loadData();
-    
-    return () => { isMounted = false; };
+    (async () => { await fetchData(); })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const refetch = () => fetchData();
-
   const addIngreso = async (data) => {
-    const res = await axios.post('http://localhost:3001/api/finanzas/ingresos', data);
-    setIngresos(prev => [...prev, res.data]);
-    return res.data;
+    const { data: nuevo, error } = await supabase
+      .from('ingresos')
+      .insert([{ ...data, fecha: data.fecha || new Date().toISOString().split('T')[0] }])
+      .select()
+      .single();
+    if (error) throw error;
+    setIngresos(prev => [...prev, nuevo]);
+    return nuevo;
   };
 
   const addEgreso = async (data) => {
-    const res = await axios.post('http://localhost:3001/api/finanzas/egresos', data);
-    setEgresos(prev => [...prev, res.data]);
-    return res.data;
+    const { data: nuevo, error } = await supabase
+      .from('egresos')
+      .insert([{ ...data, fecha: data.fecha || new Date().toISOString().split('T')[0] }])
+      .select()
+      .single();
+    if (error) throw error;
+    setEgresos(prev => [...prev, nuevo]);
+    return nuevo;
   };
 
   const addCuentaPorCobrar = async (data) => {
-    const res = await axios.post('http://localhost:3001/api/finanzas/cuentas-por-cobrar', data);
-    setCuentasPorCobrar(prev => [...prev, res.data]);
-    return res.data;
+    const { data: nueva, error } = await supabase
+      .from('cuentas_por_cobrar')
+      .insert([{ ...data, fecha_emision: data.fecha_emision || new Date().toISOString().split('T')[0], estado: 'Pendiente' }])
+      .select()
+      .single();
+    if (error) throw error;
+    setCuentasPorCobrar(prev => [...prev, nueva]);
+    return nueva;
   };
 
-  const marcarCuentaComoCobrada = async (id) => {
-    const res = await axios.put(`http://localhost:3001/api/finanzas/cuentas-por-cobrar/${id}`, { estado: 'Cobrada' });
-    setCuentasPorCobrar(prev => prev.map(c => c.id === id ? res.data : c));
-    return res.data;
+  const marcarComoCobrada = async (id) => {
+    const { error } = await supabase
+      .from('cuentas_por_cobrar')
+      .update({ estado: 'Cobrada' })
+      .eq('id', id);
+    if (error) throw error;
+    setCuentasPorCobrar(prev => prev.map(c => c.id === id ? { ...c, estado: 'Cobrada' } : c));
   };
 
   return (
     <FinanzasContext.Provider value={{ 
-      ingresos, 
-      egresos, 
-      cuentasPorCobrar, 
-      dashboardData,
-      loading, 
-      addIngreso, 
-      addEgreso, 
-      addCuentaPorCobrar,
-      marcarCuentaComoCobrada,
-      refetch 
+      ingresos, egresos, cuentasPorCobrar, dashboardData,
+      loading, error,
+      addIngreso, addEgreso, addCuentaPorCobrar, marcarComoCobrada,
+      refetch: fetchData 
     }}>
       {children}
     </FinanzasContext.Provider>

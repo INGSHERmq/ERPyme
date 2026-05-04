@@ -1,87 +1,32 @@
 import { useState } from 'react';
-import useProjects from '../../hooks/useProjects';
-import '../../App.css';
-
-// Componentes de las vistas
-import VistaScrum from './scrum/VistaScrum';
-import VistaTabla from './table/VistaTabla';
-import VistaGantt from './gantt/VistaGantt';
-import VistaCalendario from './calendar/VistaCalendario';
-import VistaGrafico from './charts/VistaGrafico';
+import useProjects from "../../hooks/useProjects";
+import ListaProyectos from './Lista/ListaProyectos';
+import ProyectoDetalle from './Detalle/ProyectoDetalle';
 
 const ProjectsView = ({ onBack }) => {
-  const [vistaActiva, setVistaActiva] = useState('scrum');
-  const { proyectos, loading, error } = useProjects();
+  const { proyectos, loading } = useProjects();
+  const [proyectoSeleccionado, setProyectoSeleccionado] = useState(null);
 
-  const renderizarVista = () => {
-    if (loading) return <div className="loading">Cargando proyectos...</div>;
-    if (error) return <div className="error">{error}</div>;
-
-    switch (vistaActiva) {
-      case 'grafico': return <VistaGrafico proyectos={proyectos} />;
-      case 'scrum': return <VistaScrum proyectos={proyectos} />;
-      case 'tabla': return <VistaTabla proyectos={proyectos} />;
-      case 'gantt': return <VistaGantt proyectos={proyectos} />;
-      case 'calendario': return <VistaCalendario proyectos={proyectos} />;
-      default: return <VistaScrum proyectos={proyectos} />;
-    }
-  };
+  if (loading) return <div className="loading">Cargando proyectos...</div>;
 
   return (
-    <div className="erp-container">
-      {/* Botón para volver al Home */}
-      <div className="module-header">
-        <button onClick={onBack} className="btn-volver">
-          <span className="icon">←</span>
-          <span>Volver al Inicio</span>
-        </button>
-      </div>
+    <div className="projects-module">
+      {/* Botón para volver al Home siempre visible */}
+      {!proyectoSeleccionado && (
+        <button onClick={onBack} className="btn-back">← Volver al Inicio</button>
+      )}
 
-      <nav className="tabs-nav">
-        <button 
-          className={vistaActiva === 'grafico' ? 'active' : ''} 
-          onClick={() => setVistaActiva('grafico')}
-          type="button"
-        >
-          📊 Gráfico
-        </button>
-        
-        <button 
-          className={vistaActiva === 'scrum' ? 'active' : ''} 
-          onClick={() => setVistaActiva('scrum')}
-          type="button"
-        >
-          📋 Tabla Scrum
-        </button>
-        
-        <button 
-          className={vistaActiva === 'tabla' ? 'active' : ''} 
-          onClick={() => setVistaActiva('tabla')}
-          type="button"
-        >
-          📑 Tabla
-        </button>
-        
-        <button 
-          className={vistaActiva === 'gantt' ? 'active' : ''} 
-          onClick={() => setVistaActiva('gantt')}
-          type="button"
-        >
-          📅 Diagrama de Gantt
-        </button>
-        
-        <button 
-          className={vistaActiva === 'calendario' ? 'active' : ''} 
-          onClick={() => setVistaActiva('calendario')}
-          type="button"
-        >
-          🗓️ Calendario
-        </button>
-      </nav>
-
-      <main className="content-area">
-        {renderizarVista()}
-      </main>
+      {proyectoSeleccionado ? (
+        <ProyectoDetalle 
+          proyecto={proyectoSeleccionado} 
+          onBack={() => setProyectoSeleccionado(null)} 
+        />
+      ) : (
+        <ListaProyectos 
+          proyectos={proyectos} 
+          onSelect={setProyectoSeleccionado} 
+        />
+      )}
     </div>
   );
 };

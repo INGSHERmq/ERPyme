@@ -1,0 +1,428 @@
+-- ============================================
+-- 🗄️ ERPyme - Script Completo para Supabase
+-- ============================================
+-- Ejecutá TODO este script de una vez en el SQL Editor
+
+-- 🔹 1. CREAR TABLAS
+-- ============================================
+
+-- CLIENTES (CRM)
+CREATE TABLE IF NOT EXISTS clientes (
+  id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+  nombre TEXT NOT NULL,
+  contacto TEXT,
+  email TEXT,
+  telefono TEXT,
+  estado TEXT CHECK (estado IN ('Activo', 'Inactivo')) DEFAULT 'Activo',
+  industria TEXT,
+  creado DATE DEFAULT CURRENT_DATE,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- COTIZACIONES (Marketing)
+CREATE TABLE IF NOT EXISTS cotizaciones (
+  id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+  cliente_id BIGINT,
+  proyecto_id BIGINT,
+  titulo TEXT NOT NULL,
+  monto NUMERIC(12,2) NOT NULL,
+  estado TEXT CHECK (estado IN ('Pendiente', 'Aceptada', 'Rechazada')) DEFAULT 'Pendiente',
+  fecha DATE,
+  descripcion TEXT,
+  validez TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- PROYECTOS (Gestión)
+CREATE TABLE IF NOT EXISTS proyectos (
+  id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+  nombre TEXT NOT NULL,
+  cliente_id BIGINT,
+  cotizacion_id BIGINT,
+  estado TEXT CHECK (estado IN ('Pendiente', 'En Progreso', 'Completado')) DEFAULT 'Pendiente',
+  prioridad TEXT CHECK (prioridad IN ('Alta', 'Media', 'Baja')) DEFAULT 'Media',
+  inicio DATE,
+  fin DATE,
+  descripcion TEXT,
+  monto NUMERIC(12,2),
+  progreso INTEGER CHECK (progreso >= 0 AND progreso <= 100) DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- FINANZAS: INGRESOS
+CREATE TABLE IF NOT EXISTS ingresos (
+  id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+  tipo TEXT CHECK (tipo IN ('Proyecto', 'Servicio', 'Otro')) DEFAULT 'Proyecto',
+  concepto TEXT NOT NULL,
+  monto NUMERIC(12,2) NOT NULL,
+  fecha DATE,
+  proyecto_id BIGINT,
+  cliente_id BIGINT,
+  estado TEXT CHECK (estado IN ('Pendiente', 'Cobrado')) DEFAULT 'Pendiente',
+  metodo TEXT CHECK (metodo IN ('Transferencia', 'Efectivo', 'Tarjeta', 'Pendiente')),
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- FINANZAS: EGRESOS
+CREATE TABLE IF NOT EXISTS egresos (
+  id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+  categoria TEXT,
+  concepto TEXT NOT NULL,
+  monto NUMERIC(12,2) NOT NULL,
+  fecha DATE,
+  proyecto_id BIGINT,
+  tipo TEXT CHECK (tipo IN ('Operativo', 'Proyecto')),
+  metodo TEXT CHECK (metodo IN ('Tarjeta', 'Transferencia', 'Efectivo')),
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- FINANZAS: CUENTAS POR COBRAR
+CREATE TABLE IF NOT EXISTS cuentas_por_cobrar (
+  id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+  cliente_id BIGINT NOT NULL,
+  proyecto_id BIGINT,
+  concepto TEXT NOT NULL,
+  monto NUMERIC(12,2) NOT NULL,
+  fecha_emision DATE,
+  fecha_vencimiento DATE,
+  estado TEXT CHECK (estado IN ('Pendiente', 'Cobrada', 'Vencida')) DEFAULT 'Pendiente',
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- RRHH: EMPLEADOS
+CREATE TABLE IF NOT EXISTS empleados (
+  id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+  nombre TEXT NOT NULL,
+  email TEXT UNIQUE,
+  telefono TEXT,
+  cargo TEXT,
+  departamento TEXT,
+  salario NUMERIC(10,2),
+  fecha_ingreso DATE,
+  estado TEXT CHECK (estado IN ('Activo', 'Inactivo')) DEFAULT 'Activo',
+  tipo_contrato TEXT CHECK (tipo_contrato IN ('Indefinido', 'Temporal', 'Por Proyecto')),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- RRHH: ASISTENCIAS
+CREATE TABLE IF NOT EXISTS asistencias (
+  id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+  empleado_id BIGINT NOT NULL,
+  fecha DATE NOT NULL,
+  hora_entrada TIME,
+  hora_salida TIME,
+  estado TEXT CHECK (estado IN ('Presente', 'Tarde', 'Ausente', 'Vacaciones')) DEFAULT 'Presente',
+  observaciones TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(empleado_id, fecha)
+);
+
+-- RRHH: ASIGNACIONES A PROYECTOS
+CREATE TABLE IF NOT EXISTS asignaciones_proyecto (
+  id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+  empleado_id BIGINT NOT NULL,
+  proyecto_id BIGINT NOT NULL,
+  rol TEXT,
+  fecha_inicio DATE,
+  fecha_fin DATE,
+  estado TEXT CHECK (estado IN ('Activo', 'Completado', 'Pendiente')) DEFAULT 'Activo',
+  horas_semanales INTEGER DEFAULT 40,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(empleado_id, proyecto_id)
+);
+
+-- RRHH: INCIDENTES SSOMA
+CREATE TABLE IF NOT EXISTS incidentes_ssoma (
+  id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+  empleado_id BIGINT NOT NULL,
+  tipo TEXT CHECK (tipo IN ('Accidente Leve', 'Accidente Grave', 'Enfermedad Ocupacional', 'Casi Accidente')),
+  descripcion TEXT,
+  fecha DATE,
+  gravedad TEXT CHECK (gravedad IN ('Baja', 'Media', 'Alta')),
+  estado TEXT CHECK (estado IN ('Abierto', 'En Seguimiento', 'Cerrado')) DEFAULT 'Abierto',
+  acciones_tomadas TEXT,
+  fecha_reporte DATE,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- RRHH: EXÁMENES MÉDICOS
+CREATE TABLE IF NOT EXISTS examenes_medicos (
+  id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+  empleado_id BIGINT NOT NULL,
+  tipo TEXT CHECK (tipo IN ('Pre-ocupacional', 'Periódico', 'De Salida')),
+  fecha DATE,
+  resultado TEXT CHECK (resultado IN ('Apto', 'Apto con observaciones', 'No Apto')),
+  observaciones TEXT,
+  proximo_examen DATE,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- LOGÍSTICA: ACTIVOS
+CREATE TABLE IF NOT EXISTS activos (
+  id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+  nombre TEXT NOT NULL,
+  tipo TEXT CHECK (tipo IN ('Laptop', 'Monitor', 'Herramienta', 'Infraestructura', 'Periférico', 'Otros')),
+  marca TEXT,
+  modelo TEXT,
+  serie TEXT UNIQUE,
+  estado TEXT CHECK (estado IN ('Disponible', 'En uso', 'En mantenimiento', 'En tránsito', 'Dado de baja')) DEFAULT 'Disponible',
+  fecha_compra DATE,
+  ubicacion TEXT,
+  costo NUMERIC(10,2),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- LOGÍSTICA: ASIGNACIONES DE ACTIVOS
+CREATE TABLE IF NOT EXISTS asignaciones_activos (
+  id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+  activo_id BIGINT NOT NULL,
+  tipo_asignacion TEXT CHECK (tipo_asignacion IN ('Empleado', 'Proyecto')) NOT NULL,
+  ref_id BIGINT NOT NULL,
+  fecha_asignacion DATE,
+  fecha_devolucion DATE,
+  estado TEXT CHECK (estado IN ('Activa', 'Devuelta', 'Inactiva')) DEFAULT 'Activa',
+  observaciones TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- LOGÍSTICA: MANTENIMIENTOS
+CREATE TABLE IF NOT EXISTS mantenimientos (
+  id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+  activo_id BIGINT NOT NULL,
+  tipo TEXT CHECK (tipo IN ('Preventivo', 'Correctivo', 'Inspección')),
+  descripcion TEXT,
+  fecha DATE,
+  costo NUMERIC(10,2),
+  tecnico TEXT,
+  estado TEXT CHECK (estado IN ('Pendiente', 'Completado')) DEFAULT 'Pendiente',
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- LOGÍSTICA: GUÍAS DE SALIDA
+CREATE TABLE IF NOT EXISTS guias_salida (
+  id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+  activo_id BIGINT NOT NULL,
+  destino TEXT NOT NULL,
+  fecha_salida DATE,
+  fecha_regreso DATE,
+  estado TEXT CHECK (estado IN ('En tránsito', 'Devuelto', 'Pendiente')) DEFAULT 'En tránsito',
+  responsable TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 🔹 2. FOREIGN KEYS (Relaciones)
+-- ============================================
+
+ALTER TABLE cotizaciones ADD CONSTRAINT fk_cotizaciones_cliente 
+  FOREIGN KEY (cliente_id) REFERENCES clientes(id) ON DELETE SET NULL;
+
+ALTER TABLE cotizaciones ADD CONSTRAINT fk_cotizaciones_proyecto 
+  FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE SET NULL;
+
+ALTER TABLE proyectos ADD CONSTRAINT fk_proyectos_cliente 
+  FOREIGN KEY (cliente_id) REFERENCES clientes(id) ON DELETE SET NULL;
+
+ALTER TABLE proyectos ADD CONSTRAINT fk_proyectos_cotizacion 
+  FOREIGN KEY (cotizacion_id) REFERENCES cotizaciones(id) ON DELETE SET NULL;
+
+ALTER TABLE ingresos ADD CONSTRAINT fk_ingresos_proyecto 
+  FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE SET NULL;
+
+ALTER TABLE ingresos ADD CONSTRAINT fk_ingresos_cliente 
+  FOREIGN KEY (cliente_id) REFERENCES clientes(id) ON DELETE SET NULL;
+
+ALTER TABLE egresos ADD CONSTRAINT fk_egresos_proyecto 
+  FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE SET NULL;
+
+ALTER TABLE cuentas_por_cobrar ADD CONSTRAINT fk_cpc_cliente 
+  FOREIGN KEY (cliente_id) REFERENCES clientes(id) ON DELETE CASCADE;
+
+ALTER TABLE cuentas_por_cobrar ADD CONSTRAINT fk_cpc_proyecto 
+  FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE SET NULL;
+
+ALTER TABLE asistencias ADD CONSTRAINT fk_asistencias_empleado 
+  FOREIGN KEY (empleado_id) REFERENCES empleados(id) ON DELETE CASCADE;
+
+ALTER TABLE asignaciones_proyecto ADD CONSTRAINT fk_asigproy_empleado 
+  FOREIGN KEY (empleado_id) REFERENCES empleados(id) ON DELETE CASCADE;
+
+ALTER TABLE asignaciones_proyecto ADD CONSTRAINT fk_asigproy_proyecto 
+  FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE;
+
+ALTER TABLE incidentes_ssoma ADD CONSTRAINT fk_incidentes_empleado 
+  FOREIGN KEY (empleado_id) REFERENCES empleados(id) ON DELETE CASCADE;
+
+ALTER TABLE examenes_medicos ADD CONSTRAINT fk_examenes_empleado 
+  FOREIGN KEY (empleado_id) REFERENCES empleados(id) ON DELETE CASCADE;
+
+ALTER TABLE asignaciones_activos ADD CONSTRAINT fk_asigact_activo 
+  FOREIGN KEY (activo_id) REFERENCES activos(id) ON DELETE CASCADE;
+
+ALTER TABLE mantenimientos ADD CONSTRAINT fk_mantenimientos_activo 
+  FOREIGN KEY (activo_id) REFERENCES activos(id) ON DELETE CASCADE;
+
+ALTER TABLE guias_salida ADD CONSTRAINT fk_guias_activo 
+  FOREIGN KEY (activo_id) REFERENCES activos(id) ON DELETE CASCADE;
+
+-- 🔹 3. TRIGGERS para updated_at
+-- ============================================
+
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_clientes_updated_at BEFORE UPDATE ON clientes FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER trg_cotizaciones_updated_at BEFORE UPDATE ON cotizaciones FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER trg_proyectos_updated_at BEFORE UPDATE ON proyectos FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER trg_cuentas_por_cobrar_updated_at BEFORE UPDATE ON cuentas_por_cobrar FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER trg_empleados_updated_at BEFORE UPDATE ON empleados FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER trg_activos_updated_at BEFORE UPDATE ON activos FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- 🔹 4. VISTAS ÚTILES
+-- ============================================
+
+CREATE OR REPLACE VIEW v_proyectos_completos AS
+SELECT 
+  p.*,
+  c.nombre AS cliente_nombre,
+  c.email AS cliente_email
+FROM proyectos p
+LEFT JOIN clientes c ON p.cliente_id = c.id;
+
+CREATE OR REPLACE VIEW v_cotizaciones_completas AS
+SELECT 
+  q.*,
+  c.nombre AS cliente_nombre,
+  p.nombre AS proyecto_nombre
+FROM cotizaciones q
+LEFT JOIN clientes c ON q.cliente_id = c.id
+LEFT JOIN proyectos p ON q.proyecto_id = p.id;
+
+CREATE OR REPLACE VIEW v_empleados_stats AS
+SELECT 
+  e.*,
+  COUNT(DISTINCT ap.proyecto_id) AS proyectos_asignados,
+  COUNT(DISTINCT i.id) AS incidentes_registrados
+FROM empleados e
+LEFT JOIN asignaciones_proyecto ap ON e.id = ap.empleado_id AND ap.estado = 'Activo'
+LEFT JOIN incidentes_ssoma i ON e.id = i.empleado_id
+GROUP BY e.id;
+
+-- 🔹 5. SEED DATA (Datos de ejemplo) - ORDEN CORREGIDO
+-- ============================================
+
+-- 1️⃣ Clientes
+INSERT INTO clientes (nombre, contacto, email, telefono, estado, industria, creado) VALUES
+('TechCorp SA', 'Juan Pérez', 'juan@techcorp.com', '+51 999 123 456', 'Activo', 'Tecnología', '2026-01-15'),
+('Innovatech', 'Ana García', 'ana@innovatech.com', '+51 987 654 321', 'Activo', 'Consultoría', '2026-02-20'),
+('LogiTrans', 'Carlos López', 'carlos@logitrans.com', '+51 912 345 678', 'Inactivo', 'Logística', '2026-03-10');
+
+-- 2️⃣ Cotizaciones (con proyecto_id NULL por ahora)
+INSERT INTO cotizaciones (cliente_id, proyecto_id, titulo, monto, estado, fecha, descripcion, validez) VALUES
+(1, NULL, 'Desarrollo ERP - Módulo Pagos', 15000, 'Aceptada', '2026-04-10', 'Implementación de pasarela de pagos integrada', '30 días'),
+(1, NULL, 'Mantenimiento API - Mensual', 2000, 'Pendiente', '2026-04-25', 'Soporte y mantenimiento de endpoints de autenticación', '15 días'),
+(2, NULL, 'Diseño UI/UX Dashboard', 8500, 'Aceptada', '2026-03-01', 'Diseño de interfaz principal y componentes reutilizables', '45 días'),
+(3, NULL, 'Sistema de Rutas Logísticas', 12000, 'Rechazada', '2026-04-01', 'Optimización de rutas de distribución con IA', '30 días');
+
+-- 3️⃣ Proyectos (con cotizacion_id referenciando cotizaciones existentes)
+INSERT INTO proyectos (nombre, cliente_id, cotizacion_id, estado, prioridad, inicio, fin, descripcion, monto, progreso) VALUES
+('Módulo de Pagos', 1, 1, 'En Progreso', 'Alta', '2026-04-01', '2026-05-15', 'Implementar pasarela de pagos', 15000, 65),
+('API de Usuarios', 1, 2, 'Pendiente', 'Media', '2026-04-10', '2026-04-20', 'Crear endpoints de autenticación', 2000, 0),
+('Diseño Dashboard', 2, 3, 'Completado', 'Baja', '2026-03-15', '2026-04-01', 'Diseñar interfaz principal', 8500, 100),
+('Base de Datos', 2, NULL, 'En Progreso', 'Alta', '2026-04-05', '2026-04-25', 'Configurar PostgreSQL y optimizar queries', 5000, 40);
+
+-- 4️⃣ Actualizar cotizaciones con los proyecto_id creados
+UPDATE cotizaciones SET proyecto_id = 1 WHERE id = 1;
+UPDATE cotizaciones SET proyecto_id = 2 WHERE id = 2;
+UPDATE cotizaciones SET proyecto_id = 3 WHERE id = 3;
+-- Cotización 4 queda con NULL (rechazada)
+
+-- 5️⃣ Empleados
+INSERT INTO empleados (nombre, email, telefono, cargo, departamento, salario, fecha_ingreso, estado, tipo_contrato) VALUES
+('María Rodríguez', 'maria.rodriguez@erpyme.com', '+51 999 111 222', 'Desarrolladora Senior', 'Tecnología', 4500, '2024-03-15', 'Activo', 'Indefinido'),
+('Carlos Mendoza', 'carlos.mendoza@erpyme.com', '+51 988 222 333', 'Diseñador UX/UI', 'Diseño', 3800, '2024-06-01', 'Activo', 'Indefinido'),
+('Ana Torres', 'ana.torres@erpyme.com', '+51 977 333 444', 'Project Manager', 'Gestión', 5200, '2023-11-20', 'Activo', 'Indefinido'),
+('Luis Ramírez', 'luis.ramirez@erpyme.com', '+51 966 444 555', 'Desarrollador Backend', 'Tecnología', 4000, '2025-01-10', 'Activo', 'Indefinido'),
+('Sofía Vargas', 'sofia.vargas@erpyme.com', '+51 955 555 666', 'Especialista SSOMA', 'Seguridad', 3500, '2024-08-15', 'Activo', 'Indefinido'),
+('Pedro Sánchez', 'pedro.sanchez@erpyme.com', '+51 944 666 777', 'Desarrollador Junior', 'Tecnología', 2800, '2025-03-01', 'Inactivo', 'Temporal');
+
+-- 6️⃣ Asignaciones Proyecto
+INSERT INTO asignaciones_proyecto (empleado_id, proyecto_id, rol, fecha_inicio, fecha_fin, estado, horas_semanales) VALUES
+(1, 1, 'Desarrolladora Principal', '2026-04-01', '2026-05-15', 'Activo', 40),
+(4, 1, 'Desarrollador Backend', '2026-04-01', '2026-05-15', 'Activo', 40),
+(2, 3, 'Diseñador UX/UI', '2026-03-15', '2026-04-01', 'Completado', 30),
+(3, 1, 'Project Manager', '2026-04-01', '2026-05-15', 'Activo', 20),
+(4, 4, 'Administrador BD', '2026-04-05', '2026-04-25', 'Activo', 40),
+(1, 2, 'Desarrolladora API', '2026-04-10', '2026-04-20', 'Pendiente', 40);
+
+-- 7️⃣ Activos (Logística)
+INSERT INTO activos (nombre, tipo, marca, modelo, serie, estado, fecha_compra, ubicacion, costo) VALUES
+('MacBook Pro 14"', 'Laptop', 'Apple', 'M3 Pro', 'SN-APL-001', 'En uso', '2025-01-15', 'Oficina Principal', 2500),
+('Monitor Dell 27" 4K', 'Monitor', 'Dell', 'U2723QE', 'SN-DLL-042', 'Disponible', '2024-11-20', 'Almacén TI', 480),
+('Taladro Industrial Bosch', 'Herramienta', 'Bosch', 'GBM 340', 'SN-BSH-112', 'En mantenimiento', '2023-06-10', 'Taller', 185),
+('Servidor Rack HP', 'Infraestructura', 'HP', 'ProLiant DL380', 'SN-HP-889', 'En uso', '2024-03-05', 'Data Center', 4200),
+('Impresora Multifuncional', 'Periférico', 'Brother', 'MFC-L2750DW', 'SN-BRT-331', 'Disponible', '2025-02-18', 'Almacén TI', 320);
+
+-- 8️⃣ Asignaciones de Activos
+INSERT INTO asignaciones_activos (activo_id, tipo_asignacion, ref_id, fecha_asignacion, estado, observaciones) VALUES
+(1, 'Empleado', 1, '2026-04-01', 'Activa', 'Desarrollo Módulo Pagos'),
+(4, 'Proyecto', 1, '2026-04-05', 'Activa', 'Hosting temporal pruebas');
+
+-- 9️⃣ Finanzas: Ingresos
+INSERT INTO ingresos (tipo, concepto, monto, fecha, proyecto_id, cliente_id, estado, metodo) VALUES
+('Proyecto', 'Pago inicial - Módulo de Pagos', 7500, '2026-04-01', 1, 1, 'Cobrado', 'Transferencia'),
+('Proyecto', 'Pago final - Diseño Dashboard', 8500, '2026-04-01', 3, 2, 'Cobrado', 'Transferencia'),
+('Servicio', 'Mantenimiento mensual', 2000, '2026-04-25', 2, 1, 'Pendiente', 'Pendiente');
+
+-- 🔟 Finanzas: Egresos
+INSERT INTO egresos (categoria, concepto, monto, fecha, proyecto_id, tipo, metodo) VALUES
+('Infraestructura', 'Servidor Cloud AWS', 450, '2026-04-05', NULL, 'Operativo', 'Tarjeta'),
+('Licencias', 'Licencia Figma Team', 150, '2026-04-10', 3, 'Proyecto', 'Tarjeta'),
+('Servicios', 'Consultoría PostgreSQL', 800, '2026-04-15', 4, 'Proyecto', 'Transferencia'),
+('Infraestructura', 'Dominio y SSL', 120, '2026-04-20', NULL, 'Operativo', 'Tarjeta');
+
+-- 1️⃣1️⃣ Cuentas por Cobrar
+INSERT INTO cuentas_por_cobrar (cliente_id, proyecto_id, concepto, monto, fecha_emision, fecha_vencimiento, estado) VALUES
+(1, 1, 'Segundo pago - Módulo Pagos', 7500, '2026-04-15', '2026-05-15', 'Pendiente'),
+(1, 2, 'Mantenimiento API', 2000, '2026-04-25', '2026-05-10', 'Pendiente');
+
+-- 1️⃣2️⃣ Asistencias
+INSERT INTO asistencias (empleado_id, fecha, hora_entrada, hora_salida, estado, observaciones) VALUES
+(1, '2026-04-29', '08:55', '18:05', 'Presente', ''),
+(2, '2026-04-29', '09:15', '18:15', 'Tarde', 'Tráfico'),
+(3, '2026-04-29', '08:50', '18:00', 'Presente', ''),
+(4, '2026-04-29', '08:45', '17:50', 'Presente', ''),
+(1, '2026-04-28', '09:00', '18:00', 'Presente', '');
+
+-- 1️⃣3️⃣ Incidentes SSOMA
+INSERT INTO incidentes_ssoma (empleado_id, tipo, descripcion, fecha, gravedad, estado, acciones_tomadas, fecha_reporte) VALUES
+(2, 'Accidente Leve', 'Caída menor en oficina, golpe en rodilla', '2026-04-15', 'Baja', 'Cerrado', 'Primeros auxilios aplicados, revisión de área', '2026-04-15'),
+(4, 'Enfermedad Ocupacional', 'Molestias en vista por uso prolongado de pantalla', '2026-04-20', 'Media', 'En Seguimiento', 'Examen oftalmológico programado, descanso programado', '2026-04-20'),
+(1, 'Casi Accidente', 'Cable suelto en pasillo, riesgo de tropiezo', '2026-04-25', 'Baja', 'Cerrado', 'Cable organizado, señalización colocada', '2026-04-25');
+
+-- 1️⃣4️⃣ Exámenes Médicos
+INSERT INTO examenes_medicos (empleado_id, tipo, fecha, resultado, observaciones, proximo_examen) VALUES
+(1, 'Pre-ocupacional', '2024-03-10', 'Apto', 'Sin observaciones', '2025-03-10'),
+(2, 'Periódico', '2026-04-22', 'Apto con observaciones', 'Revisión oftalmológica recomendada', '2027-04-22'),
+(3, 'Periódico', '2025-11-15', 'Apto', 'Sin observaciones', '2026-11-15');
+
+-- 1️⃣5️⃣ Mantenimientos
+INSERT INTO mantenimientos (activo_id, tipo, descripcion, fecha, costo, tecnico, estado) VALUES
+(3, 'Preventivo', 'Cambio de carbones y lubricación general', '2026-04-10', 35, 'Servicio Técnico Oficial', 'Completado'),
+(1, 'Correctivo', 'Reemplazo de teclado y limpieza interna', '2026-04-20', 120, 'Apple Authorized', 'Pendiente');
+
+-- 1️⃣6️⃣ Guías de Salida
+INSERT INTO guias_salida (activo_id, destino, fecha_salida, fecha_regreso, estado, responsable) VALUES
+(2, 'Cliente Innovatech - Demo', '2026-04-15', '2026-04-22', 'En tránsito', 'Carlos Mendoza');
+
+-- ✅ FIN DEL SCRIPT

@@ -1,5 +1,5 @@
 import { createContext, useState, useEffect } from 'react';
-import axios from 'axios';
+import { supabase } from '../lib/supabase';
 
 const ProjectContext = createContext();
 
@@ -8,83 +8,42 @@ export const ProjectProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    let isMounted = true; // Flag para evitar updates si el componente se desmonta
-
-    const loadData = async () => {
-      try {
-        if (isMounted) setLoading(true);
-        const response = await axios.get('http://localhost:3001/api/proyectos');
-        if (isMounted) {
-          setProyectos(response.data);
-          setError(null);
-        }
-      } catch (err) {
-        if (isMounted) {
-          setError('Error al cargar los proyectos');
-          console.error(err);
-        }
-      } finally {
-        if (isMounted) setLoading(false);
-      }
-    };
-
-    loadData();
-
-    // Cleanup function
-    return () => {
-      isMounted = false;
-    };
-  }, []);
-
-  // Crear proyecto
-  const createProyecto = async (nuevoProyecto) => {
-    try {
-      const response = await axios.post('http://localhost:3001/api/proyectos', nuevoProyecto);
-      setProyectos(prev => [...prev, response.data]);
-      return response.data;
-    } catch (err) {
-      console.error('Error al crear proyecto:', err);
-      throw err;
-    }
-  };
-
-  // Actualizar proyecto
-  const updateProyecto = async (id, datosActualizados) => {
-    try {
-      const response = await axios.put(`http://localhost:3001/api/proyectos/${id}`, datosActualizados);
-      setProyectos(prev => prev.map(p => p.id === id ? response.data : p));
-      return response.data;
-    } catch (err) {
-      console.error('Error al actualizar proyecto:', err);
-      throw err;
-    }
-  };
-
-  // Eliminar proyecto
-  const deleteProyecto = async (id) => {
-    try {
-      await axios.delete(`http://localhost:3001/api/proyectos/${id}`);
-      setProyectos(prev => prev.filter(p => p.id !== id));
-    } catch (err) {
-      console.error('Error al eliminar proyecto:', err);
-      throw err;
-    }
-  };
-
-  // Función de refetch manual
-  const refetch = async () => {
+  const fetchData = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('http://localhost:3001/api/proyectos');
-      setProyectos(response.data);
-      setError(null);
+      const { data, error } = await supabase
+        .from('v_proyectos_completos')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      setProyectos(data || []);
     } catch (err) {
-      setError('Error al recargar los proyectos');
-      console.error(err);
+      console.error('Error cargando proyectos:', err);
+      setError(err.message);
     } finally {
       setLoading(false);
     }
+  };
+
+  useEffect(() => {
+    (async () => { await fetchData(); })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const updateProyecto = async (id, updates) => {
+    const { error } = await supabase
+      .from('proyectos')
+      .update(updates)
+      .eq('id', id);
+    if (error) throw error;
+    setProyectos(prev => prev.map(p => p.id === id ? { ...p, ...updates } : p));
+  };
+
+  const deleteProyecto = async (id) => {
+    const { error } = await supabase.from('proyectos').delete().eq('id', id);
+    if (error) throw error;
+    setProyectos(prev => prev.filter(p => p.id !== id));
   };
 
   return (
@@ -92,10 +51,9 @@ export const ProjectProvider = ({ children }) => {
       proyectos, 
       loading, 
       error, 
-      createProyecto, 
       updateProyecto, 
       deleteProyecto,
-      refetch
+      refetch: fetchData 
     }}>
       {children}
     </ProjectContext.Provider>

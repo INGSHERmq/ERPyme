@@ -3,7 +3,12 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pi
 import useFinanzas from '../../hooks/useFinanzas';
 import './DashboardFinanzas.css';
 
-const CATEGORY_COLORS = { Infraestructura: '#0052cc', Licencias: '#ffc107', Servicios: '#28a745', Otros: '#6c757d' };
+const CATEGORY_COLORS = { 
+  Infraestructura: '#0052cc', 
+  Licencias: '#ffc107', 
+  Servicios: '#28a745', 
+  Otros: '#6c757d' 
+};
 
 const DashboardFinanzas = () => {
   const { dashboardData, loading } = useFinanzas();
@@ -11,25 +16,25 @@ const DashboardFinanzas = () => {
   const chartData = useMemo(() => {
     if (!dashboardData) return null;
     
-    const expenseDist = dashboardData.egresosPorCategoria.map(item => ({
+    const expenseDist = (dashboardData.egresosPorCategoria || []).map(item => ({
       ...item,
       fill: CATEGORY_COLORS[item.name] || '#ccc'
     }));
     
     return {
-      flowData: dashboardData.ingresosPorMes.map(m => ({
-        name: m.mes.slice(5),
-        Ingresos: m.ingresos,
-        Egresos: m.egresos
+      flowData: (dashboardData.ingresosPorMes || []).map(m => ({
+        name: m.mes?.slice(5) || 'N/A',
+        Ingresos: m.ingresos || 0,
+        Egresos: m.egresos || 0
       })),
       expenseDist
     };
   }, [dashboardData]);
 
-  if (loading) return <div className="loading">Cargando métricas...</div>;
-  if (!dashboardData) return <div className="empty-state">No hay datos financieros</div>;
+  if (loading) return <div className="loading">Cargando métricas financieras...</div>;
+  if (!dashboardData) return <div className="empty-state">No hay datos financieros disponibles</div>;
 
-  const formatCurrency = (value) => `$${value.toLocaleString()}`;
+  const formatCurrency = (value) => `$${(value || 0).toLocaleString()}`;
 
   return (
     <div className="finanzas-dashboard">
@@ -55,27 +60,45 @@ const DashboardFinanzas = () => {
       <div className="charts-grid">
         <div className="chart-card">
           <h3>📈 Flujo de Caja (Últimos 6 meses)</h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={chartData?.flowData}>
-              <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-              <YAxis tickFormatter={(v) => `$${v/1000}k`} tick={{ fontSize: 12 }} />
-              <Tooltip formatter={(v) => formatCurrency(v)} />
-              <Bar dataKey="Ingresos" fill="#28a745" radius={[4, 4, 0, 0]} />
-              <Bar dataKey="Egresos" fill="#dc3545" radius={[4, 4, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
+          {chartData?.flowData && chartData.flowData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={chartData.flowData}>
+                <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+                <YAxis tickFormatter={(v) => `$${v/1000}k`} tick={{ fontSize: 12 }} />
+                <Tooltip formatter={(v) => formatCurrency(v)} />
+                <Bar dataKey="Ingresos" fill="#28a745" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="Egresos" fill="#dc3545" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="empty-chart">No hay datos de flujo de caja disponibles</div>
+          )}
         </div>
 
         <div className="chart-card">
           <h3>🥧 Egresos por Categoría</h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <PieChart>
-              <Pie data={chartData?.expenseDist} cx="50%" cy="50%" outerRadius={90} dataKey="value" nameKey="name" label={({ name, percent }) => `${name} ${(percent*100).toFixed(0)}%`}>
-                {chartData?.expenseDist.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.fill} />)}
-              </Pie>
-              <Tooltip formatter={(v) => formatCurrency(v)} />
-            </PieChart>
-          </ResponsiveContainer>
+          {chartData?.expenseDist && chartData.expenseDist.length > 0 ? (
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie 
+                  data={chartData.expenseDist} 
+                  cx="50%" 
+                  cy="50%" 
+                  outerRadius={90} 
+                  dataKey="value" 
+                  nameKey="name" 
+                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                >
+                  {chartData.expenseDist.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.fill} />
+                  ))}
+                </Pie>
+                <Tooltip formatter={(v) => formatCurrency(v)} />
+              </PieChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="empty-chart">No hay datos de egresos por categoría</div>
+          )}
         </div>
       </div>
     </div>

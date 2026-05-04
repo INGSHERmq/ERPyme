@@ -1,0 +1,53 @@
+.actividades-container { display: flex; flex-direction: column; gap: 20px; }
+.vista-selector { display: flex; gap: 10px; margin-bottom: 20px; }
+.vista-selector button { padding: 8px 16px; border: 2px solid #e9ecef; background: white; border-radius: 8px; cursor: pointer; font-weight: 500; transition: all 0.2s; }
+.vista-selector button.active { background: #0052cc; color: white; border-color: #0052cc; }
+
+.scrum-board { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+.columna { background: #f8f9fa; border-radius: 12px; padding: 16px; min-height: 400px; }
+.columna h3 { margin: 0 0 16px 0; font-size: 16px; color: #333; display: flex; justify-content: space-between; align-items: center; }
+.columna .count { background: #e9ecef; padding: 2px 8px; border-radius: 12px; font-size: 12px; }
+.columna.active { background: #e3f2fd; border: 2px dashed #0052cc; }
+
+.tareas-list { display: flex; flex-direction: column; gap: 12px; }
+.tarea-card { background: white; padding: 16px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.08); cursor: move; transition: all 0.2s; border-left: 4px solid #0052cc; }
+.tarea-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.12); }
+.tarea-card.dragging { opacity: 0.5; }
+.tarea-card h4 { margin: 12px 0 8px 0; font-size: 14px; color: #212529; }
+.tarea-card .descripcion { font-size: 13px; color: #6c757d; margin: 0 0 12px 0; }
+.tarea-card .card-footer { display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: #adb5bd; }
+
+.badge { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+.prioridad-red { background: #ffe3e3; color: #dc3545; }
+.prioridad-yellow { background: #fff3cd; color: #856404; }
+.prioridad-green { background: #d4edda; color: #155724; }
+
+.lista-vista .tareas-table { width: 100%; border-collapse: collapse; background: white; border-radius: 12px; overflow: hidden; }
+.lista-vista th, .lista-vista td { padding: 14px 16px; text-align: left; border-bottom: 1px solid #f1f3f5; }
+.lista-vista th { background: #f8f9fa; font-weight: 600; color: #495057; font-size: 12px; text-transform: uppercase; }
+
+/* Al final del archivo */
+
+/* ✅ Tareas completadas - estilo diferente */
+.tarea-card.completada {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-left-color: #28a745 !important;
+}
+
+.tarea-card.completada h4 {
+  color: #6c757d;
+  text-decoration: line-through;
+}
+
+.tarea-card.completada .descripcion {
+  color: #adb5bd;
+}
+
+.tarea-card.completada .badge {
+  opacity: 0.7;
+}
+
+.tachado {
+  text-decoration: line-through;
+  color: #6c757d;
+}

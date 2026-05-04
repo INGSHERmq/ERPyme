@@ -1,89 +1,69 @@
 import { createContext, useState, useEffect } from 'react';
-import axios from 'axios';
+import { supabase } from '../lib/supabase';
 
 const MarketingContext = createContext();
 
 export const MarketingProvider = ({ children }) => {
   const [clientes, setClientes] = useState([]);
   const [cotizaciones, setCotizaciones] = useState([]);
-  const [proyectos, setProyectos] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // ✅ useEffect refactorizado con patrón isMounted + async/await
-  useEffect(() => {
-    let isMounted = true;
-
-    const loadData = async () => {
-      try {
-        if (isMounted) setLoading(true);
-        
-        const [clientesRes, cotizacionesRes, proyectosRes] = await Promise.all([
-          axios.get('http://localhost:3001/api/clientes'),
-          axios.get('http://localhost:3001/api/cotizaciones'),
-          axios.get('http://localhost:3001/api/proyectos')
-        ]);
-        
-        if (isMounted) {
-          setClientes(clientesRes.data);
-          setCotizaciones(cotizacionesRes.data);
-          setProyectos(proyectosRes.data);
-        }
-      } catch (error) {
-        if (isMounted) {
-          console.error('Error cargando datos de marketing:', error);
-        }
-      } finally {
-        if (isMounted) setLoading(false);
-      }
-    };
-
-    loadData();
-
-    // Cleanup function
-    return () => {
-      isMounted = false;
-    };
-  }, []);
-
-  const refetch = async () => {
+  const fetchData = async () => {
     try {
       setLoading(true);
-      const [clientesRes, cotizacionesRes, proyectosRes] = await Promise.all([
-        axios.get('http://localhost:3001/api/clientes'),
-        axios.get('http://localhost:3001/api/cotizaciones'),
-        axios.get('http://localhost:3001/api/proyectos')
+      const [clientesRes, cotizacionesRes] = await Promise.all([
+        supabase.from('clientes').select('*').order('nombre'),
+        supabase.from('v_cotizaciones_completas').select('*').order('fecha', { ascending: false })
       ]);
-      setClientes(clientesRes.data);
-      setCotizaciones(cotizacionesRes.data);
-      setProyectos(proyectosRes.data);
-    } catch (error) {
-      console.error('Error recargando datos:', error);
+      if (clientesRes.error) throw clientesRes.error;
+      if (cotizacionesRes.error) throw cotizacionesRes.error;
+      setClientes(clientesRes.data || []);
+      setCotizaciones(cotizacionesRes.data || []);
+    } catch (err) {
+      console.error('Error cargando marketing:', err);
+      setError(err.message);
     } finally {
       setLoading(false);
     }
   };
 
+  useEffect(() => {
+    (async () => { await fetchData(); })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const addCliente = async (data) => {
-    const res = await axios.post('http://localhost:3001/api/clientes', data);
-    setClientes(prev => [...prev, res.data]);
-    return res.data;
+    const { data: nuevo, error } = await supabase
+      .from('clientes')
+      .insert([{ ...data, creado: new Date().toISOString().split('T')[0] }])
+      .select()
+      .single();
+    if (error) throw error;
+    setClientes(prev => [...prev, nuevo]);
+    return nuevo;
   };
 
   const addCotizacion = async (data) => {
-    const res = await axios.post('http://localhost:3001/api/cotizaciones', data);
-    setCotizaciones(prev => [...prev, res.data]);
-    return res.data;
+    const { data: nueva, error } = await supabase
+      .from('cotizaciones')
+      .insert([{ ...data, fecha: data.fecha || new Date().toISOString().split('T')[0] }])
+      .select()
+      .single();
+    if (error) throw error;
+    setCotizaciones(prev => [...prev, nueva]);
+    return nueva;
   };
 
   return (
     <MarketingContext.Provider value={{ 
       clientes, 
       cotizaciones, 
-      proyectos,
       loading, 
+      error,
       addCliente, 
       addCotizacion,
-      refetch 
+      refetch: fetchData 
     }}>
       {children}
     </MarketingContext.Provider>

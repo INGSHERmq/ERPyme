@@ -16,14 +16,25 @@ function App() {
   const back = () => setModule('home');
 
   return (
-    <>
-      {module === 'home' && <Home onNavigate={setModule} />}
-      {module === 'projects' && <ProjectProvider><ProjectsView onBack={back} /></ProjectProvider>}
-      {module === 'marketing' && <MarketingProvider><MarketingView onBack={back} /></MarketingProvider>}
-      {module === 'finanzas' && <FinanzasProvider><FinanzasView onBack={back} /></FinanzasProvider>}
-      {module === 'rrhh' && <RRHHProvider><RRHHView onBack={back} /></RRHHProvider>}
-      {module === 'logistica' && <LogisticaProvider><LogisticaView onBack={back} /></LogisticaProvider>}
-    </>
+    <ProjectProvider>
+      <MarketingProvider>
+        <FinanzasProvider>
+          <RRHHProvider>
+            <LogisticaProvider>
+              <>
+                {module === 'home' && <Home onNavigate={setModule} />}
+                {module === 'projects' && <ProjectsView onBack={back} />}
+                {module === 'marketing' && <MarketingView onBack={back} />}
+                {module === 'finanzas' && <FinanzasView onBack={back} />}
+                {module === 'rrhh' && <RRHHView onBack={back} />}
+                {module === 'logistica' && <LogisticaView onBack={back} />}
+              </>
+            </LogisticaProvider>
+          </RRHHProvider>
+        </FinanzasProvider>
+      </MarketingProvider>
+    </ProjectProvider>
   );
 }
+
 export default App;

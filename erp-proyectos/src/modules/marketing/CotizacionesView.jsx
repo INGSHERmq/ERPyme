@@ -4,55 +4,104 @@ import useMarketing from '../../hooks/useMarketing';
 import './CotizacionesView.css';
 
 const CotizacionesView = () => {
-  const { clientes, cotizaciones, loading, refetch } = useMarketing();
+  const { clientes, cotizaciones, addCotizacion, refetch, loading } = useMarketing();
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
-    clienteId: '', titulo: '', monto: '', estado: 'Pendiente', 
-    fecha: new Date().toISOString().split('T')[0], descripcion: '', validez: '30 días'
+    cliente_id: '',
+    titulo: '',
+    monto: '',
+    estado: 'Pendiente',
+    fecha: new Date().toISOString().split('T')[0],
+    descripcion: '',
+    validez: '30 días'
   });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post('http://localhost:3001/api/cotizaciones', {
+      await addCotizacion({
         ...formData,
-        clienteId: Number(formData.clienteId),
-        monto: Number(formData.monto)
+        monto: Number(formData.monto),
+        cliente_id: Number(formData.cliente_id)
       });
-      refetch();
       setShowForm(false);
       setFormData({
-        clienteId: '', titulo: '', monto: '', estado: 'Pendiente',
-        fecha: new Date().toISOString().split('T')[0], descripcion: '', validez: '30 días'
+        cliente_id: '',
+        titulo: '',
+        monto: '',
+        estado: 'Pendiente',
+        fecha: new Date().toISOString().split('T')[0],
+        descripcion: '',
+        validez: '30 días'
       });
+      refetch();
     } catch (error) {
-      console.error('Error al crear cotización:', error);
-      alert('❌ Error al guardar la cotización');
+      console.error('Error al guardar:', error);
+      alert('❌ Error al crear la cotización');
     }
   };
 
-  const handleConvertir = async (cotizacionId) => {
-    if (!window.confirm('¿Convertir esta cotización en un nuevo proyecto?')) return;
-    
+  const handleChange = (e) => setFormData(p => ({ ...p, [e.target.name]: e.target.value }));
+
+  // ✅ Función para convertir cotización en proyecto e ingreso
+  const handleConvertir = async (cotizacion) => {
     try {
-      await axios.post(`http://localhost:3001/api/cotizaciones/${cotizacionId}/convertir`);
+      // ✅ Fechas calculadas sin Date.now()
+      const fechaInicio = new Date();
+      const fechaFin = new Date();
+      fechaFin.setDate(fechaInicio.getDate() + 30);
+      
+      const hoy = fechaInicio.toISOString().split('T')[0];
+      const finEstimado = fechaFin.toISOString().split('T')[0];
+
+      // 1. Crear proyecto
+      const proyectoData = {
+        nombre: cotizacion.titulo,
+        cliente_id: cotizacion.cliente_id,
+        cotizacion_id: cotizacion.id,
+        estado: 'En Progreso',
+        prioridad: 'Media',
+        inicio: hoy,
+        fin: finEstimado,
+        descripcion: cotizacion.descripcion || 'Proyecto creado desde cotización',
+        monto: cotizacion.monto,
+        progreso: 0
+      };
+
+      const { data: proyecto } = await axios.post('http://localhost:3001/api/proyectos', proyectoData);
+
+      // 2. Crear ingreso automático (50% inicial)
+      const ingresoData = {
+        tipo: 'Proyecto',
+        concepto: `Pago inicial - ${cotizacion.titulo}`,
+        monto: cotizacion.monto * 0.5,
+        fecha: hoy,
+        proyecto_id: proyecto.id,
+        cliente_id: cotizacion.cliente_id,
+        estado: 'Pendiente',
+        metodo: 'Pendiente'
+      };
+
+      await axios.post('http://localhost:3001/api/finanzas/ingresos', ingresoData);
+
+      // 3. Actualizar cotización
+      await axios.put(`http://localhost:3001/api/cotizaciones/${cotizacion.id}`, {
+        estado: 'Aceptada',
+        proyecto_id: proyecto.id
+      });
+
+      alert('✅ Cotización convertida en proyecto e ingreso creado');
       refetch();
-      alert('✅ Cotización convertida en proyecto exitosamente');
     } catch (error) {
       console.error('Error al convertir:', error);
       alert('❌ Error al convertir la cotización');
     }
   };
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
   if (loading) return <div className="loading">Cargando cotizaciones...</div>;
 
   return (
-    <div className="marketing-view">
+    <div className="cotizaciones-view">
       <div className="view-header">
         <h2>📄 Cotizaciones</h2>
         <button className="btn-primary" onClick={() => setShowForm(!showForm)}>
@@ -62,19 +111,15 @@ const CotizacionesView = () => {
 
       {showForm && (
         <form onSubmit={handleSubmit} className="simple-form">
-          <select name="clienteId" required value={formData.clienteId} onChange={handleInputChange}>
-            <option value="">Seleccionar Cliente *</option>
+          <select name="cliente_id" required value={formData.cliente_id} onChange={handleChange}>
+            <option value="">Cliente *</option>
             {clientes.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
           </select>
-          <input name="titulo" placeholder="Título del Proyecto *" required value={formData.titulo} onChange={handleInputChange} />
-          <input name="monto" type="number" placeholder="Monto ($)" required value={formData.monto} onChange={handleInputChange} />
-          <input name="fecha" type="date" required value={formData.fecha} onChange={handleInputChange} />
-          <textarea name="descripcion" placeholder="Descripción" rows="2" value={formData.descripcion} onChange={handleInputChange} />
-          <select name="validez" value={formData.validez} onChange={handleInputChange}>
-            <option value="15 días">15 días</option>
-            <option value="30 días">30 días</option>
-            <option value="45 días">45 días</option>
-          </select>
+          <input name="titulo" placeholder="Título del proyecto *" required value={formData.titulo} onChange={handleChange} />
+          <input name="monto" type="number" placeholder="Monto ($)" required value={formData.monto} onChange={handleChange} />
+          <input name="fecha" type="date" required value={formData.fecha} onChange={handleChange} />
+          <textarea name="descripcion" placeholder="Descripción" value={formData.descripcion} onChange={handleChange} />
+          <input name="validez" placeholder="Validez (ej: 30 días)" value={formData.validez} onChange={handleChange} />
           <button type="submit" className="btn-primary">Crear Cotización</button>
         </form>
       )}
@@ -93,35 +138,18 @@ const CotizacionesView = () => {
             </tr>
           </thead>
           <tbody>
-            {cotizaciones.map(q => (
-              <tr key={q.id}>
-                <td className="cell-bold">{q.clienteNombre}</td>
-                <td>{q.titulo}</td>
-                <td><strong>${q.monto.toLocaleString()}</strong></td>
+            {cotizaciones.map(c => (
+              <tr key={c.id}>
+                <td className="cell-bold">{c.clienteNombre || '—'}</td>
+                <td>{c.titulo}</td>
+                <td><strong>${c.monto.toLocaleString()}</strong></td>
+                <td><span className={`badge badge-${c.estado === 'Aceptada' ? 'green' : c.estado === 'Rechazada' ? 'red' : 'yellow'}`}>{c.estado}</span></td>
+                <td>{c.proyectoNombre || 'Sin proyecto'}</td>
+                <td>{c.fecha}</td>
                 <td>
-                  <span className={`badge ${
-                    q.estado === 'Aceptada' ? 'badge-green' : 
-                    q.estado === 'Rechazada' ? 'badge-red' : 'badge-yellow'
-                  }`}>
-                    {q.estado}
-                  </span>
-                </td>
-                <td>
-                  {q.proyectoNombre ? (
-                    <span className="badge badge-blue">🔗 {q.proyectoNombre}</span>
-                  ) : (
-                    <span className="text-muted">Sin proyecto</span>
-                  )}
-                </td>
-                <td>{q.fecha}</td>
-                <td className="cell-actions">
-                  {q.estado === 'Pendiente' && !q.proyectoId && (
-                    <button 
-                      className="btn-action btn-convert"
-                      onClick={() => handleConvertir(q.id)}
-                      title="Convertir en proyecto"
-                    >
-                      🔄
+                  {c.estado === 'Pendiente' && (
+                    <button className="btn-action btn-convert" onClick={() => handleConvertir(c)}>
+                      ✅ Confirmar
                     </button>
                   )}
                 </td>
