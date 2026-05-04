@@ -9,20 +9,23 @@ import { MarketingProvider } from './context/MarketingContext';
 import { FinanzasProvider } from './context/FinanzasContext';
 import { RRHHProvider } from './context/RRHHContext';
 import { LogisticaProvider } from './context/LogisticaContext';
+import AuthProvider from './context/auth/AuthProvider';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    {/* ✅ Anidar todos los providers para acceso global */}
-    <ProjectProvider>
-      <MarketingProvider>
-        <FinanzasProvider>
-          <RRHHProvider>
-            <LogisticaProvider>
-              <App />
-            </LogisticaProvider>
-          </RRHHProvider>
-        </FinanzasProvider>
-      </MarketingProvider>
-    </ProjectProvider>
+    {/* ✅ AuthProvider debe estar MÁS EXTERNO */}
+    <AuthProvider>
+      <ProjectProvider>
+        <MarketingProvider>
+          <FinanzasProvider>
+            <RRHHProvider>
+              <LogisticaProvider>
+                <App />
+              </LogisticaProvider>
+            </RRHHProvider>
+          </FinanzasProvider>
+        </MarketingProvider>
+      </ProjectProvider>
+    </AuthProvider>
   </React.StrictMode>
 );
