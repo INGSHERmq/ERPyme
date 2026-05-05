@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
+import { useAuth } from '../context/auth/useAuth';
 
 const useLogistica = () => {
+  const { user } = useAuth();
   const [activos, setActivos] = useState([]);
   const [asignaciones, setAsignaciones] = useState([]);
   const [mantenimientos, setMantenimientos] = useState([]);
@@ -11,13 +13,15 @@ const useLogistica = () => {
   const [error, setError] = useState(null);
 
   const fetchData = async () => {
+    if (!user?.id) return;
+    
     try {
       setLoading(true);
       const [actRes, asigRes, mantRes, guiasRes] = await Promise.all([
-        supabase.from('activos').select('*').order('nombre'),
-        supabase.from('asignaciones_activos').select('*').eq('estado', 'Activa'),
-        supabase.from('mantenimientos').select('*').order('fecha', { ascending: false }),
-        supabase.from('guias_salida').select('*').order('fecha_salida', { ascending: false })
+        supabase.from('activos').select('*').eq('user_id', user.id).order('nombre'),
+        supabase.from('asignaciones_activos').select('*').eq('user_id', user.id).eq('estado', 'Activa'),
+        supabase.from('mantenimientos').select('*').eq('user_id', user.id).order('fecha', { ascending: false }),
+        supabase.from('guias_salida').select('*').eq('user_id', user.id).order('fecha_salida', { ascending: false })
       ]);
 
       if (actRes.error) throw actRes.error;
@@ -30,7 +34,6 @@ const useLogistica = () => {
       setMantenimientos(mantRes.data || []);
       setGuias(guiasRes.data || []);
 
-      // Dashboard stats
       const total = actRes.data?.length || 0;
       const disponibles = actRes.data?.filter(a => a.estado === 'Disponible').length || 0;
       const enUso = actRes.data?.filter(a => a.estado === 'En uso').length || 0;
@@ -55,13 +58,16 @@ const useLogistica = () => {
   useEffect(() => {
     (async () => { await fetchData(); })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [user?.id]);
 
   const addActivo = async (data) => {
+    if (!user?.id) throw new Error('Usuario no autenticado');
+    
     const { data: nuevo, error } = await supabase
       .from('activos')
       .insert([{ 
         ...data, 
+        user_id: user.id,
         fecha_compra: data.fecha_compra || new Date().toISOString().split('T')[0],
         estado: data.estado || 'Disponible'
       }])
@@ -73,10 +79,13 @@ const useLogistica = () => {
   };
 
   const asignarActivo = async (data) => {
+    if (!user?.id) throw new Error('Usuario no autenticado');
+    
     const { data: nueva, error } = await supabase
       .from('asignaciones_activos')
       .insert([{ 
         ...data, 
+        user_id: user.id,
         fecha_asignacion: data.fecha_asignacion || new Date().toISOString().split('T')[0],
         estado: data.estado || 'Activa'
       }])
@@ -84,9 +93,8 @@ const useLogistica = () => {
       .single();
     if (error) throw error;
     
-    // Actualizar estado del activo
     if (data.activo_id) {
-      await supabase.from('activos').update({ estado: 'En uso' }).eq('id', data.activo_id);
+      await supabase.from('activos').update({ estado: 'En uso' }).eq('id', data.activo_id).eq('user_id', user.id);
       setActivos(prev => prev.map(a => a.id === data.activo_id ? { ...a, estado: 'En uso' } : a));
     }
     
@@ -101,12 +109,12 @@ const useLogistica = () => {
         estado: 'Devuelta', 
         fecha_devolucion: new Date().toISOString().split('T')[0] 
       })
-      .eq('id', asignacionId);
+      .eq('id', asignacionId)
+      .eq('user_id', user?.id);
     if (error) throw error;
     
-    // Liberar activo
     if (activoId) {
-      await supabase.from('activos').update({ estado: 'Disponible' }).eq('id', activoId);
+      await supabase.from('activos').update({ estado: 'Disponible' }).eq('id', activoId).eq('user_id', user?.id);
       setActivos(prev => prev.map(a => a.id === activoId ? { ...a, estado: 'Disponible' } : a));
     }
     
@@ -116,10 +124,13 @@ const useLogistica = () => {
   };
 
   const programarMantenimiento = async (data) => {
+    if (!user?.id) throw new Error('Usuario no autenticado');
+    
     const { data: nuevo, error } = await supabase
       .from('mantenimientos')
       .insert([{ 
         ...data, 
+        user_id: user.id,
         fecha: data.fecha || new Date().toISOString().split('T')[0],
         estado: data.estado || 'Pendiente'
       }])
@@ -127,9 +138,8 @@ const useLogistica = () => {
       .single();
     if (error) throw error;
     
-    // Actualizar estado del activo
     if (data.activo_id) {
-      await supabase.from('activos').update({ estado: 'En mantenimiento' }).eq('id', data.activo_id);
+      await supabase.from('activos').update({ estado: 'En mantenimiento' }).eq('id', data.activo_id).eq('user_id', user.id);
       setActivos(prev => prev.map(a => a.id === data.activo_id ? { ...a, estado: 'En mantenimiento' } : a));
     }
     
@@ -141,12 +151,12 @@ const useLogistica = () => {
     const { error } = await supabase
       .from('mantenimientos')
       .update({ estado: 'Completado' })
-      .eq('id', mantenimientoId);
+      .eq('id', mantenimientoId)
+      .eq('user_id', user?.id);
     if (error) throw error;
     
-    // Liberar activo
     if (activoId) {
-      await supabase.from('activos').update({ estado: 'Disponible' }).eq('id', activoId);
+      await supabase.from('activos').update({ estado: 'Disponible' }).eq('id', activoId).eq('user_id', user?.id);
       setActivos(prev => prev.map(a => a.id === activoId ? { ...a, estado: 'Disponible' } : a));
     }
     
@@ -156,10 +166,13 @@ const useLogistica = () => {
   };
 
   const emitirGuia = async (data) => {
+    if (!user?.id) throw new Error('Usuario no autenticado');
+    
     const { data: nueva, error } = await supabase
       .from('guias_salida')
       .insert([{ 
         ...data, 
+        user_id: user.id,
         fecha_salida: data.fecha_salida || new Date().toISOString().split('T')[0],
         estado: data.estado || 'En tránsito'
       }])
@@ -167,9 +180,8 @@ const useLogistica = () => {
       .single();
     if (error) throw error;
     
-    // Actualizar estado del activo
     if (data.activo_id) {
-      await supabase.from('activos').update({ estado: 'En tránsito' }).eq('id', data.activo_id);
+      await supabase.from('activos').update({ estado: 'En tránsito' }).eq('id', data.activo_id).eq('user_id', user.id);
       setActivos(prev => prev.map(a => a.id === data.activo_id ? { ...a, estado: 'En tránsito' } : a));
     }
     

@@ -1,10 +1,9 @@
 import { useState } from 'react';
-import axios from 'axios';
 import useMarketing from '../../hooks/useMarketing';
 import './ClientesView.css';
 
 const ClientesView = () => {
-  const { clientes, loading, refetch } = useMarketing();
+  const { clientes, addCliente, loading, refetch } = useMarketing();
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
     nombre: '', contacto: '', email: '', telefono: '', industria: '', estado: 'Activo'
@@ -13,13 +12,15 @@ const ClientesView = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post('http://localhost:3001/api/clientes', formData);
+      // ✅ Usamos el hook de Supabase en lugar de axios
+      await addCliente(formData);
       refetch();
       setShowForm(false);
       setFormData({ nombre: '', contacto: '', email: '', telefono: '', industria: '', estado: 'Activo' });
+      alert('✅ Cliente guardado correctamente');
     } catch (error) {
       console.error('Error al crear cliente:', error);
-      alert('❌ Error al guardar el cliente');
+      alert('❌ Error: ' + (error.message || 'No se pudo guardar el cliente'));
     }
   };
 
@@ -46,9 +47,9 @@ const ClientesView = () => {
           <input name="email" type="email" placeholder="Email *" required value={formData.email} onChange={handleInputChange} />
           <input name="telefono" placeholder="Teléfono" value={formData.telefono} onChange={handleInputChange} />
           <input name="industria" placeholder="Industria" value={formData.industria} onChange={handleInputChange} />
-          <select id ="estado" name="estado" value={formData.estado} onChange={handleInputChange}>
-            <option value="Activo" color='black'>Activo</option>
-            <option value="Inactivo" color='black'>Inactivo</option>
+          <select name="estado" value={formData.estado} onChange={handleInputChange}>
+            <option value="Activo">Activo</option>
+            <option value="Inactivo">Inactivo</option>
           </select>
           <button type="submit" className="btn-primary">Guardar Cliente</button>
         </form>
@@ -62,8 +63,6 @@ const ClientesView = () => {
               <th>Contacto</th>
               <th>Email</th>
               <th>Industria</th>
-              <th>Proyectos</th>
-              <th>Monto Total</th>
               <th>Estado</th>
             </tr>
           </thead>
@@ -74,8 +73,6 @@ const ClientesView = () => {
                 <td>{cliente.contacto}</td>
                 <td><a href={`mailto:${cliente.email}`}>{cliente.email}</a></td>
                 <td>{cliente.industria || '—'}</td>
-                <td><span className="badge badge-blue">{cliente.proyectosCount || 0}</span></td>
-                <td><strong>${cliente.montoTotal?.toLocaleString() || 0}</strong></td>
                 <td>
                   <span className={`badge ${cliente.estado === 'Activo' ? 'badge-green' : 'badge-gray'}`}>
                     {cliente.estado}

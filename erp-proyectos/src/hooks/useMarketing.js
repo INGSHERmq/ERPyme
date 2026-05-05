@@ -1,18 +1,22 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
+import { useAuth } from '../context/auth/useAuth';
 
 const useMarketing = () => {
+  const { user } = useAuth();
   const [clientes, setClientes] = useState([]);
   const [cotizaciones, setCotizaciones] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   const fetchData = async () => {
+    if (!user?.id) return;
+    
     try {
       setLoading(true);
       const [clientesRes, cotizacionesRes] = await Promise.all([
-        supabase.from('clientes').select('*').order('nombre'),
-        supabase.from('v_cotizaciones_completas').select('*').order('fecha', { ascending: false })
+        supabase.from('clientes').select('*').eq('user_id', user.id).order('nombre'),
+        supabase.from('v_cotizaciones_completas').select('*').eq('user_id', user.id).order('fecha', { ascending: false })
       ]);
 
       if (clientesRes.error) throw clientesRes.error;
@@ -31,12 +35,14 @@ const useMarketing = () => {
   useEffect(() => {
     (async () => { await fetchData(); })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [user?.id]);
 
   const addCliente = async (data) => {
+    if (!user?.id) throw new Error('Usuario no autenticado');
+    
     const { data: nuevo, error } = await supabase
       .from('clientes')
-      .insert([{ ...data, creado: new Date().toISOString().split('T')[0] }])
+      .insert([{ ...data, user_id: user.id, creado: new Date().toISOString().split('T')[0] }])
       .select()
       .single();
     if (error) throw error;
@@ -45,9 +51,11 @@ const useMarketing = () => {
   };
 
   const addCotizacion = async (data) => {
+    if (!user?.id) throw new Error('Usuario no autenticado');
+    
     const { data: nueva, error } = await supabase
       .from('cotizaciones')
-      .insert([{ ...data, fecha: data.fecha || new Date().toISOString().split('T')[0] }])
+      .insert([{ ...data, user_id: user.id, fecha: data.fecha || new Date().toISOString().split('T')[0] }])
       .select()
       .single();
     if (error) throw error;
@@ -56,22 +64,22 @@ const useMarketing = () => {
   };
 
   const convertirCotizacion = async (cotizacionId, proyectoData) => {
-    // 1. Crear proyecto
+    if (!user?.id) throw new Error('Usuario no autenticado');
+    
     const { data: proyecto, error: projError } = await supabase
       .from('proyectos')
-      .insert([{ ...proyectoData, progreso: 0 }])
+      .insert([{ ...proyectoData, user_id: user.id, progreso: 0 }])
       .select()
       .single();
     if (projError) throw projError;
 
-    // 2. Actualizar cotización vinculada
     const { error: cotError } = await supabase
       .from('cotizaciones')
       .update({ estado: 'Aceptada', proyecto_id: proyecto.id })
-      .eq('id', cotizacionId);
+      .eq('id', cotizacionId)
+      .eq('user_id', user.id);
     if (cotError) throw cotError;
 
-    // 3. Actualizar estado local
     setCotizaciones(prev => prev.map(c => 
       c.id === cotizacionId ? { ...c, estado: 'Aceptada', proyecto_id: proyecto.id } : c
     ));

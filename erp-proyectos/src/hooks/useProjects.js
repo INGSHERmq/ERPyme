@@ -1,18 +1,22 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
+import { useAuth } from '../context/auth/useAuth';
 
 const useProjects = () => {
+  const { user } = useAuth();
   const [proyectos, setProyectos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // 📥 LEER: Función para cargar proyectos
   const fetchProjects = async () => {
+    if (!user?.id) return;
+    
     try {
       setLoading(true);
       const { data, error } = await supabase
         .from('v_proyectos_completos')
         .select('*')
+        .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -25,29 +29,21 @@ const useProjects = () => {
     }
   };
 
-  // ✅ useEffect con patrón IIFE para evitar warnings
   useEffect(() => {
-    (async () => {
-      await fetchProjects();
-    })();
+    (async () => { await fetchProjects(); })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // 👈 Dependencias vacías: solo se ejecuta al montar
+  }, [user?.id]);
 
-  // ✏️ ACTUALIZAR: (Mover tarjeta en Scrum, editar, etc.)
   const updateProyecto = async (id, updates) => {
     try {
       const { error } = await supabase
         .from('proyectos')
         .update(updates)
-        .eq('id', id);
+        .eq('id', id)
+        .eq('user_id', user?.id);
 
       if (error) throw error;
-
-      // Actualización optimista del estado local
-      setProyectos((prev) =>
-        prev.map((p) => (p.id === id ? { ...p, ...updates } : p))
-      );
-      
+      setProyectos((prev) => prev.map((p) => (p.id === id ? { ...p, ...updates } : p)));
       return true;
     } catch (err) {
       console.error('Error actualizando:', err);
@@ -55,12 +51,13 @@ const useProjects = () => {
     }
   };
 
-  // ➕ CREAR
   const createProyecto = async (newProject) => {
+    if (!user?.id) throw new Error('Usuario no autenticado');
+    
     try {
       const { data, error } = await supabase
         .from('proyectos')
-        .insert([newProject])
+        .insert([{ ...newProject, user_id: user.id }])
         .select()
         .single();
 
@@ -73,10 +70,14 @@ const useProjects = () => {
     }
   };
 
-  // 🗑️ ELIMINAR
   const deleteProyecto = async (id) => {
     try {
-      const { error } = await supabase.from('proyectos').delete().eq('id', id);
+      const { error } = await supabase
+        .from('proyectos')
+        .delete()
+        .eq('id', id)
+        .eq('user_id', user?.id);
+        
       if (error) throw error;
       setProyectos((prev) => prev.filter((p) => p.id !== id));
       return true;

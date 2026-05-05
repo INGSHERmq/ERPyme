@@ -1,10 +1,9 @@
 import { useState } from 'react';
-import axios from 'axios';
 import useMarketing from '../../hooks/useMarketing';
 import './CotizacionesView.css';
 
 const CotizacionesView = () => {
-  const { clientes, cotizaciones, addCotizacion, refetch, loading } = useMarketing();
+  const { clientes, cotizaciones, addCotizacion, convertirCotizacion, refetch, loading } = useMarketing();
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
     cliente_id: '',
@@ -35,18 +34,21 @@ const CotizacionesView = () => {
         validez: '30 días'
       });
       refetch();
+      alert('✅ Cotización creada correctamente');
     } catch (error) {
       console.error('Error al guardar:', error);
-      alert('❌ Error al crear la cotización');
+      alert('❌ Error: ' + (error.message || 'No se pudo crear la cotización'));
     }
   };
 
   const handleChange = (e) => setFormData(p => ({ ...p, [e.target.name]: e.target.value }));
 
-  // ✅ Función para convertir cotización en proyecto e ingreso
+  // ✅ Función para convertir cotización en proyecto (usa Supabase, NO axios)
   const handleConvertir = async (cotizacion) => {
+    if (!window.confirm('¿Confirmar cotización y crear proyecto?')) return;
+    
     try {
-      // ✅ Fechas calculadas sin Date.now()
+      // ✅ Fechas calculadas sin Date.now() (puro React)
       const fechaInicio = new Date();
       const fechaFin = new Date();
       fechaFin.setDate(fechaInicio.getDate() + 30);
@@ -54,8 +56,8 @@ const CotizacionesView = () => {
       const hoy = fechaInicio.toISOString().split('T')[0];
       const finEstimado = fechaFin.toISOString().split('T')[0];
 
-      // 1. Crear proyecto
-      const proyectoData = {
+      // ✅ Usamos la función del hook que ya maneja Supabase + user_id
+      await convertirCotizacion(cotizacion.id, {
         nombre: cotizacion.titulo,
         cliente_id: cotizacion.cliente_id,
         cotizacion_id: cotizacion.id,
@@ -66,35 +68,13 @@ const CotizacionesView = () => {
         descripcion: cotizacion.descripcion || 'Proyecto creado desde cotización',
         monto: cotizacion.monto,
         progreso: 0
-      };
-
-      const { data: proyecto } = await axios.post('http://localhost:3001/api/proyectos', proyectoData);
-
-      // 2. Crear ingreso automático (50% inicial)
-      const ingresoData = {
-        tipo: 'Proyecto',
-        concepto: `Pago inicial - ${cotizacion.titulo}`,
-        monto: cotizacion.monto * 0.5,
-        fecha: hoy,
-        proyecto_id: proyecto.id,
-        cliente_id: cotizacion.cliente_id,
-        estado: 'Pendiente',
-        metodo: 'Pendiente'
-      };
-
-      await axios.post('http://localhost:3001/api/finanzas/ingresos', ingresoData);
-
-      // 3. Actualizar cotización
-      await axios.put(`http://localhost:3001/api/cotizaciones/${cotizacion.id}`, {
-        estado: 'Aceptada',
-        proyecto_id: proyecto.id
       });
 
       alert('✅ Cotización convertida en proyecto e ingreso creado');
       refetch();
     } catch (error) {
       console.error('Error al convertir:', error);
-      alert('❌ Error al convertir la cotización');
+      alert('❌ Error: ' + (error.message || 'No se pudo convertir la cotización'));
     }
   };
 

@@ -11,12 +11,11 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   }
 });
 
-// ✅ Helper para obtener el perfil del usuario actual
 export const getCurrentUserProfile = async () => {
-  const {  user } = await supabase.auth.getUser();
+  const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
   
-  const {  profile, error } = await supabase
+  const { data: profile, error } = await supabase
     .from('profiles')
     .select('*')
     .eq('id', user.id)

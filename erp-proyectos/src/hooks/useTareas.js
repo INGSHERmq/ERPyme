@@ -1,14 +1,15 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
+import { useAuth } from '../context/auth/useAuth';
 
 const useTareas = (proyectoId) => {
+  const { user } = useAuth();
   const [tareas, setTareas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // ✅ Función asíncrona definida AFUERA del useEffect
   const fetchTareas = async () => {
-    if (!proyectoId) {
+    if (!proyectoId || !user?.id) {
       setTareas([]);
       setLoading(false);
       return;
@@ -20,6 +21,7 @@ const useTareas = (proyectoId) => {
         .from('v_tareas_completas')
         .select('*')
         .eq('proyecto_id', proyectoId)
+        .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
       if (supabaseError) throw supabaseError;
@@ -32,18 +34,17 @@ const useTareas = (proyectoId) => {
     }
   };
 
-  // ✅ useEffect con patrón IIFE para evitar warnings
   useEffect(() => {
-    (async () => {
-      await fetchTareas();
-    })();
+    (async () => { await fetchTareas(); })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [proyectoId]);
+  }, [proyectoId, user?.id]);
 
   const createTarea = async (tareaData) => {
-    const {  nueva, error } = await supabase
+    if (!user?.id) throw new Error('Usuario no autenticado');
+    
+    const { data: nueva, error } = await supabase
       .from('tareas')
-      .insert([{ ...tareaData, proyecto_id: proyectoId }])
+      .insert([{ ...tareaData, proyecto_id: proyectoId, user_id: user.id }])
       .select()
       .single();
     
@@ -53,10 +54,11 @@ const useTareas = (proyectoId) => {
   };
 
   const updateTarea = async (id, updates) => {
-    const {  actualizada, error } = await supabase
+    const { data: actualizada, error } = await supabase
       .from('tareas')
       .update(updates)
       .eq('id', id)
+      .eq('user_id', user?.id)
       .select()
       .single();
     
@@ -69,7 +71,8 @@ const useTareas = (proyectoId) => {
     const { error } = await supabase
       .from('tareas')
       .delete()
-      .eq('id', id);
+      .eq('id', id)
+      .eq('user_id', user?.id);
     
     if (error) throw error;
     setTareas(prev => prev.filter(t => t.id !== id));

@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
+import { useAuth } from '../context/auth/useAuth';
 
 const useRRHH = () => {
+  const { user } = useAuth();
   const [empleados, setEmpleados] = useState([]);
   const [asistencias, setAsistencias] = useState([]);
   const [asignaciones, setAsignaciones] = useState([]);
@@ -11,13 +13,15 @@ const useRRHH = () => {
   const [error, setError] = useState(null);
 
   const fetchData = async () => {
+    if (!user?.id) return;
+    
     try {
       setLoading(true);
       const [empRes, asistRes, asigRes, incRes] = await Promise.all([
-        supabase.from('v_empleados_stats').select('*').order('nombre'),
-        supabase.from('asistencias').select('*').order('fecha', { ascending: false }).limit(50),
-        supabase.from('asignaciones_proyecto').select('*').eq('estado', 'Activo'),
-        supabase.from('incidentes_ssoma').select('*').order('fecha', { ascending: false }).limit(20)
+        supabase.from('v_empleados_stats').select('*').eq('user_id', user.id).order('nombre'),
+        supabase.from('asistencias').select('*').eq('user_id', user.id).order('fecha', { ascending: false }).limit(50),
+        supabase.from('asignaciones_proyecto').select('*').eq('user_id', user.id).eq('estado', 'Activo'),
+        supabase.from('incidentes_ssoma').select('*').eq('user_id', user.id).order('fecha', { ascending: false }).limit(20)
       ]);
       
       if (empRes.error) throw empRes.error;
@@ -52,12 +56,14 @@ const useRRHH = () => {
 
   useEffect(() => {
     (async () => { await fetchData(); })();
-  }, []);
+  }, [user?.id]);
 
   const addEmpleado = async (data) => {
-    const {  nuevo, error } = await supabase
+    if (!user?.id) throw new Error('Usuario no autenticado');
+    
+    const { data: nuevo, error } = await supabase
       .from('empleados')
-      .insert([{ ...data, fecha_ingreso: data.fecha_ingreso || new Date().toISOString().split('T')[0], estado: data.estado || 'Activo' }])
+      .insert([{ ...data, user_id: user.id, fecha_ingreso: data.fecha_ingreso || new Date().toISOString().split('T')[0], estado: data.estado || 'Activo' }])
       .select()
       .single();
     if (error) throw error;
@@ -66,9 +72,11 @@ const useRRHH = () => {
   };
 
   const registrarAsistencia = async (data) => {
-    const {  nueva, error } = await supabase
+    if (!user?.id) throw new Error('Usuario no autenticado');
+    
+    const { data: nueva, error } = await supabase
       .from('asistencias')
-      .insert([{ ...data, fecha: data.fecha || new Date().toISOString().split('T')[0] }])
+      .insert([{ ...data, user_id: user.id, fecha: data.fecha || new Date().toISOString().split('T')[0] }])
       .select()
       .single();
     if (error) throw error;
@@ -77,12 +85,15 @@ const useRRHH = () => {
   };
 
   const asignarAProyecto = async (data) => {
+    if (!user?.id) throw new Error('Usuario no autenticado');
+    
     try {
-      const {  existente, error: fetchError } = await supabase
+      const { data: existente, error: fetchError } = await supabase
         .from('asignaciones_proyecto')
         .select('*')
         .eq('empleado_id', data.empleado_id)
         .eq('proyecto_id', data.proyecto_id)
+        .eq('user_id', user.id)
         .maybeSingle();
 
       if (fetchError) throw fetchError;
@@ -90,7 +101,7 @@ const useRRHH = () => {
       let resultado;
       
       if (existente) {
-        const {  actualizado, error: updateError } = await supabase
+        const { data: actualizado, error: updateError } = await supabase
           .from('asignaciones_proyecto')
           .update({
             rol: data.rol,
@@ -100,6 +111,7 @@ const useRRHH = () => {
             estado: data.estado || 'Activo'
           })
           .eq('id', existente.id)
+          .eq('user_id', user.id)
           .select()
           .single();
         
@@ -107,11 +119,12 @@ const useRRHH = () => {
         resultado = actualizado;
         setAsignaciones(prev => prev.map(a => a.id === existente.id ? actualizado : a));
       } else {
-        const {  nuevo, error: insertError } = await supabase
+        const { data: nuevo, error: insertError } = await supabase
           .from('asignaciones_proyecto')
           .insert([{
             empleado_id: data.empleado_id,
             proyecto_id: data.proyecto_id,
+            user_id: user.id,
             rol: data.rol,
             fecha_inicio: data.fecha_inicio,
             fecha_fin: data.fecha_fin,
@@ -134,9 +147,11 @@ const useRRHH = () => {
   };
 
   const registrarIncidente = async (data) => {
-    const {  nuevo, error } = await supabase
+    if (!user?.id) throw new Error('Usuario no autenticado');
+    
+    const { data: nuevo, error } = await supabase
       .from('incidentes_ssoma')
-      .insert([{ ...data, fecha: data.fecha || new Date().toISOString().split('T')[0], fecha_reporte: data.fecha_reporte || new Date().toISOString().split('T')[0], estado: data.estado || 'Abierto' }])
+      .insert([{ ...data, user_id: user.id, fecha: data.fecha || new Date().toISOString().split('T')[0], fecha_reporte: data.fecha_reporte || new Date().toISOString().split('T')[0], estado: data.estado || 'Abierto' }])
       .select()
       .single();
     if (error) throw error;
