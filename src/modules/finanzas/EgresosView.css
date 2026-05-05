@@ -1,0 +1,19 @@
+.egresos-view { display: flex; flex-direction: column; gap: 24px; }
+
+.simple-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; background: white; padding: 24px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); align-items: end; }
+.simple-form input, .simple-form select { padding: 12px 16px; border: 2px solid #e9ecef; border-radius: 8px; font-size: 14px; outline: none; background: white; color: #212529; width: 100%; box-sizing: border-box; transition: all 0.2s; }
+.simple-form input:focus, .simple-form select:focus { border-color: #0052cc; box-shadow: 0 0 0 3px rgba(0,82,204,0.1); }
+.simple-form button[type="submit"] { width: auto; padding: 12px 32px; margin-top: 0; }
+
+.table-responsive { overflow-x: auto; background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+.data-table { width: 100%; border-collapse: collapse; min-width: 700px; }
+.data-table th, .data-table td { padding: 16px 20px; text-align: left; border-bottom: 1px solid #f1f3f5; color: #212529; }
+.data-table th { background: #f8f9fa; font-weight: 600; color: #495057; font-size: 13px; text-transform: uppercase; }
+.data-table tbody tr:hover { background: #f8f9fa; }
+
+.badge { display: inline-block; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+.badge-green { background: #d4edda; color: #155724; }
+.badge-yellow { background: #fff3cd; color: #856404; }
+.cell-bold { font-weight: 600; color: #212529; }
+.text-red { color: #dc3545; }
+@media (max-width: 768px) { .simple-form { grid-template-columns: 1fr; } }

@@ -1,0 +1,124 @@
+.lista-proyectos {
+  padding: 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.lista-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.lista-header h2 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 700;
+  color: #212529;
+}
+
+.lista-filtros {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.lista-filtros input[type="text"] {
+  padding: 10px 16px;
+  border: 2px solid #e9ecef;
+  border-radius: 8px;
+  font-size: 14px;
+  width: 250px;
+  transition: all 0.2s;
+}
+
+.lista-filtros input[type="text"]:focus {
+  outline: none;
+  border-color: #0052cc;
+  box-shadow: 0 0 0 3px rgba(0,82,204,0.1);
+}
+
+.lista-filtros select {
+  padding: 10px 16px;
+  border: 2px solid #e9ecef;
+  border-radius: 8px;
+  font-size: 14px;
+  background: white;
+  cursor: pointer;
+}
+
+.tabla-scroll {
+  overflow-x: auto;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.proyectos-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 800px;
+}
+
+.proyectos-table th {
+  background: #f8f9fa;
+  padding: 16px 24px;
+  text-align: left;
+  font-weight: 600;
+  color: #495057;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.proyectos-table td {
+  padding: 16px 24px;
+  border-bottom: 1px solid #f1f3f5;
+  color: #495057;
+  vertical-align: middle;
+}
+
+.proyectos-table tbody tr:hover {
+  background: #fcfcfc;
+}
+
+.badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.badge-blue { background: #e3f2fd; color: #0052cc; }
+.badge-green { background: #d4edda; color: #155724; }
+.badge-gray { background: #e9ecef; color: #6c757d; }
+.badge-red { background: #ffe3e3; color: #dc3545; }
+.badge-yellow { background: #fff3cd; color: #856404; }
+
+.btn-ver {
+  background: #0052cc;
+  color: white;
+  border: none;
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-ver:hover {
+  background: #003d99;
+  transform: translateY(-1px);
+}
+
+@media (max-width: 768px) {
+  .lista-header { flex-direction: column; align-items: flex-start; }
+  .lista-filtros { width: 100%; flex-direction: column; }
+  .lista-filtros input[type="text"], .lista-filtros select { width: 100%; }
+}

@@ -1,0 +1,109 @@
+/* =========================================
+   Personal - Tarjetas de Equipo
+   ========================================= */
+.vista-personal {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.vista-personal h3 {
+  margin: 0 0 16px 0;
+  font-size: 18px;
+  color: #212529;
+  font-weight: 600;
+}
+
+/* Mensaje cuando no hay equipo asignado */
+.empty-msg {
+  text-align: center;
+  padding: 50px;
+  color: #6c757d;
+  background: #f8f9fa;
+  border-radius: 12px;
+  border: 2px dashed #e9ecef; /* Borde punteado para indicar vacío */
+  font-size: 14px;
+}
+
+/* Grid de Tarjetas */
+.cards-grid {
+  display: grid;
+  /* Adaptable: crea columnas de mínimo 220px */
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+/* Diseño de la Tarjeta Individual */
+.card-miembro {
+  background: white;
+  border: 1px solid #e9ecef;
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+}
+
+.card-miembro:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+  border-color: #0052cc; /* Resalta al pasar el mouse */
+}
+
+/* Avatar (Letra inicial) */
+.avatar {
+  width: 48px;
+  height: 48px;
+  background: #e3f2fd; /* Fondo azul claro */
+  color: #0052cc;      /* Texto azul fuerte */
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  font-weight: 700;
+  flex-shrink: 0; /* Evita que se aplaste */
+}
+
+/* Información del Empleado */
+.info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.info strong {
+  font-size: 15px;
+  color: #212529;
+  font-weight: 600;
+}
+
+.info span {
+  font-size: 13px;
+  color: #6c757d;
+}
+
+/* Badge del Rol en el Proyecto */
+.rol-badge {
+  background: #f1f3f5;
+  color: #495057;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .cards-grid {
+    grid-template-columns: 1fr; /* Una columna en móviles */
+  }
+  
+  .card-miembro {
+    padding: 16px;
+  }
+}
