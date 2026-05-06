@@ -22,13 +22,13 @@ const RRHHView = ({ onBack }) => {
 
   return (
     <div className="module-container">
-      <button onClick={onBack} className="btn-back">← Volver al Inicio</button>
+      <button onClick={onBack} className="btn-back">Volver al inicio</button>
       <nav className="tabs-nav">
-        <button className={tab === 'dashboard' ? 'active' : ''} onClick={() => setTab('dashboard')}>📊 Dashboard</button>
-        <button className={tab === 'empleados' ? 'active' : ''} onClick={() => setTab('empleados')}>👥 Empleados</button>
-        <button className={tab === 'asistencias' ? 'active' : ''} onClick={() => setTab('asistencias')}>📅 Asistencias</button>
-        <button className={tab === 'asignaciones' ? 'active' : ''} onClick={() => setTab('asignaciones')}>🏗️ Asignaciones</button>
-        <button className={tab === 'ssoma' ? 'active' : ''} onClick={() => setTab('ssoma')}>⚕️ SSOMA</button>
+        <button className={tab === 'dashboard' ? 'active' : ''} onClick={() => setTab('dashboard')}>Resumen</button>
+        <button className={tab === 'empleados' ? 'active' : ''} onClick={() => setTab('empleados')}>Empleados</button>
+        <button className={tab === 'asistencias' ? 'active' : ''} onClick={() => setTab('asistencias')}>Asistencias</button>
+        <button className={tab === 'asignaciones' ? 'active' : ''} onClick={() => setTab('asignaciones')}>Personal en proyectos</button>
+        <button className={tab === 'ssoma' ? 'active' : ''} onClick={() => setTab('ssoma')}>Seguridad</button>
       </nav>
       <main className="content-area">{renderTab()}</main>
     </div>

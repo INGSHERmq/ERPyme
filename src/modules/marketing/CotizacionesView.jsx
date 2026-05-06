@@ -2,18 +2,20 @@ import { useState } from 'react';
 import useMarketing from '../../hooks/useMarketing';
 import './CotizacionesView.css';
 
+const initialForm = () => ({
+  cliente_id: '',
+  titulo: '',
+  monto: '',
+  estado: 'Pendiente',
+  fecha: new Date().toISOString().split('T')[0],
+  descripcion: '',
+  validez: '30 dias'
+});
+
 const CotizacionesView = () => {
   const { clientes, cotizaciones, addCotizacion, convertirCotizacion, refetch, loading } = useMarketing();
   const [showForm, setShowForm] = useState(false);
-  const [formData, setFormData] = useState({
-    cliente_id: '',
-    titulo: '',
-    monto: '',
-    estado: 'Pendiente',
-    fecha: new Date().toISOString().split('T')[0],
-    descripcion: '',
-    validez: '30 días'
-  });
+  const [formData, setFormData] = useState(initialForm);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -24,39 +26,28 @@ const CotizacionesView = () => {
         cliente_id: Number(formData.cliente_id)
       });
       setShowForm(false);
-      setFormData({
-        cliente_id: '',
-        titulo: '',
-        monto: '',
-        estado: 'Pendiente',
-        fecha: new Date().toISOString().split('T')[0],
-        descripcion: '',
-        validez: '30 días'
-      });
+      setFormData(initialForm());
       refetch();
-      alert('✅ Cotización creada correctamente');
+      alert('Cotizacion creada correctamente');
     } catch (error) {
       console.error('Error al guardar:', error);
-      alert('❌ Error: ' + (error.message || 'No se pudo crear la cotización'));
+      alert('No se pudo crear la cotizacion');
     }
   };
 
   const handleChange = (e) => setFormData(p => ({ ...p, [e.target.name]: e.target.value }));
 
-  // ✅ Función para convertir cotización en proyecto (usa Supabase, NO axios)
   const handleConvertir = async (cotizacion) => {
-    if (!window.confirm('¿Confirmar cotización y crear proyecto?')) return;
-    
+    if (!window.confirm('Confirmar cotizacion y crear el ingreso pendiente?')) return;
+
     try {
-      // ✅ Fechas calculadas sin Date.now() (puro React)
       const fechaInicio = new Date();
       const fechaFin = new Date();
       fechaFin.setDate(fechaInicio.getDate() + 30);
-      
+
       const hoy = fechaInicio.toISOString().split('T')[0];
       const finEstimado = fechaFin.toISOString().split('T')[0];
 
-      // ✅ Usamos la función del hook que ya maneja Supabase + user_id
       await convertirCotizacion(cotizacion.id, {
         nombre: cotizacion.titulo,
         cliente_id: cotizacion.cliente_id,
@@ -65,16 +56,16 @@ const CotizacionesView = () => {
         prioridad: 'Media',
         inicio: hoy,
         fin: finEstimado,
-        descripcion: cotizacion.descripcion || 'Proyecto creado desde cotización',
+        descripcion: cotizacion.descripcion || 'Proyecto creado desde cotizacion',
         monto: cotizacion.monto,
         progreso: 0
       });
 
-      alert('✅ Cotización convertida en proyecto e ingreso creado');
+      alert('Cotizacion confirmada. Ya aparece como ingreso pendiente en Dinero.');
       refetch();
     } catch (error) {
-      console.error('Error al convertir:', error);
-      alert('❌ Error: ' + (error.message || 'No se pudo convertir la cotización'));
+      console.error('Error al confirmar:', error);
+      alert(error.message || 'No se pudo confirmar la cotizacion');
     }
   };
 
@@ -83,9 +74,9 @@ const CotizacionesView = () => {
   return (
     <div className="cotizaciones-view">
       <div className="view-header">
-        <h2>📄 Cotizaciones</h2>
+        <h2>Cotizaciones</h2>
         <button className="btn-primary" onClick={() => setShowForm(!showForm)}>
-          {showForm ? 'Cancelar' : '+ Nueva Cotización'}
+          {showForm ? 'Cancelar' : '+ Nueva cotizacion'}
         </button>
       </div>
 
@@ -95,12 +86,12 @@ const CotizacionesView = () => {
             <option value="">Cliente *</option>
             {clientes.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
           </select>
-          <input name="titulo" placeholder="Título del proyecto *" required value={formData.titulo} onChange={handleChange} />
-          <input name="monto" type="number" placeholder="Monto ($)" required value={formData.monto} onChange={handleChange} />
+          <input name="titulo" placeholder="Titulo del proyecto *" required value={formData.titulo} onChange={handleChange} />
+          <input name="monto" type="number" placeholder="Monto (S/)" required value={formData.monto} onChange={handleChange} />
           <input name="fecha" type="date" required value={formData.fecha} onChange={handleChange} />
-          <textarea name="descripcion" placeholder="Descripción" value={formData.descripcion} onChange={handleChange} />
-          <input name="validez" placeholder="Validez (ej: 30 días)" value={formData.validez} onChange={handleChange} />
-          <button type="submit" className="btn-primary">Crear Cotización</button>
+          <textarea name="descripcion" placeholder="Descripcion" value={formData.descripcion} onChange={handleChange} />
+          <input name="validez" placeholder="Validez (ej: 30 dias)" value={formData.validez} onChange={handleChange} />
+          <button type="submit" className="btn-primary">Crear cotizacion</button>
         </form>
       )}
 
@@ -109,7 +100,7 @@ const CotizacionesView = () => {
           <thead>
             <tr>
               <th>Cliente</th>
-              <th>Título</th>
+              <th>Titulo</th>
               <th>Monto</th>
               <th>Estado</th>
               <th>Proyecto</th>
@@ -120,16 +111,16 @@ const CotizacionesView = () => {
           <tbody>
             {cotizaciones.map(c => (
               <tr key={c.id}>
-                <td className="cell-bold">{c.clienteNombre || '—'}</td>
+                <td className="cell-bold">{c.clienteNombre || '-'}</td>
                 <td>{c.titulo}</td>
-                <td><strong>${c.monto.toLocaleString()}</strong></td>
+                <td><strong>S/ {Number(c.monto || 0).toLocaleString()}</strong></td>
                 <td><span className={`badge badge-${c.estado === 'Aceptada' ? 'green' : c.estado === 'Rechazada' ? 'red' : 'yellow'}`}>{c.estado}</span></td>
                 <td>{c.proyectoNombre || 'Sin proyecto'}</td>
                 <td>{c.fecha}</td>
                 <td>
                   {c.estado === 'Pendiente' && (
                     <button className="btn-action btn-convert" onClick={() => handleConvertir(c)}>
-                      ✅ Confirmar
+                      Confirmar
                     </button>
                   )}
                 </td>

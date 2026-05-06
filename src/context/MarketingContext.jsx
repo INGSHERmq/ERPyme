@@ -30,7 +30,6 @@ export const MarketingProvider = ({ children }) => {
 
   useEffect(() => {
     (async () => { await fetchData(); })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const addCliente = async (data) => {

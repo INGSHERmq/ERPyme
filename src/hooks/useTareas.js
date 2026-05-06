@@ -17,6 +17,7 @@ const useTareas = (proyectoId) => {
     
     try {
       setLoading(true);
+      setError(null);
       const { data, error: supabaseError } = await supabase
         .from('v_tareas_completas')
         .select('*')

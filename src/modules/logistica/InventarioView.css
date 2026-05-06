@@ -1,1 +1,7 @@
 .logistica-view { display: flex; flex-direction: column; gap: 20px; }
+
+.view-hint {
+  color: #64748b;
+  font-size: 14px;
+  font-weight: 600;
+}

@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { supabase } from '../../lib/supabase';
+import { useAuth } from '../../context/auth/useAuth';
 import useLogistica from '../../hooks/useLogistica';
 import './MantenimientoView.css';
 
 const MantenimientoView = () => {
   const { activos, mantenimientos, programarMantenimiento, loading, refetch } = useLogistica();
+  const { user } = useAuth();
   
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
@@ -56,7 +58,8 @@ const MantenimientoView = () => {
       const { error: updateError } = await supabase
         .from('mantenimientos')
         .update({ estado: 'Completado' })
-        .eq('id', mantenimiento.id);
+        .eq('id', mantenimiento.id)
+        .eq('user_id', user?.id);
 
       if (updateError) throw updateError;
 
@@ -65,7 +68,8 @@ const MantenimientoView = () => {
         const { error: activoError } = await supabase
           .from('activos')
           .update({ estado: 'Disponible' })
-          .eq('id', mantenimiento.activo_id);
+          .eq('id', mantenimiento.activo_id)
+          .eq('user_id', user?.id);
 
         if (activoError) throw activoError;
       }
@@ -80,7 +84,8 @@ const MantenimientoView = () => {
         fecha: fechaHoy,
         proyecto_id: null,
         tipo: 'Operativo',
-        metodo: 'Transferencia'
+        metodo: 'Transferencia',
+        user_id: user?.id
       };
 
       console.log('Creando egreso:', egresoData);

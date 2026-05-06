@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/auth/useAuth';
 
@@ -12,11 +12,20 @@ const useRRHH = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const fetchData = async () => {
-    if (!user?.id) return;
+  const fetchData = useCallback(async () => {
+    if (!user?.id) {
+      setEmpleados([]);
+      setAsistencias([]);
+      setAsignaciones([]);
+      setIncidentes([]);
+      setDashboardData(null);
+      setLoading(false);
+      return;
+    }
     
     try {
       setLoading(true);
+      setError(null);
       const [empRes, asistRes, asigRes, incRes] = await Promise.all([
         supabase.from('v_empleados_stats').select('*').eq('user_id', user.id).order('nombre'),
         supabase.from('asistencias').select('*').eq('user_id', user.id).order('fecha', { ascending: false }).limit(50),
@@ -30,9 +39,16 @@ const useRRHH = () => {
       if (incRes.error) throw incRes.error;
 
       setEmpleados(empRes.data || []);
-      setAsistencias(asistRes.data || []);
+      setAsistencias((asistRes.data || []).map(a => ({
+        ...a,
+        empleadoNombre: empRes.data?.find(e => e.id === a.empleado_id)?.nombre || 'Sin empleado'
+      })));
       setAsignaciones(asigRes.data || []);
-      setIncidentes(incRes.data || []);
+      setIncidentes((incRes.data || []).map(i => ({
+        ...i,
+        empleadoNombre: empRes.data?.find(e => e.id === i.empleado_id)?.nombre || 'Sin empleado',
+        accionesTomadas: i.acciones_tomadas
+      })));
 
       const activos = empRes.data?.filter(e => e.estado === 'Activo') || [];
       const presentesHoy = asistRes.data?.filter(a => 
@@ -52,11 +68,11 @@ const useRRHH = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
 
   useEffect(() => {
     (async () => { await fetchData(); })();
-  }, [user?.id]);
+  }, [fetchData]);
 
   const addEmpleado = async (data) => {
     if (!user?.id) throw new Error('Usuario no autenticado');
@@ -159,6 +175,16 @@ const useRRHH = () => {
     return nuevo;
   };
 
+  const addIncidente = (data) => registrarIncidente({
+    empleado_id: data.empleado_id ?? data.empleadoId,
+    tipo: data.tipo,
+    gravedad: data.gravedad,
+    descripcion: data.descripcion,
+    acciones_tomadas: data.acciones_tomadas ?? data.accionesTomadas,
+    estado: data.estado,
+    fecha: data.fecha
+  });
+
   return {
     empleados,
     asistencias,
@@ -171,6 +197,7 @@ const useRRHH = () => {
     registrarAsistencia,
     asignarAProyecto,
     registrarIncidente,
+    addIncidente,
     refetch: fetchData
   };
 };
