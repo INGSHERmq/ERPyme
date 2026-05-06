@@ -9,10 +9,15 @@ const useProjects = () => {
   const [error, setError] = useState(null);
 
   const fetchProjects = async () => {
-    if (!user?.id) return;
+    if (!user?.id) {
+      setProyectos([]);
+      setLoading(false);
+      return;
+    }
     
     try {
       setLoading(true);
+      setError(null);
       const { data, error } = await supabase
         .from('v_proyectos_completos')
         .select('*')

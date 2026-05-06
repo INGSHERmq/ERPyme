@@ -5,7 +5,14 @@ import './SSOMAView.css';
 const SSOMAView = () => {
   const { empleados, incidentes, addIncidente, refetch, loading } = useRRHH();
   const [showForm, setShowForm] = useState(false);
-  const [formData, setFormData] = useState({ empleadoId: '', tipo: 'Accidente Leve', gravedad: 'Baja', descripcion: '', accionesTomadas: '', estado: 'Abierto' });
+  const [formData, setFormData] = useState({
+    empleadoId: '',
+    tipo: 'Accidente Leve',
+    gravedad: 'Baja',
+    descripcion: '',
+    accionesTomadas: '',
+    estado: 'Abierto'
+  });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -17,13 +24,13 @@ const SSOMAView = () => {
 
   const handleChange = (e) => setFormData(p => ({ ...p, [e.target.name]: e.target.value }));
 
-  if (loading) return <div className="loading">Cargando...</div>;
+  if (loading) return <div className="loading">Cargando seguridad...</div>;
 
   return (
     <div className="rrhh-view">
       <div className="view-header">
-        <h2>⚕️ Registro SSOMA</h2>
-        <button className="btn-primary" onClick={() => setShowForm(!showForm)}>{showForm ? 'Cancelar' : '+ Nuevo Incidente'}</button>
+        <h2>Registro de seguridad</h2>
+        <button className="btn-primary" onClick={() => setShowForm(!showForm)}>{showForm ? 'Cancelar' : '+ Nuevo reporte'}</button>
       </div>
 
       {showForm && (
@@ -38,8 +45,8 @@ const SSOMAView = () => {
           <select name="gravedad" value={formData.gravedad} onChange={handleChange}>
             <option>Baja</option><option>Media</option><option>Alta</option>
           </select>
-          <input name="descripcion" placeholder="Descripción del incidente *" required value={formData.descripcion} onChange={handleChange} />
-          <input name="accionesTomadas" placeholder="Acciones correctivas tomadas" value={formData.accionesTomadas} onChange={handleChange} />
+          <input name="descripcion" placeholder="Descripcion del caso *" required value={formData.descripcion} onChange={handleChange} />
+          <input name="accionesTomadas" placeholder="Acciones tomadas" value={formData.accionesTomadas} onChange={handleChange} />
           <select name="estado" value={formData.estado} onChange={handleChange}>
             <option>Abierto</option><option>En Seguimiento</option><option>Cerrado</option>
           </select>
@@ -58,7 +65,7 @@ const SSOMAView = () => {
                 <td><span className={`badge ${i.gravedad === 'Alta' ? 'badge-red' : i.gravedad === 'Media' ? 'badge-yellow' : 'badge-green'}`}>{i.gravedad}</span></td>
                 <td>{i.fecha}</td>
                 <td><span className={`badge ${i.estado === 'Cerrado' ? 'badge-green' : 'badge-blue'}`}>{i.estado}</span></td>
-                <td className="text-muted">{i.accionesTomadas || '—'}</td>
+                <td className="text-muted">{i.accionesTomadas || '-'}</td>
               </tr>
             ))}
           </tbody>

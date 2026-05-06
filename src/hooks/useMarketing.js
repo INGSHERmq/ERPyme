@@ -6,24 +6,35 @@ const useMarketing = () => {
   const { user } = useAuth();
   const [clientes, setClientes] = useState([]);
   const [cotizaciones, setCotizaciones] = useState([]);
+  const [proyectos, setProyectos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   const fetchData = async () => {
-    if (!user?.id) return;
+    if (!user?.id) {
+      setClientes([]);
+      setCotizaciones([]);
+      setProyectos([]);
+      setLoading(false);
+      return;
+    }
     
     try {
       setLoading(true);
-      const [clientesRes, cotizacionesRes] = await Promise.all([
+      setError(null);
+      const [clientesRes, cotizacionesRes, proyectosRes] = await Promise.all([
         supabase.from('clientes').select('*').eq('user_id', user.id).order('nombre'),
-        supabase.from('v_cotizaciones_completas').select('*').eq('user_id', user.id).order('fecha', { ascending: false })
+        supabase.from('v_cotizaciones_completas').select('*').eq('user_id', user.id).order('fecha', { ascending: false }),
+        supabase.from('proyectos').select('*').eq('user_id', user.id).order('created_at', { ascending: false })
       ]);
 
       if (clientesRes.error) throw clientesRes.error;
       if (cotizacionesRes.error) throw cotizacionesRes.error;
+      if (proyectosRes.error) throw proyectosRes.error;
 
       setClientes(clientesRes.data || []);
       setCotizaciones(cotizacionesRes.data || []);
+      setProyectos(proyectosRes.data || []);
     } catch (err) {
       console.error('Error cargando marketing:', err);
       setError(err.message);
@@ -65,6 +76,7 @@ const useMarketing = () => {
 
   const convertirCotizacion = async (cotizacionId, proyectoData) => {
     if (!user?.id) throw new Error('Usuario no autenticado');
+    const fechaActual = new Date().toISOString().split('T')[0];
     
     const { data: proyecto, error: projError } = await supabase
       .from('proyectos')
@@ -72,6 +84,23 @@ const useMarketing = () => {
       .select()
       .single();
     if (projError) throw projError;
+
+    const { data: ingreso, error: ingresoError } = await supabase
+      .from('ingresos')
+      .insert([{
+        tipo: 'Proyecto',
+        concepto: `Cotizacion aprobada - ${proyectoData.nombre || 'Proyecto'}`,
+        monto: Number(proyectoData.monto || 0),
+        fecha: fechaActual,
+        proyecto_id: proyecto.id,
+        cliente_id: proyectoData.cliente_id || null,
+        estado: 'Pendiente',
+        metodo: 'Pendiente',
+        user_id: user.id
+      }])
+      .select()
+      .single();
+    if (ingresoError) throw ingresoError;
 
     const { error: cotError } = await supabase
       .from('cotizaciones')
@@ -83,12 +112,14 @@ const useMarketing = () => {
     setCotizaciones(prev => prev.map(c => 
       c.id === cotizacionId ? { ...c, estado: 'Aceptada', proyecto_id: proyecto.id } : c
     ));
-    return { proyecto, cotizacionId };
+    setProyectos(prev => [proyecto, ...prev]);
+    return { proyecto, ingreso, cotizacionId };
   };
 
   return {
     clientes,
     cotizaciones,
+    proyectos,
     loading,
     error,
     addCliente,

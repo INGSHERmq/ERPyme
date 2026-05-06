@@ -19,33 +19,18 @@ const MarketingView = ({ onBack }) => {
   return (
     <div className="module-container">
       <button onClick={onBack} className="btn-back" aria-label="Volver al inicio">
-        ← Volver al Inicio
+        Volver al inicio
       </button>
 
       <nav className="tabs-nav" role="tablist">
-        <button 
-          role="tab"
-          aria-selected={tab === 'dashboard'}
-          className={tab === 'dashboard' ? 'active' : ''} 
-          onClick={() => setTab('dashboard')}
-        >
-          📊 Dashboard
+        <button role="tab" aria-selected={tab === 'dashboard'} className={tab === 'dashboard' ? 'active' : ''} onClick={() => setTab('dashboard')}>
+          Resumen
         </button>
-        <button 
-          role="tab"
-          aria-selected={tab === 'clientes'}
-          className={tab === 'clientes' ? 'active' : ''} 
-          onClick={() => setTab('clientes')}
-        >
-          👥 Clientes
+        <button role="tab" aria-selected={tab === 'clientes'} className={tab === 'clientes' ? 'active' : ''} onClick={() => setTab('clientes')}>
+          Clientes
         </button>
-        <button 
-          role="tab"
-          aria-selected={tab === 'cotizaciones'}
-          className={tab === 'cotizaciones' ? 'active' : ''} 
-          onClick={() => setTab('cotizaciones')}
-        >
-          📄 Cotizaciones
+        <button role="tab" aria-selected={tab === 'cotizaciones'} className={tab === 'cotizaciones' ? 'active' : ''} onClick={() => setTab('cotizaciones')}>
+          Cotizaciones
         </button>
       </nav>
 

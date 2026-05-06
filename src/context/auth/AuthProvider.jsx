@@ -1,6 +1,19 @@
 import { useState, useEffect } from 'react';
-import { supabase, getCurrentUserProfile } from '../../lib/supabase';
+import { supabase, getCurrentUserProfile, clearStoredAuth } from '../../lib/supabase';
 import { AuthContext } from './context';
+
+const isRefreshTokenError = (error) => {
+  const message = String(error?.message || '').toLowerCase();
+  return message.includes('refresh token') || message.includes('invalid refresh token');
+};
+
+const withTimeout = (promise, ms) => {
+  let timeoutId;
+  const timeout = new Promise((_, reject) => {
+    timeoutId = setTimeout(() => reject(new Error('Tiempo de espera agotado')), ms);
+  });
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timeoutId));
+};
 
 export default function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
@@ -10,37 +23,35 @@ export default function AuthProvider({ children }) {
   useEffect(() => {
     let isMounted = true;
 
-    // ✅ FUNCIÓN DE SEGURIDAD: Evita que la app se quede colgada infinitamente
-    const withTimeout = (promise, ms) => {
-      let timeoutId;
-      const timeout = new Promise((_, reject) => {
-        timeoutId = setTimeout(() => reject(new Error('Tiempo de espera agotado')), ms);
-      });
-      return Promise.race([promise, timeout]).finally(() => clearTimeout(timeoutId));
+    const clearAuthState = async (error) => {
+      if (isRefreshTokenError(error)) await clearStoredAuth();
+      if (!isMounted) return;
+      setUser(null);
+      setProfile(null);
     };
 
     const checkSession = async () => {
       try {
-        // ✅ Le damos 5 segundos máximo. Si no responde, salta al catch.
-        const { user: currentUser } = await withTimeout(supabase.auth.getUser(), 5000);
-        
-        if (currentUser && isMounted) {
-          // ✅ También protegemos la carga del perfil
+        const { data: { session }, error: sessionError } = await withTimeout(
+          supabase.auth.getSession(),
+          5000
+        );
+        if (sessionError) throw sessionError;
+
+        if (session?.user) {
           const result = await withTimeout(getCurrentUserProfile(), 5000);
-          setUser(result?.user || null);
-          setProfile(result?.profile || null);
-        }
-      } catch (error) {
-        console.error('Error checking session o Timeout:', error.message);
-        
-        // ✅ SI FALLA POR TIMEOUT, FORZAMOS LIMPIEZA de la caché corrupta
-        if (isMounted) {
-          await supabase.auth.signOut(); 
+          if (isMounted) {
+            setUser(result?.user || session.user);
+            setProfile(result?.profile || null);
+          }
+        } else if (isMounted) {
           setUser(null);
           setProfile(null);
         }
+      } catch (error) {
+        console.error('Error checking session o Timeout:', error.message);
+        await clearAuthState(error);
       } finally {
-        // GARANTÍA TOTAL de que el loading se apaga
         if (isMounted) setLoading(false);
       }
     };
@@ -48,7 +59,7 @@ export default function AuthProvider({ children }) {
     checkSession();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      async (_event, session) => {
         try {
           if (session?.user) {
             const result = await getCurrentUserProfile();
@@ -56,14 +67,13 @@ export default function AuthProvider({ children }) {
               setUser(result?.user || session.user);
               setProfile(result?.profile || null);
             }
-          } else {
-            if (isMounted) {
-              setUser(null);
-              setProfile(null);
-            }
+          } else if (isMounted) {
+            setUser(null);
+            setProfile(null);
           }
         } catch (error) {
           console.error('Error en onAuthStateChange:', error);
+          await clearAuthState(error);
         } finally {
           if (isMounted) setLoading(false);
         }
@@ -98,23 +108,25 @@ export default function AuthProvider({ children }) {
       setProfile(null);
       const { error } = await supabase.auth.signOut();
       if (error) {
-        console.error('Error al contactar Supabase para cerrar sesión:', error);
+        console.error('Error al cerrar sesion:', error);
+        if (isRefreshTokenError(error)) await clearStoredAuth();
       }
     } catch (err) {
       console.error('Error inesperado en signOut:', err);
+      if (isRefreshTokenError(err)) await clearStoredAuth();
     }
   };
 
   const updateProfile = async (updates) => {
     if (!user?.id) throw new Error('No authenticated user');
-    
+
     const { data: updated, error } = await supabase
       .from('profiles')
       .update({ ...updates, updated_at: new Date().toISOString() })
       .eq('id', user.id)
       .select()
       .single();
-      
+
     if (error) throw error;
     setProfile(updated);
     return updated;

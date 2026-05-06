@@ -4,9 +4,9 @@ import useRRHH from '../../hooks/useRRHH';
 import './DashboardRRHH.css';
 
 const DEPT_COLORS = {
-  Tecnología: '#0052cc',
-  Diseño: '#ffc107',
-  Gestión: '#28a745',
+  Tecnologia: '#0052cc',
+  Diseno: '#ffc107',
+  Gestion: '#28a745',
   Seguridad: '#dc3545',
   Ventas: '#6c757d'
 };
@@ -14,7 +14,6 @@ const DEPT_COLORS = {
 const DashboardRRHH = () => {
   const { dashboardData, loading, error } = useRRHH();
 
-  // ✅ Cálculo seguro de datos para el gráfico
   const chartData = useMemo(() => {
     if (!dashboardData?.empleadosPorDepartamento) return [];
     return dashboardData.empleadosPorDepartamento.map(d => ({
@@ -23,38 +22,35 @@ const DashboardRRHH = () => {
     }));
   }, [dashboardData]);
 
-  // ✅ Manejo de estados de carga y error
-  if (loading) return <div className="loading">Cargando métricas de RRHH...</div>;
-  if (error) return <div className="empty-state">❌ Error: {error}</div>;
+  if (loading) return <div className="loading">Cargando resumen de personal...</div>;
+  if (error) return <div className="empty-state">Error: {error}</div>;
   if (!dashboardData) return <div className="empty-state">No hay datos disponibles</div>;
 
-  const formatCurrency = (value) => `$${(value || 0).toLocaleString()}`;
+  const formatCurrency = (value) => `S/ ${(value || 0).toLocaleString()}`;
 
   return (
     <div className="rrhh-dashboard">
-      {/* KPIs */}
       <div className="kpi-grid">
         <div className="kpi-card kpi-blue">
-          <span className="kpi-label">Empleados Activos</span>
+          <span className="kpi-label">Empleados activos</span>
           <span className="kpi-value">{dashboardData.totalEmpleados || 0}</span>
         </div>
         <div className="kpi-card kpi-green">
-          <span className="kpi-label">Presentes Hoy</span>
+          <span className="kpi-label">Presentes hoy</span>
           <span className="kpi-value">{dashboardData.presentesHoy || 0}</span>
         </div>
         <div className="kpi-card kpi-yellow">
-          <span className="kpi-label">Planilla Mensual</span>
+          <span className="kpi-label">Pago mensual</span>
           <span className="kpi-value">{formatCurrency(dashboardData.planillaMensual)}</span>
         </div>
         <div className="kpi-card kpi-red">
-          <span className="kpi-label">Incidentes Mes</span>
+          <span className="kpi-label">Reportes de seguridad</span>
           <span className="kpi-value">{dashboardData.incidentesMes || 0}</span>
         </div>
       </div>
 
-      {/* Gráfico */}
       <div className="chart-wrapper">
-        <h3>🏢 Distribución por Departamento</h3>
+        <h3>Empleados por area</h3>
         {chartData.length > 0 ? (
           <ResponsiveContainer width="100%" height={300}>
             <PieChart>
@@ -75,7 +71,7 @@ const DashboardRRHH = () => {
             </PieChart>
           </ResponsiveContainer>
         ) : (
-          <div className="empty-chart">No hay datos de departamentos para mostrar</div>
+          <div className="empty-chart">No hay datos de areas para mostrar</div>
         )}
       </div>
     </div>

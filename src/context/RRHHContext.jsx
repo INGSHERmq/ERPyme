@@ -53,7 +53,6 @@ export const RRHHProvider = ({ children }) => {
 
   useEffect(() => {
     (async () => { await fetchData(); })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const addEmpleado = async (data) => {

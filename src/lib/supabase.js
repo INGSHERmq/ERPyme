@@ -11,15 +11,28 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   }
 });
 
+export const clearStoredAuth = async () => {
+  if (typeof window === 'undefined') return;
+
+  Object.keys(window.localStorage)
+    .filter(key => key.startsWith('sb-') && key.endsWith('-auth-token'))
+    .forEach(key => window.localStorage.removeItem(key));
+
+  Object.keys(window.sessionStorage)
+    .filter(key => key.startsWith('sb-') && key.endsWith('-auth-token'))
+    .forEach(key => window.sessionStorage.removeItem(key));
+};
+
 export const getCurrentUserProfile = async () => {
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
+  if (userError) throw userError;
   if (!user) return null;
   
   const { data: profile, error } = await supabase
     .from('profiles')
     .select('*')
     .eq('id', user.id)
-    .single();
+    .maybeSingle();
     
   if (error) {
     console.error('Error fetching profile:', error);

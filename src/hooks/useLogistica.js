@@ -5,6 +5,7 @@ import { useAuth } from '../context/auth/useAuth';
 const useLogistica = () => {
   const { user } = useAuth();
   const [activos, setActivos] = useState([]);
+  const [inventarioLogistica, setInventarioLogistica] = useState([]);
   const [asignaciones, setAsignaciones] = useState([]);
   const [mantenimientos, setMantenimientos] = useState([]);
   const [guias, setGuias] = useState([]);
@@ -13,31 +14,71 @@ const useLogistica = () => {
   const [error, setError] = useState(null);
 
   const fetchData = async () => {
-    if (!user?.id) return;
+    if (!user?.id) {
+      setActivos([]);
+      setInventarioLogistica([]);
+      setAsignaciones([]);
+      setMantenimientos([]);
+      setGuias([]);
+      setDashboardData(null);
+      setLoading(false);
+      return;
+    }
     
     try {
       setLoading(true);
-      const [actRes, asigRes, mantRes, guiasRes] = await Promise.all([
+      setError(null);
+      const [actRes, productosRes, asigRes, mantRes, guiasRes] = await Promise.all([
         supabase.from('activos').select('*').eq('user_id', user.id).order('nombre'),
+        supabase.from('productos_servicios').select('*').eq('user_id', user.id).order('nombre'),
         supabase.from('asignaciones_activos').select('*').eq('user_id', user.id).eq('estado', 'Activa'),
         supabase.from('mantenimientos').select('*').eq('user_id', user.id).order('fecha', { ascending: false }),
         supabase.from('guias_salida').select('*').eq('user_id', user.id).order('fecha_salida', { ascending: false })
       ]);
 
       if (actRes.error) throw actRes.error;
+      if (productosRes.error) throw productosRes.error;
       if (asigRes.error) throw asigRes.error;
       if (mantRes.error) throw mantRes.error;
       if (guiasRes.error) throw guiasRes.error;
 
       setActivos(actRes.data || []);
+      setInventarioLogistica((productosRes.data || []).map(producto => ({
+        id: producto.id,
+        codigo: producto.codigo,
+        nombre: producto.nombre,
+        tipo: producto.tipo,
+        unidad: producto.unidad,
+        marca: producto.codigo || '-',
+        modelo: producto.unidad || '',
+        ubicacion: 'Inventario',
+        costo: producto.costo,
+        stockActual: producto.stock_actual,
+        stockMinimo: producto.stock_minimo,
+        estado: producto.estado || 'Activo'
+      })));
       setAsignaciones(asigRes.data || []);
-      setMantenimientos(mantRes.data || []);
-      setGuias(guiasRes.data || []);
+      setMantenimientos((mantRes.data || []).map(m => ({
+        ...m,
+        activoNombre: actRes.data?.find(a => a.id === m.activo_id)?.nombre || 'Sin activo'
+      })));
+      setGuias((guiasRes.data || []).map(g => ({
+        ...g,
+        activoNombre: actRes.data?.find(a => a.id === g.activo_id)?.nombre || 'Sin activo',
+        fechaSalida: g.fecha_salida,
+        fechaRegreso: g.fecha_regreso
+      })));
 
-      const total = actRes.data?.length || 0;
-      const disponibles = actRes.data?.filter(a => a.estado === 'Disponible').length || 0;
+      const productos = productosRes.data || [];
+      const total = productos.length;
+      const disponibles = productos.filter(producto => producto.estado === 'Activo').length;
       const enUso = actRes.data?.filter(a => a.estado === 'En uso').length || 0;
-      const valorTotal = actRes.data?.reduce((s, a) => s + (a.costo || 0), 0) || 0;
+      const valorTotal = productos.reduce((s, producto) => s + ((producto.costo || 0) * (producto.stock_actual || 0)), 0);
+      const porTipo = productos.reduce((acc, producto) => {
+        const tipo = producto.tipo || 'Sin tipo';
+        acc[tipo] = (acc[tipo] || 0) + 1;
+        return acc;
+      }, {});
 
       setDashboardData({
         total,
@@ -45,7 +86,8 @@ const useLogistica = () => {
         enUso,
         enMantenimiento: actRes.data?.filter(a => a.estado === 'En mantenimiento').length || 0,
         valorTotal,
-        mantenimientosPendientes: mantRes.data?.filter(m => m.estado === 'Pendiente').length || 0
+        mantenimientosPendientes: mantRes.data?.filter(m => m.estado === 'Pendiente').length || 0,
+        porTipo: Object.entries(porTipo).map(([name, value]) => ({ name, value }))
       });
     } catch (err) {
       console.error('Error cargando logística:', err);
@@ -189,8 +231,18 @@ const useLogistica = () => {
     return nueva;
   };
 
+  const addGuia = (data) => emitirGuia({
+    activo_id: data.activo_id ?? data.activoId,
+    destino: data.destino,
+    fecha_salida: data.fecha_salida ?? data.fechaSalida,
+    fecha_regreso: (data.fecha_regreso ?? data.fechaRegreso) || null,
+    responsable: data.responsable,
+    estado: data.estado
+  });
+
   return {
     activos,
+    inventarioLogistica,
     asignaciones,
     mantenimientos,
     guias,
@@ -203,6 +255,7 @@ const useLogistica = () => {
     programarMantenimiento,
     completarMantenimiento,
     emitirGuia,
+    addGuia,
     refetch: fetchData
   };
 };

@@ -1,19 +1,22 @@
 import { useState, useMemo } from 'react';
-import { DndProvider, useDrag, useDrop } from 'react-dnd';
-import { HTML5Backend } from 'react-dnd-html5-backend';
+import {
+  DndContext,
+  PointerSensor,
+  useDraggable,
+  useDroppable,
+  useSensor,
+  useSensors
+} from '@dnd-kit/core';
 import useRRHH from '../../../hooks/useRRHH';
 import useTareas from '../../../hooks/useTareas';
 import TareaModal from '../TareaModal/TareaModal';
 import './Actividades.css';
 
-const ItemTypes = { TAREA: 'tarea' };
-
 const TareaCard = ({ tarea, onEdit, onDelete }) => {
-  const [{ isDragging }, drag] = useDrag(() => ({
-    type: ItemTypes.TAREA,
-    item: { id: tarea.id, estado: tarea.estado },
-    collect: (monitor) => ({ isDragging: monitor.isDragging() }),
-  }));
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+    id: String(tarea.id),
+    data: { estado: tarea.estado }
+  });
 
   const prioridadColors = {
     Alta: 'badge-red',
@@ -25,84 +28,90 @@ const TareaCard = ({ tarea, onEdit, onDelete }) => {
   const cardStyle = {
     borderLeft: `4px solid ${tarea.color || '#0052cc'}`,
     opacity: isCompletada ? 0.7 : 1,
-    backgroundColor: isCompletada ? '#f8f9fa' : 'white'
+    backgroundColor: isCompletada ? '#f8f9fa' : 'white',
+    transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined
   };
 
   return (
-    <div 
-      ref={drag} 
+    <article
+      ref={setNodeRef}
       className={`tarea-card ${isDragging ? 'dragging' : ''} ${isCompletada ? 'completada' : ''}`}
       style={cardStyle}
       onDoubleClick={() => onEdit(tarea)}
+      {...listeners}
+      {...attributes}
     >
       <div className="card-header">
         <span className={`badge ${prioridadColors[tarea.prioridad] || 'badge-gray'}`}>
           {tarea.prioridad}
         </span>
         <div className="card-actions">
-          <button className="btn-icon" onClick={() => onEdit(tarea)}>✏️</button>
-          <button className="btn-icon" onClick={() => onDelete(tarea.id)}>🗑️</button>
+          <button type="button" className="btn-icon" onClick={() => onEdit(tarea)} aria-label="Editar tarea">
+            Editar
+          </button>
+          <button type="button" className="btn-icon" onClick={() => onDelete(tarea.id)} aria-label="Eliminar tarea">
+            Eliminar
+          </button>
         </div>
       </div>
       <h4 className={isCompletada ? 'tachado' : ''}>{tarea.titulo}</h4>
-      <p className="descripcion">{tarea.descripcion || 'Sin descripción'}</p>
-      
+      <p className="descripcion">{tarea.descripcion || 'Sin descripcion'}</p>
+
       {tarea.empleado_nombre && (
         <div className="asignado">
           <span className="avatar-small">{tarea.empleado_nombre.charAt(0)}</span>
           <span>{tarea.empleado_nombre}</span>
         </div>
       )}
-      
+
       <div className="card-footer">
         {tarea.fecha_fin && (
-          <span className="fecha">📅 {new Date(tarea.fecha_fin).toLocaleDateString('es-ES')}</span>
+          <span className="fecha">{new Date(tarea.fecha_fin).toLocaleDateString('es-ES')}</span>
         )}
       </div>
-    </div>
+    </article>
   );
 };
 
-const Columna = ({ titulo, estado, tareas, onDrop, onEditTarea, onDeleteTarea }) => {
-  const [{ isOver }, drop] = useDrop(() => ({
-    accept: ItemTypes.TAREA,
-    drop: (item) => onDrop(item.id, estado),
-    collect: (monitor) => ({ isOver: monitor.isOver() }),
-  }));
+const Columna = ({ titulo, estado, tareas, onEditTarea, onDeleteTarea }) => {
+  const { isOver, setNodeRef } = useDroppable({ id: estado });
 
   return (
-    <div ref={drop} className={`columna ${isOver ? 'active' : ''}`}>
+    <section ref={setNodeRef} className={`columna ${isOver ? 'active' : ''}`} aria-label={titulo}>
       <h3>{titulo} <span className="count">{tareas.length}</span></h3>
       <div className="tareas-list">
         {tareas.map(t => (
-          <TareaCard 
-            key={t.id} 
-            tarea={t} 
+          <TareaCard
+            key={t.id}
+            tarea={t}
             onEdit={onEditTarea}
             onDelete={onDeleteTarea}
           />
         ))}
       </div>
-    </div>
+    </section>
   );
 };
 
 const Actividades = ({ proyectoId }) => {
   const { asignaciones, empleados } = useRRHH();
   const { tareas, createTarea, updateTarea, deleteTarea, loading, refetch } = useTareas(proyectoId);
-  
+
   const [vista, setVista] = useState('scrum');
   const [modalShow, setModalShow] = useState(false);
   const [tareaEditando, setTareaEditando] = useState(null);
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 8 }
+    })
+  );
 
-  // ✅ Obtener personal asignado al proyecto con NOMBRE COMPLETO
   const empleadosProyecto = useMemo(() => {
     if (!asignaciones || !empleados) return [];
-    
+
     return asignaciones
       .filter(a => Number(a.proyecto_id) === Number(proyectoId) && a.estado === 'Activo')
       .map(asignacion => {
-        // Buscar el empleado completo desde la lista de empleados
         const empleado = empleados.find(e => Number(e.id) === Number(asignacion.empleado_id));
         return {
           id: asignacion.empleado_id,
@@ -118,18 +127,29 @@ const Actividades = ({ proyectoId }) => {
       await refetch();
     } catch (error) {
       console.error('Error moviendo tarea:', error);
-      alert('❌ Error al mover la tarea');
+      alert('No se pudo mover la tarea');
     }
+  };
+
+  const handleDragEnd = (event) => {
+    const { active, over } = event;
+    if (!over) return;
+
+    const currentState = active.data.current?.estado;
+    const nextState = over.id;
+    if (!nextState || currentState === nextState) return;
+
+    handleMoveTarea(Number(active.id), nextState);
   };
 
   const handleCreateTarea = async (tareaData) => {
     try {
       await createTarea(tareaData);
       await refetch();
-      alert('✅ Tarea creada correctamente');
+      alert('Tarea creada correctamente');
     } catch (error) {
       console.error('Error creando tarea:', error);
-      alert('❌ Error al crear la tarea');
+      alert('No se pudo crear la tarea');
     }
   };
 
@@ -138,21 +158,21 @@ const Actividades = ({ proyectoId }) => {
       await updateTarea(tareaEditando.id, tareaData);
       setTareaEditando(null);
       await refetch();
-      alert('✅ Tarea actualizada correctamente');
+      alert('Tarea actualizada correctamente');
     } catch (error) {
       console.error('Error actualizando tarea:', error);
-      alert('❌ Error al actualizar la tarea');
+      alert('No se pudo actualizar la tarea');
     }
   };
 
   const handleDeleteTarea = async (id) => {
-    if (window.confirm('¿Eliminar esta tarea?')) {
+    if (window.confirm('Eliminar esta tarea?')) {
       try {
         await deleteTarea(id);
-        alert('✅ Tarea eliminada correctamente');
+        alert('Tarea eliminada correctamente');
       } catch (error) {
         console.error('Error eliminando tarea:', error);
-        alert('❌ Error al eliminar la tarea');
+        alert('No se pudo eliminar la tarea');
       }
     }
   };
@@ -171,43 +191,40 @@ const Actividades = ({ proyectoId }) => {
   };
 
   return (
-    <DndProvider backend={HTML5Backend}>
+    <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
       <div className="actividades-container">
         <div className="vista-selector">
-          <button className={vista === 'scrum' ? 'active' : ''} onClick={() => setVista('scrum')}>
-            📋 Tablero
+          <button type="button" className={vista === 'scrum' ? 'active' : ''} onClick={() => setVista('scrum')}>
+            Tablero
           </button>
-          <button className={vista === 'lista' ? 'active' : ''} onClick={() => setVista('lista')}>
-            📄 Lista
+          <button type="button" className={vista === 'lista' ? 'active' : ''} onClick={() => setVista('lista')}>
+            Lista
           </button>
-          <button className="btn-primary" onClick={() => openModal()}>
+          <button type="button" className="btn-primary" onClick={() => openModal()}>
             + Nueva Tarea
           </button>
         </div>
 
         {vista === 'scrum' ? (
           <div className="scrum-board">
-            <Columna 
-              titulo="Pendiente" 
-              estado="Pendiente" 
-              tareas={columnas.Pendiente} 
-              onDrop={handleMoveTarea}
+            <Columna
+              titulo="Pendiente"
+              estado="Pendiente"
+              tareas={columnas.Pendiente}
               onEditTarea={openModal}
               onDeleteTarea={handleDeleteTarea}
             />
-            <Columna 
-              titulo="En Progreso" 
-              estado="En Progreso" 
-              tareas={columnas['En Progreso']} 
-              onDrop={handleMoveTarea}
+            <Columna
+              titulo="En Progreso"
+              estado="En Progreso"
+              tareas={columnas['En Progreso']}
               onEditTarea={openModal}
               onDeleteTarea={handleDeleteTarea}
             />
-            <Columna 
-              titulo="Completado" 
-              estado="Completado" 
-              tareas={columnas.Completado} 
-              onDrop={handleMoveTarea}
+            <Columna
+              titulo="Completado"
+              estado="Completado"
+              tareas={columnas.Completado}
               onEditTarea={openModal}
               onDeleteTarea={handleDeleteTarea}
             />
@@ -232,10 +249,10 @@ const Actividades = ({ proyectoId }) => {
                     <td><span className={`badge badge-${t.estado === 'En Progreso' ? 'blue' : t.estado === 'Completado' ? 'green' : 'gray'}`}>{t.estado}</span></td>
                     <td><span className={`badge badge-${t.prioridad === 'Alta' ? 'red' : t.prioridad === 'Media' ? 'yellow' : 'green'}`}>{t.prioridad}</span></td>
                     <td>{t.empleado_nombre || 'Sin asignar'}</td>
-                    <td>{t.fecha_fin ? new Date(t.fecha_fin).toLocaleDateString('es-ES') : '—'}</td>
+                    <td>{t.fecha_fin ? new Date(t.fecha_fin).toLocaleDateString('es-ES') : '-'}</td>
                     <td>
-                      <button className="btn-action" onClick={() => openModal(t)}>✏️</button>
-                      <button className="btn-action" onClick={() => handleDeleteTarea(t.id)}>🗑️</button>
+                      <button type="button" className="btn-action" onClick={() => openModal(t)}>Editar</button>
+                      <button type="button" className="btn-action" onClick={() => handleDeleteTarea(t.id)}>Eliminar</button>
                     </td>
                   </tr>
                 ))}
@@ -255,7 +272,7 @@ const Actividades = ({ proyectoId }) => {
           empleadosProyecto={empleadosProyecto}
         />
       </div>
-    </DndProvider>
+    </DndContext>
   );
 };
 
