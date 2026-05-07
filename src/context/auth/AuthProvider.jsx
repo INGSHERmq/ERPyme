@@ -43,9 +43,10 @@ export default function AuthProvider({ children }) {
 
   const loadModulesForUser = useCallback(async (currentUser, currentProfile, currentMembership) => {
     if (!currentUser?.id) return [];
+    if (!currentMembership?.empresa_id) return [];
     if (['super_admin', 'owner', 'admin'].includes(currentMembership?.rol)) return ERP_MODULE_KEYS;
 
-    const empresaId = currentMembership?.empresa_id || currentProfile?.empresa_actual_id;
+    const empresaId = currentMembership.empresa_id;
     if (!empresaId) return [];
 
     const { data, error } = await supabase
@@ -88,6 +89,8 @@ export default function AuthProvider({ children }) {
     if (!session?.user) {
       setUser(null);
       setProfile(null);
+      setMembership(null);
+      setEnabledModules([]);
       return;
     }
 
@@ -95,6 +98,12 @@ export default function AuthProvider({ children }) {
     const currentUser = result?.user || session.user;
     const currentProfile = result?.profile || null;
     const currentMembership = await loadMembership(currentUser, currentProfile);
+
+    if (!currentMembership) {
+      await supabase.auth.signOut();
+      throw new Error('Tu usuario esta inactivo o no tiene una membresia activa.');
+    }
+
     const modules = await loadModulesForUser(currentUser, currentProfile, currentMembership);
 
     setUser(currentUser);
@@ -166,9 +175,51 @@ export default function AuthProvider({ children }) {
     document.addEventListener('visibilitychange', handleVisibility);
     window.addEventListener('focus', handleFocus);
 
+    let accessChannel;
+    const setupAccessSubscription = async () => {
+      try {
+        const { data, error } = await supabase.auth.getSession();
+        if (error || !data?.session?.user?.id) return;
+
+        const currentUserId = data.session.user.id;
+        accessChannel = supabase
+          .channel(`auth-access-${currentUserId}`)
+          .on(
+            'postgres_changes',
+            {
+              event: '*',
+              schema: 'public',
+              table: 'user_module_access',
+              filter: `user_id=eq.${currentUserId}`
+            },
+            () => {
+              safeCheckSession({ refresh: true, silent: true });
+            }
+          )
+          .on(
+            'postgres_changes',
+            {
+              event: '*',
+              schema: 'public',
+              table: 'empresa_usuarios',
+              filter: `user_id=eq.${currentUserId}`
+            },
+            () => {
+              safeCheckSession({ refresh: true, silent: true });
+            }
+          )
+          .subscribe();
+      } catch (error) {
+        console.error('Error subscribing auth access changes:', error);
+      }
+    };
+
+    setupAccessSubscription();
+
     return () => {
       isMounted = false;
       subscription?.unsubscribe();
+      if (accessChannel) supabase.removeChannel(accessChannel);
       document.removeEventListener('visibilitychange', handleVisibility);
       window.removeEventListener('focus', handleFocus);
     };

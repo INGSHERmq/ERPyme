@@ -61,6 +61,24 @@ const useMarketing = () => {
     return nuevo;
   };
 
+  const updateClienteEstado = async (clienteId, estado) => {
+    if (!user?.id) throw new Error('Usuario no autenticado');
+
+    const { data: actualizado, error } = await supabase
+      .from('clientes')
+      .update({ estado })
+      .eq('id', clienteId)
+      .eq('user_id', user.id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    setClientes(prev => prev.map(cliente => (
+      cliente.id === clienteId ? { ...cliente, estado: actualizado.estado } : cliente
+    )));
+    return actualizado;
+  };
+
   const addCotizacion = async (data) => {
     if (!user?.id) throw new Error('Usuario no autenticado');
     
@@ -123,6 +141,7 @@ const useMarketing = () => {
     loading,
     error,
     addCliente,
+    updateClienteEstado,
     addCotizacion,
     convertirCotizacion,
     refetch: fetchData
