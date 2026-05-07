@@ -20,7 +20,11 @@ const LogisticaView = ({ onBack }) => {
 
   return (
     <div className="module-container">
-      <button onClick={onBack} className="btn-back">Volver al inicio</button>
+      <section className="module-hero module-hero-logistica">
+        <button onClick={onBack} className="module-hero-back">Volver al inicio</button>
+        <h1>Logistica</h1>
+        <p>Administra equipos, inventario operativo, prestamos, guias y mantenimientos.</p>
+      </section>
       <nav className="tabs-nav">
         <button className={tab === 'dashboard' ? 'active' : ''} onClick={() => setTab('dashboard')}>Resumen</button>
         <button className={tab === 'inventario' ? 'active' : ''} onClick={() => setTab('inventario')}>Equipos</button>

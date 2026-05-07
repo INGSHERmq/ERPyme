@@ -22,7 +22,11 @@ const RRHHView = ({ onBack }) => {
 
   return (
     <div className="module-container">
-      <button onClick={onBack} className="btn-back">Volver al inicio</button>
+      <section className="module-hero module-hero-rrhh">
+        <button onClick={onBack} className="module-hero-back">Volver al inicio</button>
+        <h1>Recursos Humanos</h1>
+        <p>Organiza empleados, asistencias, asignaciones a proyectos y seguridad ocupacional.</p>
+      </section>
       <nav className="tabs-nav">
         <button className={tab === 'dashboard' ? 'active' : ''} onClick={() => setTab('dashboard')}>Resumen</button>
         <button className={tab === 'empleados' ? 'active' : ''} onClick={() => setTab('empleados')}>Empleados</button>

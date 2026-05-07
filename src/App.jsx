@@ -19,9 +19,17 @@ const DocumentosAdjuntosView = lazy(() => import('./modules/erpExtras/views/Docu
 const NotificacionesView = lazy(() => import('./modules/erpExtras/views/NotificacionesView'));
 const ImportacionExportacionView = lazy(() => import('./modules/erpExtras/views/ImportacionExportacionView'));
 const AssistantView = lazy(() => import('./modules/assistant/AssistantView'));
+const AdminView = lazy(() => import('./modules/admin/AdminView'));
 
 function App() {
-  const { isAuthenticated, loading: authLoading, profile, signOut } = useAuth();
+  const {
+    isAuthenticated,
+    loading: authLoading,
+    profile,
+    signOut,
+    enabledModules,
+    canAccessAdminPanel
+  } = useAuth();
   const [module, setModule] = useState('home');
 
   if (authLoading) {
@@ -35,13 +43,32 @@ function App() {
 
   if (!isAuthenticated) return <Login />;
 
+  if (canAccessAdminPanel) {
+    return (
+      <div className="app">
+        <main className="app-content">
+          <Suspense fallback={<div className="loading">Cargando area...</div>}>
+            <AdminView signOut={signOut} />
+          </Suspense>
+        </main>
+      </div>
+    );
+  }
+
   const back = () => setModule('home');
 
   return (
     <div className="app">
       <main className="app-content">
         <Suspense fallback={<div className="loading">Cargando area...</div>}>
-          {module === 'home' && <Home onNavigate={setModule} profile={profile} signOut={signOut} />}
+          {module === 'home' && (
+            <Home
+              onNavigate={setModule}
+              profile={profile}
+              signOut={signOut}
+              enabledModules={enabledModules}
+            />
+          )}
           {module === 'projects' && <ProjectsView onBack={back} />}
           {module === 'marketing' && <MarketingView onBack={back} />}
           {module === 'finanzas' && <FinanzasView onBack={back} />}

@@ -55,12 +55,20 @@ const useRRHH = () => {
         a.fecha === new Date().toISOString().split('T')[0] && a.estado === 'Presente'
       ).length || 0;
       const planillaMensual = activos.reduce((s, e) => s + (e.salario || 0), 0);
+      const empleadosPorDepartamento = Object.entries(
+        activos.reduce((acc, empleado) => {
+          const departamento = empleado.departamento || empleado.area || 'Sin area';
+          acc[departamento] = (acc[departamento] || 0) + 1;
+          return acc;
+        }, {})
+      ).map(([name, value]) => ({ name, value }));
 
       setDashboardData({
         totalEmpleados: activos.length,
         presentesHoy,
         planillaMensual,
-        incidentesMes: incRes.data?.filter(i => i.fecha?.startsWith(new Date().toISOString().slice(0, 7))).length || 0
+        incidentesMes: incRes.data?.filter(i => i.fecha?.startsWith(new Date().toISOString().slice(0, 7))).length || 0,
+        empleadosPorDepartamento
       });
     } catch (err) {
       console.error('Error cargando RRHH:', err);

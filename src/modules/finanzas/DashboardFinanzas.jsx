@@ -4,10 +4,10 @@ import useFinanzas from '../../hooks/useFinanzas';
 import './DashboardFinanzas.css';
 
 const CATEGORY_COLORS = {
-  Infraestructura: '#0052cc',
-  Licencias: '#ffc107',
-  Servicios: '#28a745',
-  Otros: '#6c757d'
+  Infraestructura: '#ff4d8b',
+  Licencias: '#e8b94a',
+  Servicios: '#1a3a3a',
+  Otros: '#b8a4ed'
 };
 
 const DashboardFinanzas = () => {
@@ -66,8 +66,8 @@ const DashboardFinanzas = () => {
                 <XAxis dataKey="name" tick={{ fontSize: 12 }} />
                 <YAxis tickFormatter={(v) => `S/ ${v / 1000}k`} tick={{ fontSize: 12 }} />
                 <Tooltip formatter={(v) => formatCurrency(v)} />
-                <Bar dataKey="Ingresos" fill="#28a745" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="Gastos" fill="#dc3545" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="Ingresos" fill="#1a3a3a" radius={[8, 8, 0, 0]} />
+                <Bar dataKey="Gastos" fill="#ff4d8b" radius={[8, 8, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           ) : (

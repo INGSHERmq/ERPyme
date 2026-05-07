@@ -20,9 +20,13 @@ const FinanzasView = ({ onBack }) => {
 
   return (
     <div className="module-container">
-      <button onClick={onBack} className="btn-back" aria-label="Volver al inicio">
-        Volver al inicio
-      </button>
+      <section className="module-hero module-hero-finanzas">
+        <button onClick={onBack} className="module-hero-back" aria-label="Volver al inicio">
+          Volver al inicio
+        </button>
+        <h1>Dinero</h1>
+        <p>Controla ingresos, gastos, saldo disponible y cuentas pendientes por cobrar.</p>
+      </section>
 
       <nav className="tabs-nav" role="tablist">
         <button role="tab" aria-selected={tab === 'dashboard'} className={tab === 'dashboard' ? 'active' : ''} onClick={() => setTab('dashboard')}>Resumen</button>

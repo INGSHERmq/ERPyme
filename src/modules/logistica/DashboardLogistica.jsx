@@ -4,14 +4,14 @@ import useLogistica from '../../hooks/useLogistica';
 import './DashboardLogistica.css';
 
 const TYPE_COLORS = {
-  Producto: '#0052cc',
-  Servicio: '#28a745',
-  Laptop: '#0052cc',
-  Monitor: '#28a745',
-  Herramienta: '#ffc107',
-  Infraestructura: '#dc3545',
-  Periferico: '#6c757d',
-  Otros: '#adb5bd'
+  Producto: '#ff4d8b',
+  Servicio: '#1a3a3a',
+  Laptop: '#b8a4ed',
+  Monitor: '#a4d4c5',
+  Herramienta: '#e8b94a',
+  Infraestructura: '#ff6b5a',
+  Periferico: '#ffb084',
+  Otros: '#f5f0e0'
 };
 
 const DashboardLogistica = () => {

@@ -1,24 +1,77 @@
-import { useState, useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import useProjects from '../../../hooks/useProjects';
+import useTareas from '../../../hooks/useTareas';
 import './Calendario.css';
 
-const DAY_NAMES = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+const DAY_NAMES = ['Dom', 'Lun', 'Mar', 'Mie', 'Jue', 'Vie', 'Sab'];
 const MONTH_NAMES = [
   'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
   'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
 ];
 
+const parseDate = (dateStr) => {
+  if (!dateStr) return null;
+  const date = new Date(dateStr);
+  if (Number.isNaN(date.getTime())) return null;
+  date.setHours(0, 0, 0, 0);
+  return date;
+};
+
+const endOfDay = (date) => {
+  const result = new Date(date);
+  result.setHours(23, 59, 59, 999);
+  return result;
+};
+
 const Calendario = ({ proyectoId }) => {
   const { proyectos } = useProjects();
+  const { tareas, loading: tareasLoading } = useTareas(proyectoId);
   const [viewDate, setViewDate] = useState(new Date());
 
-  // Filtrar solo ESTE proyecto
   const proyecto = useMemo(() => {
-    return proyectos.find(p => p.id === proyectoId);
+    return proyectos.find(p => Number(p.id) === Number(proyectoId));
   }, [proyectos, proyectoId]);
 
   const currentYear = viewDate.getFullYear();
   const currentMonth = viewDate.getMonth();
+
+  const events = useMemo(() => {
+    if (!proyecto) return [];
+
+    const projectStart = parseDate(proyecto.inicio);
+    const projectEnd = parseDate(proyecto.fin);
+    const projectEvent = projectStart && projectEnd
+      ? [{
+          id: `project-${proyecto.id}`,
+          type: 'project',
+          title: proyecto.nombre,
+          badge: proyecto.estado || 'Proyecto',
+          start: projectStart,
+          end: endOfDay(projectEnd),
+          color: '#1a3a3a'
+        }]
+      : [];
+
+    const taskEvents = tareas
+      .map((tarea) => {
+        const start = parseDate(tarea.fecha_inicio || tarea.fecha_fin);
+        const end = parseDate(tarea.fecha_fin || tarea.fecha_inicio);
+        if (!start || !end) return null;
+
+        return {
+          id: `task-${tarea.id}`,
+          type: 'task',
+          title: tarea.titulo,
+          badge: tarea.estado,
+          start,
+          end: endOfDay(end),
+          color: tarea.color || '#ff4d8b'
+        };
+      })
+      .filter(Boolean);
+
+    return [...projectEvent, ...taskEvents];
+  }, [proyecto, tareas]);
 
   const calendarData = useMemo(() => {
     const firstDay = new Date(currentYear, currentMonth, 1);
@@ -32,35 +85,26 @@ const Calendario = ({ proyectoId }) => {
     return dias;
   }, [currentYear, currentMonth]);
 
-  const getEventForDay = (date) => {
-    if (!date || !proyecto) return null;
-    
-    const inicio = new Date(proyecto.inicio);
-    const fin = new Date(proyecto.fin);
-    inicio.setHours(0, 0, 0, 0);
-    fin.setHours(23, 59, 59, 999);
-    
-    if (date >= inicio && date <= fin) {
-      return proyecto;
-    }
-    return null;
+  const getEventsForDay = (date) => {
+    if (!date) return [];
+    const day = parseDate(date);
+    return events.filter(event => day >= event.start && day <= event.end);
   };
 
   const handlePrevMonth = () => setViewDate(new Date(currentYear, currentMonth - 1, 1));
   const handleNextMonth = () => setViewDate(new Date(currentYear, currentMonth + 1, 1));
   const handleToday = () => setViewDate(new Date());
 
-  if (!proyecto) {
-    return <div className="empty-state">No hay calendario para este proyecto</div>;
-  }
+  if (tareasLoading) return <div className="loading">Cargando calendario...</div>;
+  if (!proyecto) return <div className="empty-state">No hay calendario para este proyecto</div>;
 
   return (
     <div className="calendario-proyecto">
       <div className="calendario-header">
         <div className="nav-buttons">
-          <button onClick={handlePrevMonth}>‹ Anterior</button>
-          <button onClick={handleToday}>Hoy</button>
-          <button onClick={handleNextMonth}>Siguiente ›</button>
+          <button type="button" onClick={handlePrevMonth}>Anterior</button>
+          <button type="button" onClick={handleToday}>Hoy</button>
+          <button type="button" onClick={handleNextMonth}>Siguiente</button>
         </div>
         <h3>{MONTH_NAMES[currentMonth]} {currentYear}</h3>
       </div>
@@ -71,23 +115,29 @@ const Calendario = ({ proyectoId }) => {
         ))}
 
         {calendarData.map((date, index) => {
-          const event = date ? getEventForDay(date) : null;
+          const dayEvents = getEventsForDay(date);
           const isToday = date && new Date().toDateString() === date.toDateString();
 
           return (
-            <div 
-              key={index} 
+            <div
+              key={date?.toISOString() || `empty-${index}`}
               className={`calendar-cell ${!date ? 'empty' : ''} ${isToday ? 'today' : ''}`}
             >
               {date && (
                 <>
                   <span className="cell-number">{date.getDate()}</span>
-                  {event && (
-                    <div className="calendar-event">
-                      <span className="event-title">{event.nombre}</span>
-                      <span className="event-badge">{event.estado}</span>
-                    </div>
-                  )}
+                  <div className="calendar-events">
+                    {dayEvents.map(event => (
+                      <div
+                        key={event.id}
+                        className={`calendar-event ${event.type}`}
+                        style={{ borderLeftColor: event.color }}
+                      >
+                        <span className="event-title">{event.title}</span>
+                        <span className="event-badge">{event.badge}</span>
+                      </div>
+                    ))}
+                  </div>
                 </>
               )}
             </div>
@@ -97,8 +147,12 @@ const Calendario = ({ proyectoId }) => {
 
       <div className="proyecto-legend">
         <div className="legend-item">
-          <span className="legend-color" style={{ backgroundColor: '#0052cc' }}></span>
+          <span className="legend-color project"></span>
           <span>{proyecto.nombre} ({proyecto.inicio} - {proyecto.fin})</span>
+        </div>
+        <div className="legend-item">
+          <span className="legend-color task"></span>
+          <span>Tareas programadas ({events.filter(event => event.type === 'task').length})</span>
         </div>
       </div>
     </div>

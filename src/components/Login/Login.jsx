@@ -10,12 +10,12 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
-    
+
     try {
       await signIn(formData.email, formData.password);
     } catch (err) {
       console.error('Login error:', err);
-      setError(err.message || 'Error al iniciar sesión');
+      setError(err.message || 'Error al iniciar sesion');
     }
   };
 
@@ -27,13 +27,13 @@ const Login = () => {
     <div className="login-container">
       <div className="login-card">
         <div className="login-header">
-          <h1>🚀 ERPyme</h1>
-          <p>Inicia sesión para continuar</p>
+          <h1>ERPyme</h1>
+          <p>Inicia sesion para continuar</p>
         </div>
 
         <form onSubmit={handleSubmit} className="login-form">
-          {error && <div className="error-message">❌ {error}</div>}
-          
+          {error && <div className="error-message">{error}</div>}
+
           <div className="form-group">
             <label htmlFor="email">Email</label>
             <input
@@ -49,7 +49,7 @@ const Login = () => {
           </div>
 
           <div className="form-group">
-            <label htmlFor="password">Contraseña</label>
+            <label htmlFor="password">Contrasena</label>
             <input
               id="password"
               name="password"
@@ -57,18 +57,18 @@ const Login = () => {
               required
               value={formData.password}
               onChange={handleChange}
-              placeholder="••••••••"
+              placeholder="********"
               disabled={loading}
             />
           </div>
 
           <button type="submit" className="btn-login" disabled={loading}>
-            {loading ? 'Cargando...' : 'Iniciar Sesión'}
+            {loading ? 'Cargando...' : 'Iniciar sesion'}
           </button>
         </form>
 
         <div className="login-footer">
-          <p>¿No tienes cuenta? <a href="#register">Regístrate</a></p>
+          <p>No tienes cuenta? <a href="#register">Registrate</a></p>
           <p className="demo-credentials">
             <small>Demo: admin@erpyme.com / Admin123!</small>
           </p>
