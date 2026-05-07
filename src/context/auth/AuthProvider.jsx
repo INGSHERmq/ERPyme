@@ -43,10 +43,10 @@ export default function AuthProvider({ children }) {
 
   const loadModulesForUser = useCallback(async (currentUser, currentProfile, currentMembership) => {
     if (!currentUser?.id) return [];
-    if (['super_admin', 'owner'].includes(currentMembership?.rol)) return ERP_MODULE_KEYS;
+    if (['super_admin', 'owner', 'admin'].includes(currentMembership?.rol)) return ERP_MODULE_KEYS;
 
     const empresaId = currentMembership?.empresa_id || currentProfile?.empresa_actual_id;
-    if (!empresaId) return ERP_MODULE_KEYS;
+    if (!empresaId) return [];
 
     const { data, error } = await supabase
       .from('user_module_access')
@@ -56,10 +56,10 @@ export default function AuthProvider({ children }) {
 
     if (error) {
       console.error('Error loading module access:', error);
-      return ERP_MODULE_KEYS;
+      return [];
     }
 
-    if (!data?.length) return ERP_MODULE_KEYS;
+    if (!data?.length) return [];
     return data.filter((row) => row.enabled).map((row) => row.module_key);
   }, []);
 
@@ -203,6 +203,7 @@ export default function AuthProvider({ children }) {
     try {
       const { error } = await withTimeout(supabase.auth.signOut());
       if (error) throw error;
+      await clearStoredAuth();
     } catch (error) {
       await resetAuthState(error);
     }
@@ -240,94 +241,80 @@ export default function AuthProvider({ children }) {
       throw new Error('Un administrador solo puede crear usuarios estandar');
     }
 
-    const currentSession = await supabase.auth.getSession();
-    const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-      email,
-      password,
-      options: { data: { nombre_completo } }
+    const { error } = await supabase.rpc('admin_create_managed_user', {
+      p_email: email,
+      p_password: password,
+      p_nombre_completo: nombre_completo,
+      p_rol: rol,
+      p_enabled_modules: enabledModuleKeys
     });
 
-    if (signUpError) throw signUpError;
-    const createdUser = signUpData?.user;
-    if (!createdUser?.id) throw new Error('No se pudo crear el usuario en Auth');
-
-    await supabase.from('profiles').upsert({
-      id: createdUser.id,
-      email,
-      nombre_completo,
-      rol,
-      empresa_actual_id: profile.empresa_actual_id,
-      updated_at: new Date().toISOString()
-    });
-
-    const { error: membershipError } = await supabase.from('empresa_usuarios').upsert({
-      empresa_id: profile.empresa_actual_id,
-      user_id: createdUser.id,
-      rol,
-      estado: 'Activo'
-    }, { onConflict: 'empresa_id,user_id' });
-
-    if (membershipError) throw membershipError;
-
-    const moduleRows = ERP_MODULE_KEYS.map((moduleKey) => ({
-      user_id: createdUser.id,
-      empresa_id: profile.empresa_actual_id,
-      module_key: moduleKey,
-      enabled: enabledModuleKeys.includes(moduleKey)
-    }));
-
-    const { error: moduleError } = await supabase.from('user_module_access').upsert(moduleRows, {
-      onConflict: 'user_id,empresa_id,module_key'
-    });
-
-    if (moduleError) throw moduleError;
-
-    if (currentSession?.data?.session) {
-      await supabase.auth.setSession({
-        access_token: currentSession.data.session.access_token,
-        refresh_token: currentSession.data.session.refresh_token
-      });
-    }
+    if (error) throw error;
   };
 
   const listManagedUsers = async () => {
     if (!profile?.empresa_actual_id) return [];
 
-    const { data: users, error: usersError } = await supabase
-      .from('empresa_usuarios')
-      .select('id, user_id, rol, estado, created_at')
-      .eq('empresa_id', profile.empresa_actual_id)
-      .order('created_at', { ascending: true });
+    const { data, error } = await supabase.rpc('admin_list_managed_users');
+    if (error) {
+      const msg = String(error.message || '').toLowerCase();
+      const functionMissing = msg.includes('could not find the function') || msg.includes('schema cache');
+      if (!functionMissing) throw error;
 
-    if (usersError) throw usersError;
-    if (!users?.length) return [];
+      // Fallback temporal mientras se actualiza el schema cache de Supabase
+      const { data: users, error: usersError } = await supabase
+        .from('empresa_usuarios')
+        .select('id, user_id, rol, estado, created_at')
+        .eq('empresa_id', profile.empresa_actual_id)
+        .order('created_at', { ascending: true });
 
-    const userIds = users.map((item) => item.user_id);
-    const { data: profilesData, error: profilesError } = await supabase
-      .from('profiles')
-      .select('id, email, nombre_completo')
-      .in('id', userIds);
-    if (profilesError) throw profilesError;
+      if (usersError) throw usersError;
+      if (!users?.length) return [];
 
-    const { data: moduleData, error: moduleError } = await supabase
-      .from('user_module_access')
-      .select('user_id, module_key, enabled')
-      .eq('empresa_id', profile.empresa_actual_id)
-      .in('user_id', userIds);
-    if (moduleError) throw moduleError;
+      const userIds = users.map((item) => item.user_id);
+      const { data: profilesData } = await supabase
+        .from('profiles')
+        .select('id, email, nombre_completo')
+        .in('id', userIds);
 
-    const profileMap = new Map((profilesData || []).map((item) => [item.id, item]));
-    const modulesMap = new Map();
-    (moduleData || []).forEach((item) => {
-      const current = modulesMap.get(item.user_id) || {};
-      current[item.module_key] = item.enabled;
-      modulesMap.set(item.user_id, current);
-    });
+      const { data: moduleData } = await supabase
+        .from('user_module_access')
+        .select('user_id, module_key, enabled')
+        .eq('empresa_id', profile.empresa_actual_id)
+        .in('user_id', userIds);
 
-    return users.map((item) => ({
-      ...item,
-      profile: profileMap.get(item.user_id) || null,
-      modules: modulesMap.get(item.user_id) || {}
+      const profileMap = new Map((profilesData || []).map((item) => [item.id, item]));
+      const modulesMap = new Map();
+      (moduleData || []).forEach((item) => {
+        const current = modulesMap.get(item.user_id) || {};
+        current[item.module_key] = item.enabled;
+        modulesMap.set(item.user_id, current);
+      });
+
+      return users.map((item) => ({
+        id: item.id,
+        user_id: item.user_id,
+        rol: item.rol,
+        estado: item.estado,
+        created_at: item.created_at,
+        profile: profileMap.get(item.user_id) || null,
+        modules: modulesMap.get(item.user_id) || {}
+      }));
+    }
+    if (!data?.length) return [];
+
+    return data.map((item) => ({
+      id: item.membership_id,
+      user_id: item.user_id,
+      rol: item.rol,
+      estado: item.estado,
+      created_at: item.created_at,
+      profile: {
+        id: item.user_id,
+        email: item.email,
+        nombre_completo: item.nombre_completo
+      },
+      modules: item.modules || {}
     }));
   };
 
@@ -341,6 +328,13 @@ export default function AuthProvider({ children }) {
   };
 
   const updateManagedUserModules = async (targetUserId, enabledModuleKeys) => {
+    const target = await listManagedUsers();
+    const targetUser = target.find((item) => item.user_id === targetUserId);
+    if (!targetUser) throw new Error('Usuario no encontrado');
+    if (targetUser.rol !== 'user') {
+      throw new Error('Solo se pueden modificar modulos para usuarios estandar');
+    }
+
     const rows = ERP_MODULE_KEYS.map((moduleKey) => ({
       user_id: targetUserId,
       empresa_id: profile?.empresa_actual_id,
@@ -350,6 +344,14 @@ export default function AuthProvider({ children }) {
 
     const { error } = await supabase.from('user_module_access').upsert(rows, {
       onConflict: 'user_id,empresa_id,module_key'
+    });
+    if (error) throw error;
+  };
+
+  const setManagedUserPassword = async (targetUserId, newPassword) => {
+    const { error } = await supabase.rpc('admin_set_user_password', {
+      p_user_id: targetUserId,
+      p_new_password: newPassword
     });
     if (error) throw error;
   };
@@ -371,6 +373,7 @@ export default function AuthProvider({ children }) {
     listManagedUsers,
     updateManagedUserStatus,
     updateManagedUserModules,
+    setManagedUserPassword,
     membership,
     appRole,
     enabledModules,

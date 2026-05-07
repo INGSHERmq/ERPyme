@@ -67,12 +67,6 @@ const Login = () => {
           </button>
         </form>
 
-        <div className="login-footer">
-          <p>No tienes cuenta? <a href="#register">Registrate</a></p>
-          <p className="demo-credentials">
-            <small>Demo: admin@erpyme.com / Admin123!</small>
-          </p>
-        </div>
       </div>
     </div>
   );

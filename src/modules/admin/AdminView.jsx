@@ -17,13 +17,16 @@ const AdminView = ({ onBack, signOut }) => {
     createManagedUser,
     listManagedUsers,
     updateManagedUserStatus,
-    updateManagedUserModules
+    updateManagedUserModules,
+    setManagedUserPassword
   } = useAuth();
 
   const [formData, setFormData] = useState(EMPTY_FORM);
   const [selectedModules, setSelectedModules] = useState(ERP_MODULE_KEYS);
   const [users, setUsers] = useState([]);
   const [selectedUserId, setSelectedUserId] = useState(null);
+  const [modalUserId, setModalUserId] = useState(null);
+  const [passwordForm, setPasswordForm] = useState({ password: '', confirmPassword: '' });
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -91,11 +94,13 @@ const AdminView = ({ onBack, signOut }) => {
   };
 
   const selectedUser = users.find((item) => item.user_id === selectedUserId);
+  const modalUser = users.find((item) => item.user_id === modalUserId);
 
   const selectedUserModules = useMemo(() => {
-    if (!selectedUser) return {};
-    return selectedUser.modules || {};
-  }, [selectedUser]);
+    if (!modalUser) return {};
+    return modalUser.modules || {};
+  }, [modalUser]);
+  const canEditModalUserModules = modalUser?.rol === 'user';
 
   const handleToggleUserStatus = async (target) => {
     setError('');
@@ -114,7 +119,7 @@ const AdminView = ({ onBack, signOut }) => {
   };
 
   const handleToggleUserModule = async (moduleKey) => {
-    if (!selectedUser) return;
+    if (!modalUser) return;
 
     const enabledKeys = ERP_MODULE_KEYS.filter((key) => (
       key === moduleKey ? !selectedUserModules[key] : !!selectedUserModules[key]
@@ -124,11 +129,55 @@ const AdminView = ({ onBack, signOut }) => {
     setMessage('');
     setLoading(true);
     try {
-      await updateManagedUserModules(selectedUser.user_id, enabledKeys);
+      await updateManagedUserModules(modalUser.user_id, enabledKeys);
       setMessage('Permisos de modulos actualizados.');
       await loadUsers();
     } catch (moduleError) {
       setError(moduleError.message || 'No se pudo actualizar modulos');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const openUserModal = (userId) => {
+    setModalUserId(userId);
+    setSelectedUserId(userId);
+    setPasswordForm({ password: '', confirmPassword: '' });
+  };
+
+  const closeUserModal = () => {
+    setModalUserId(null);
+    setPasswordForm({ password: '', confirmPassword: '' });
+  };
+
+  const handlePasswordInput = (event) => {
+    const { name, value } = event.target;
+    setPasswordForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleChangePassword = async (event) => {
+    event.preventDefault();
+    if (!modalUser) return;
+
+    if (passwordForm.password.length < 8) {
+      setError('La contrasena debe tener al menos 8 caracteres.');
+      return;
+    }
+
+    if (passwordForm.password !== passwordForm.confirmPassword) {
+      setError('Las contrasenas no coinciden.');
+      return;
+    }
+
+    setError('');
+    setMessage('');
+    setLoading(true);
+    try {
+      await setManagedUserPassword(modalUser.user_id, passwordForm.password);
+      setMessage('Contrasena actualizada correctamente.');
+      setPasswordForm({ password: '', confirmPassword: '' });
+    } catch (passwordError) {
+      setError(passwordError.message || 'No se pudo actualizar la contrasena');
     } finally {
       setLoading(false);
     }
@@ -229,16 +278,42 @@ const AdminView = ({ onBack, signOut }) => {
               <article
                 key={entry.id}
                 className={`user-row ${selectedUserId === entry.user_id ? 'active' : ''}`}
+                role="button"
+                tabIndex={0}
+                onClick={() => openUserModal(entry.user_id)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    openUserModal(entry.user_id);
+                  }
+                }}
               >
-                <button type="button" onClick={() => setSelectedUserId(entry.user_id)}>
+                <div className="user-row-main">
                   <span>{entry.profile?.nombre_completo || 'Usuario sin nombre'}</span>
                   <small>{entry.profile?.email || 'Sin email'}</small>
-                </button>
+                </div>
                 <div className="user-row-meta">
                   <span className={`badge badge-${entry.rol}`}>{entry.rol}</span>
                   <span className={`badge badge-${entry.estado === 'Activo' ? 'ok' : 'off'}`}>{entry.estado}</span>
-                  <button type="button" className="admin-secondary" onClick={() => handleToggleUserStatus(entry)}>
+                  <button
+                    type="button"
+                    className="admin-secondary"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      handleToggleUserStatus(entry);
+                    }}
+                  >
                     {entry.estado === 'Activo' ? 'Desactivar' : 'Activar'}
+                  </button>
+                  <button
+                    type="button"
+                    className="admin-secondary"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      openUserModal(entry.user_id);
+                    }}
+                  >
+                    Modulos y contrasena
                   </button>
                 </div>
               </article>
@@ -248,25 +323,69 @@ const AdminView = ({ onBack, signOut }) => {
         </section>
       </main>
 
-      <section className="admin-card admin-card-modules">
-        <h2>Modulos habilitados por usuario</h2>
-        {!selectedUser && <p className="admin-empty">Selecciona un usuario para administrar sus modulos.</p>}
-        {selectedUser && (
-          <div className="module-permissions-grid">
-            {ERP_MODULES.map((module) => (
-              <label key={module.id} className="permission-item">
+      {modalUser && (
+        <div className="admin-modal-backdrop" role="presentation" onClick={closeUserModal}>
+          <section className="admin-modal" role="dialog" aria-modal="true" onClick={(event) => event.stopPropagation()}>
+            <header className="admin-modal-header">
+              <h2>Modulos habilitados por usuario</h2>
+              <button type="button" className="admin-secondary" onClick={closeUserModal}>Cerrar</button>
+            </header>
+            <p className="admin-modal-subtitle">
+              {modalUser.profile?.nombre_completo || 'Usuario'} ({modalUser.profile?.email || 'Sin email'})
+            </p>
+            {!canEditModalUserModules && (
+              <p className="admin-modal-subtitle">
+                Este perfil es <strong>{modalUser.rol}</strong>: no aplica gestion de modulos en esta vista.
+              </p>
+            )}
+
+            <div className="module-permissions-grid">
+              {ERP_MODULES.map((module) => (
+                <label key={module.id} className="permission-item">
+                  <input
+                    type="checkbox"
+                    checked={!!selectedUserModules[module.id]}
+                    onChange={() => handleToggleUserModule(module.id)}
+                    disabled={loading || !canEditModalUserModules}
+                  />
+                  <span>{module.title}</span>
+                </label>
+              ))}
+            </div>
+
+            <form className="admin-password-form" onSubmit={handleChangePassword}>
+              <h3>Cambiar contrasena</h3>
+              <label>
+                Nueva contrasena
                 <input
-                  type="checkbox"
-                  checked={!!selectedUserModules[module.id]}
-                  onChange={() => handleToggleUserModule(module.id)}
+                  type="password"
+                  name="password"
+                  value={passwordForm.password}
+                  onChange={handlePasswordInput}
+                  minLength={8}
+                  required
                   disabled={loading}
                 />
-                <span>{module.title}</span>
               </label>
-            ))}
-          </div>
-        )}
-      </section>
+              <label>
+                Confirmar contrasena
+                <input
+                  type="password"
+                  name="confirmPassword"
+                  value={passwordForm.confirmPassword}
+                  onChange={handlePasswordInput}
+                  minLength={8}
+                  required
+                  disabled={loading}
+                />
+              </label>
+              <button type="submit" className="admin-primary" disabled={loading}>
+                {loading ? 'Guardando...' : 'Actualizar contrasena'}
+              </button>
+            </form>
+          </section>
+        </div>
+      )}
 
       {(message || error) && (
         <div className={`admin-feedback ${error ? 'error' : 'success'}`}>
