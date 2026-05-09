@@ -134,6 +134,13 @@ const CREATE_SCHEMAS = {
 };
 
 const FIELD_ALIASES = {
+  empresa: 'nombre',
+  nombreEmpresa: 'nombre',
+  nombre_empresa: 'nombre',
+  razonSocial: 'nombre',
+  razon_social: 'nombre',
+  personaContacto: 'contacto',
+  persona_contacto: 'contacto',
   clienteId: 'cliente_id',
   proyectoId: 'proyecto_id',
   proveedorId: 'proveedor_id',
@@ -216,17 +223,36 @@ const tools = [
 const systemPrompt = `
 Eres el asistente interno de ERPyme. Responde en espanol claro y breve.
 Tienes herramientas para leer datos y crear registros reales en Supabase.
-Antes de crear un registro valida que existan los campos requeridos. Si falta informacion importante, pide solo lo faltante.
+Antes de crear un registro valida que existan TODOS los campos del esquema de la tabla objetivo.
+Si falta uno o mas campos, no crees el registro y solicita explicitamente los campos faltantes.
 No inventes datos existentes: consulta el ERP cuando la pregunta dependa de registros.
 Si una herramienta devuelve error o no fue llamada, no digas que no existen registros. Informa que no pudiste verificar.
 Cuando crees algo, resume que tabla se afecto y los datos principales.
 `;
 
 const normalizeData = (data) => {
+  const normalizeEstadoValue = (value) => {
+    if (typeof value !== 'string') return value;
+    const normalized = value.trim().toLowerCase();
+    const estadoMap = {
+      activo: 'Activo',
+      inactivo: 'Inactivo',
+      pendiente: 'Pendiente',
+      aceptada: 'Aceptada',
+      rechazada: 'Rechazada',
+      borrador: 'Borrador',
+      nuevo: 'Nuevo',
+      leido: 'Leido',
+      leída: 'Leida',
+      leida: 'Leida'
+    };
+    return estadoMap[normalized] || value.trim();
+  };
+
   return Object.entries(data || {}).reduce((acc, [key, value]) => {
     const normalizedKey = FIELD_ALIASES[key] || key;
     if (value === '' || value === undefined) return acc;
-    acc[normalizedKey] = value;
+    acc[normalizedKey] = normalizedKey === 'estado' ? normalizeEstadoValue(value) : value;
     return acc;
   }, {});
 };
@@ -348,11 +374,25 @@ const createErpRecord = async ({ table, data }) => {
   const schema = CREATE_SCHEMAS[table];
   if (!schema) throw new Error(`No puedo crear registros en ${table}`);
 
-  const payload = addDefaultValues(table, pickAllowedFields(table, data), schema.fields);
-  const missing = schema.required.filter(field => payload[field] === undefined || payload[field] === '');
+  const providedPayload = pickAllowedFields(table, data);
+  const isEmpty = (value) => {
+    if (value === undefined || value === null) return true;
+    if (typeof value === 'string' && value.trim() === '') return true;
+    return false;
+  };
+
+  // Regla estricta: para altas desde IA se exige completar todo el formulario del modulo.
+  const missing = schema.fields.filter(field => isEmpty(providedPayload[field]));
   if (missing.length > 0) {
-    return { created: false, table, missing, message: `Faltan campos requeridos: ${missing.join(', ')}` };
+    return {
+      created: false,
+      table,
+      missing,
+      message: `Faltan campos obligatorios para crear en ${table}: ${missing.join(', ')}`
+    };
   }
+
+  const payload = addDefaultValues(table, providedPayload, schema.fields);
 
   const { data: created, error } = await supabase
     .from(table)

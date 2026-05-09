@@ -61,6 +61,24 @@ const useMarketing = () => {
     return nuevo;
   };
 
+  const updateClienteEstado = async (clienteId, estado) => {
+    if (!user?.id) throw new Error('Usuario no autenticado');
+
+    const { data: actualizado, error } = await supabase
+      .from('clientes')
+      .update({ estado })
+      .eq('id', clienteId)
+      .eq('user_id', user.id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    setClientes(prev => prev.map(cliente => (
+      cliente.id === clienteId ? { ...cliente, estado: actualizado.estado } : cliente
+    )));
+    return actualizado;
+  };
+
   const addCotizacion = async (data) => {
     if (!user?.id) throw new Error('Usuario no autenticado');
     
@@ -74,46 +92,22 @@ const useMarketing = () => {
     return nueva;
   };
 
-  const convertirCotizacion = async (cotizacionId, proyectoData) => {
+  const convertirCotizacion = async (cotizacionId) => {
     if (!user?.id) throw new Error('Usuario no autenticado');
-    const fechaActual = new Date().toISOString().split('T')[0];
-    
-    const { data: proyecto, error: projError } = await supabase
-      .from('proyectos')
-      .insert([{ ...proyectoData, user_id: user.id, progreso: 0 }])
-      .select()
-      .single();
-    if (projError) throw projError;
 
-    const { data: ingreso, error: ingresoError } = await supabase
-      .from('ingresos')
-      .insert([{
-        tipo: 'Proyecto',
-        concepto: `Cotizacion aprobada - ${proyectoData.nombre || 'Proyecto'}`,
-        monto: Number(proyectoData.monto || 0),
-        fecha: fechaActual,
-        proyecto_id: proyecto.id,
-        cliente_id: proyectoData.cliente_id || null,
-        estado: 'Pendiente',
-        metodo: 'Pendiente',
-        user_id: user.id
-      }])
-      .select()
-      .single();
-    if (ingresoError) throw ingresoError;
-
-    const { error: cotError } = await supabase
+    const { data: cotizacionActualizada, error: cotError } = await supabase
       .from('cotizaciones')
-      .update({ estado: 'Aceptada', proyecto_id: proyecto.id })
+      .update({ estado: 'aprobada' })
       .eq('id', cotizacionId)
-      .eq('user_id', user.id);
+      .eq('user_id', user.id)
+      .select()
+      .single();
     if (cotError) throw cotError;
 
     setCotizaciones(prev => prev.map(c => 
-      c.id === cotizacionId ? { ...c, estado: 'Aceptada', proyecto_id: proyecto.id } : c
+      c.id === cotizacionId ? { ...c, ...cotizacionActualizada } : c
     ));
-    setProyectos(prev => [proyecto, ...prev]);
-    return { proyecto, ingreso, cotizacionId };
+    return cotizacionActualizada;
   };
 
   return {
@@ -123,6 +117,7 @@ const useMarketing = () => {
     loading,
     error,
     addCliente,
+    updateClienteEstado,
     addCotizacion,
     convertirCotizacion,
     refetch: fetchData

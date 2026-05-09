@@ -7,20 +7,25 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     autoRefreshToken: true,
     persistSession: true,
-    detectSessionInUrl: true
+    detectSessionInUrl: true,
+    flowType: 'pkce'
   }
 });
 
 export const clearStoredAuth = async () => {
   if (typeof window === 'undefined') return;
 
+  const isSupabaseAuthKey = (key) => key.startsWith('sb-') && key.includes('auth-token');
+
   Object.keys(window.localStorage)
-    .filter(key => key.startsWith('sb-') && key.endsWith('-auth-token'))
+    .filter(isSupabaseAuthKey)
     .forEach(key => window.localStorage.removeItem(key));
 
   Object.keys(window.sessionStorage)
-    .filter(key => key.startsWith('sb-') && key.endsWith('-auth-token'))
+    .filter(isSupabaseAuthKey)
     .forEach(key => window.sessionStorage.removeItem(key));
+
+  await supabase.auth.signOut({ scope: 'local' }).catch(() => {});
 };
 
 export const getCurrentUserProfile = async () => {

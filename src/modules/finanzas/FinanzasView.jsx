@@ -1,34 +1,39 @@
 import { useState } from 'react';
-import DashboardFinanzas from './DashboardFinanzas';
-import IngresosView from './IngresosView';
-import EgresosView from './EgresosView';
-import CuentasPorCobrarView from './CuentasPorCobrarView';
+import FacturasCompraView from './FacturasCompraView';
+import FacturasVentaView from './FacturasVentaView';
+import AnaliticaProyectoView from './AnaliticaProyectoView';
 import './FinanzasView.css';
 
 const FinanzasView = ({ onBack }) => {
-  const [tab, setTab] = useState('dashboard');
+  const [tab, setTab] = useState('facturas-compra');
 
   const renderTab = () => {
     switch (tab) {
-      case 'dashboard': return <DashboardFinanzas />;
-      case 'ingresos': return <IngresosView />;
-      case 'egresos': return <EgresosView />;
-      case 'cuentas': return <CuentasPorCobrarView />;
-      default: return <DashboardFinanzas />;
+      case 'facturas-compra':
+        return <FacturasCompraView />;
+      case 'facturas-venta':
+        return <FacturasVentaView />;
+      case 'analitica':
+        return <AnaliticaProyectoView />;
+      default:
+        return null;
     }
   };
 
   return (
     <div className="module-container">
-      <button onClick={onBack} className="btn-back" aria-label="Volver al inicio">
-        Volver al inicio
-      </button>
+      <section className="module-hero module-hero-finanzas">
+        <button onClick={onBack} className="module-hero-back" aria-label="Volver al inicio">
+          Volver al inicio
+        </button>
+        <h1>Contabilidad</h1>
+        <p>Facturas de compra, facturas de venta y analitica de ganancia/perdida por proyecto.</p>
+      </section>
 
       <nav className="tabs-nav" role="tablist">
-        <button role="tab" aria-selected={tab === 'dashboard'} className={tab === 'dashboard' ? 'active' : ''} onClick={() => setTab('dashboard')}>Resumen</button>
-        <button role="tab" aria-selected={tab === 'ingresos'} className={tab === 'ingresos' ? 'active' : ''} onClick={() => setTab('ingresos')}>Ingresos</button>
-        <button role="tab" aria-selected={tab === 'egresos'} className={tab === 'egresos' ? 'active' : ''} onClick={() => setTab('egresos')}>Gastos</button>
-        <button role="tab" aria-selected={tab === 'cuentas'} className={tab === 'cuentas' ? 'active' : ''} onClick={() => setTab('cuentas')}>Por cobrar</button>
+        <button role="tab" aria-selected={tab === 'facturas-compra'} className={tab === 'facturas-compra' ? 'active' : ''} onClick={() => setTab('facturas-compra')}>Facturas compra</button>
+        <button role="tab" aria-selected={tab === 'facturas-venta'} className={tab === 'facturas-venta' ? 'active' : ''} onClick={() => setTab('facturas-venta')}>Facturas venta</button>
+        <button role="tab" aria-selected={tab === 'analitica'} className={tab === 'analitica' ? 'active' : ''} onClick={() => setTab('analitica')}>Analitica proyecto</button>
       </nav>
 
       <main className="content-area" role="tabpanel">

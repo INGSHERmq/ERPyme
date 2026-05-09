@@ -18,9 +18,13 @@ const MarketingView = ({ onBack }) => {
 
   return (
     <div className="module-container">
-      <button onClick={onBack} className="btn-back" aria-label="Volver al inicio">
-        Volver al inicio
-      </button>
+      <section className="module-hero module-hero-marketing">
+        <button onClick={onBack} className="module-hero-back" aria-label="Volver al inicio">
+          Volver al inicio
+        </button>
+        <h1>Ventas</h1>
+        <p>Gestiona clientes, cotizaciones y su conversion automatica a proyectos aprobados.</p>
+      </section>
 
       <nav className="tabs-nav" role="tablist">
         <button role="tab" aria-selected={tab === 'dashboard'} className={tab === 'dashboard' ? 'active' : ''} onClick={() => setTab('dashboard')}>

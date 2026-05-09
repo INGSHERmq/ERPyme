@@ -30,7 +30,7 @@ const useRRHH = () => {
         supabase.from('v_empleados_stats').select('*').eq('user_id', user.id).order('nombre'),
         supabase.from('asistencias').select('*').eq('user_id', user.id).order('fecha', { ascending: false }).limit(50),
         supabase.from('asignaciones_proyecto').select('*').eq('user_id', user.id).eq('estado', 'Activo'),
-        supabase.from('incidentes_ssoma').select('*').eq('user_id', user.id).order('fecha', { ascending: false }).limit(20)
+        supabase.from('registro_accidentes').select('*').eq('user_id', user.id).order('fecha', { ascending: false }).limit(20)
       ]);
       
       if (empRes.error) throw empRes.error;
@@ -55,12 +55,20 @@ const useRRHH = () => {
         a.fecha === new Date().toISOString().split('T')[0] && a.estado === 'Presente'
       ).length || 0;
       const planillaMensual = activos.reduce((s, e) => s + (e.salario || 0), 0);
+      const empleadosPorDepartamento = Object.entries(
+        activos.reduce((acc, empleado) => {
+          const departamento = empleado.departamento || empleado.area || 'Sin area';
+          acc[departamento] = (acc[departamento] || 0) + 1;
+          return acc;
+        }, {})
+      ).map(([name, value]) => ({ name, value }));
 
       setDashboardData({
         totalEmpleados: activos.length,
         presentesHoy,
         planillaMensual,
-        incidentesMes: incRes.data?.filter(i => i.fecha?.startsWith(new Date().toISOString().slice(0, 7))).length || 0
+        incidentesMes: incRes.data?.filter(i => i.fecha?.startsWith(new Date().toISOString().slice(0, 7))).length || 0,
+        empleadosPorDepartamento
       });
     } catch (err) {
       console.error('Error cargando RRHH:', err);
@@ -166,7 +174,7 @@ const useRRHH = () => {
     if (!user?.id) throw new Error('Usuario no autenticado');
     
     const { data: nuevo, error } = await supabase
-      .from('incidentes_ssoma')
+      .from('registro_accidentes')
       .insert([{ ...data, user_id: user.id, fecha: data.fecha || new Date().toISOString().split('T')[0], fecha_reporte: data.fecha_reporte || new Date().toISOString().split('T')[0], estado: data.estado || 'Abierto' }])
       .select()
       .single();

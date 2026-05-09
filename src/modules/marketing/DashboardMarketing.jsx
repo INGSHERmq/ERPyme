@@ -4,22 +4,24 @@ import useMarketing from '../../hooks/useMarketing';
 import './DashboardMarketing.css';
 
 const STATUS_COLORS = {
-  Aceptada: '#28a745',
-  Pendiente: '#ffc107',
-  Rechazada: '#dc3545'
+  Aceptada: '#1a3a3a',
+  Pendiente: '#e8b94a',
+  Rechazada: '#ff4d8b'
 };
 
 const DashboardMarketing = () => {
   const { clientes, cotizaciones, proyectos, loading } = useMarketing();
 
   const stats = useMemo(() => {
-    if (!cotizaciones?.length || !proyectos?.length || !clientes?.length) return null;
+    const cotizacionesData = cotizaciones || [];
+    const proyectosData = proyectos || [];
+    const clientesData = clientes || [];
 
-    const aceptadas = cotizaciones.filter(c => c.estado === 'Aceptada');
+    const aceptadas = cotizacionesData.filter(c => c.estado === 'Aceptada');
     const montoAceptado = aceptadas.reduce((sum, c) => sum + (c.monto || 0), 0);
 
     const statusDist = Object.entries(
-      cotizaciones.reduce((acc, c) => {
+      cotizacionesData.reduce((acc, c) => {
         acc[c.estado] = (acc[c.estado] || 0) + 1;
         return acc;
       }, {})
@@ -29,21 +31,21 @@ const DashboardMarketing = () => {
       fill: STATUS_COLORS[name] || '#ccc'
     }));
 
-    const projectsByClient = clientes
+    const projectsByClient = clientesData
       .map(cliente => ({
         name: cliente.nombre,
-        value: proyectos.filter(p => p.cliente_id === cliente.id).length
+        value: proyectosData.filter(p => p.cliente_id === cliente.id).length
       }))
       .filter(c => c.value > 0)
       .sort((a, b) => b.value - a.value);
 
     return {
-      totalCotizaciones: cotizaciones.length,
-      tasaConversion: cotizaciones.length > 0
-        ? Math.round((aceptadas.length / cotizaciones.length) * 100)
+      totalCotizaciones: cotizacionesData.length,
+      tasaConversion: cotizacionesData.length > 0
+        ? Math.round((aceptadas.length / cotizacionesData.length) * 100)
         : 0,
       montoAceptado,
-      proyectosActivos: proyectos.filter(p => p.estado === 'En Progreso').length,
+      proyectosActivos: proyectosData.filter(p => p.estado === 'En Progreso').length,
       statusDist,
       projectsByClient
     };
@@ -108,7 +110,7 @@ const DashboardMarketing = () => {
                 <XAxis type="number" />
                 <YAxis dataKey="name" type="category" width={100} />
                 <Tooltip />
-                <Bar dataKey="value" fill="#0052cc" radius={[0, 4, 4, 0]} />
+                <Bar dataKey="value" fill="#ff4d8b" radius={[0, 8, 8, 0]} />
               </BarChart>
             </ResponsiveContainer>
           ) : (

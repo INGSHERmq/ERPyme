@@ -26,9 +26,8 @@ const TareaCard = ({ tarea, onEdit, onDelete }) => {
 
   const isCompletada = tarea.estado === 'Completado';
   const cardStyle = {
-    borderLeft: `4px solid ${tarea.color || '#0052cc'}`,
+    borderLeft: `5px solid ${tarea.color || '#ff4d8b'}`,
     opacity: isCompletada ? 0.7 : 1,
-    backgroundColor: isCompletada ? '#f8f9fa' : 'white',
     transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined
   };
 
@@ -65,8 +64,11 @@ const TareaCard = ({ tarea, onEdit, onDelete }) => {
       )}
 
       <div className="card-footer">
+        {tarea.fecha_inicio && (
+          <span className="fecha">Inicio: {new Date(tarea.fecha_inicio).toLocaleDateString('es-ES')}</span>
+        )}
         {tarea.fecha_fin && (
-          <span className="fecha">{new Date(tarea.fecha_fin).toLocaleDateString('es-ES')}</span>
+          <span className="fecha">Fin: {new Date(tarea.fecha_fin).toLocaleDateString('es-ES')}</span>
         )}
       </div>
     </article>
@@ -77,7 +79,7 @@ const Columna = ({ titulo, estado, tareas, onEditTarea, onDeleteTarea }) => {
   const { isOver, setNodeRef } = useDroppable({ id: estado });
 
   return (
-    <section ref={setNodeRef} className={`columna ${isOver ? 'active' : ''}`} aria-label={titulo}>
+    <section ref={setNodeRef} className={`columna columna-${estado.toLowerCase().replace(/\s+/g, '-')} ${isOver ? 'active' : ''}`} aria-label={titulo}>
       <h3>{titulo} <span className="count">{tareas.length}</span></h3>
       <div className="tareas-list">
         {tareas.map(t => (

@@ -1,133 +1,24 @@
 import { useMemo, useState } from 'react';
 import './Home.css';
+import { ERP_MODULES } from './config/modules';
 
-const MODULES = [
-  {
-    id: 'projects',
-    title: 'Proyectos',
-    desc: 'Tareas, calendario, avances y cronogramas',
-    color: '#0052cc',
-    status: 'Activo'
-  },
-  {
-    id: 'marketing',
-    title: 'Clientes y cotizaciones',
-    desc: 'Clientes, oportunidades y cotizaciones',
-    color: '#ff5722',
-    status: 'Activo'
-  },
-  {
-    id: 'ventas',
-    title: 'Ventas y cobranza',
-    desc: 'Contactos nuevos, pedidos, facturas e historial comercial',
-    color: '#7c3aed',
-    status: 'Nuevo'
-  },
-  {
-    id: 'compras',
-    title: 'Compras y proveedores',
-    desc: 'Proveedores, compras solicitadas y gastos de compra',
-    color: '#0f766e',
-    status: 'Nuevo'
-  },
-  {
-    id: 'facturacion',
-    title: 'Facturas y comprobantes',
-    desc: 'Facturas, boletas, recibos y documentos de venta',
-    color: '#b45309',
-    status: 'Nuevo'
-  },
-  {
-    id: 'finanzas',
-    title: 'Dinero',
-    desc: 'Ingresos, egresos y cuentas por cobrar',
-    color: '#ca8a04',
-    status: 'Activo'
-  },
-  {
-    id: 'caja-bancos',
-    title: 'Caja y bancos',
-    desc: 'Cuentas bancarias, caja chica y saldos iniciales',
-    color: '#15803d',
-    status: 'Nuevo'
-  },
-  {
-    id: 'logistica',
-    title: 'Logistica',
-    desc: 'Equipos desde inventario, prestamos y mantenimiento',
-    color: '#607d8b',
-    status: 'Activo'
-  },
-  {
-    id: 'inventario-operativo',
-    title: 'Productos e inventario',
-    desc: 'Productos, existencias, almacenes y alertas',
-    color: '#0891b2',
-    status: 'Nuevo'
-  },
-  {
-    id: 'rrhh',
-    title: 'Recursos Humanos',
-    desc: 'Empleados, asistencias, asignaciones y seguridad',
-    color: '#4caf50',
-    status: 'Activo'
-  },
-  {
-    id: 'reportes',
-    title: 'Reportes',
-    desc: 'Resumen de ventas, gastos, caja y proyectos',
-    color: '#1d4ed8',
-    status: 'Nuevo'
-  },
-  {
-    id: 'permisos-auditoria',
-    title: 'Usuarios y permisos',
-    desc: 'Usuarios, permisos, accesos e historial de cambios',
-    color: '#be123c',
-    status: 'Nuevo'
-  },
-  {
-    id: 'documentos',
-    title: 'Archivos',
-    desc: 'Contratos, comprobantes, fotos, certificados y documentos',
-    color: '#9333ea',
-    status: 'Nuevo'
-  },
-  {
-    id: 'notificaciones',
-    title: 'Alertas',
-    desc: 'Vencimientos, tareas atrasadas y avisos importantes',
-    color: '#dc2626',
-    status: 'Nuevo'
-  },
-  {
-    id: 'importacion',
-    title: 'Importar y exportar',
-    desc: 'Cargar o descargar informacion en Excel o CSV',
-    color: '#475569',
-    status: 'Nuevo'
-  },
-  {
-    id: 'assistant',
-    title: 'Habla con tu asistente',
-    desc: 'Chat interno para consultar informacion de tu empresa',
-    color: '#0ea5e9',
-    status: 'Nuevo'
-  }
-];
-
-const Home = ({ onNavigate, profile, signOut }) => {
+const Home = ({ onNavigate, profile, signOut, enabledModules }) => {
   const [searchTerm, setSearchTerm] = useState('');
+
+  const visibleModules = useMemo(() => {
+    if (!enabledModules?.length) return [];
+    return ERP_MODULES.filter((module) => enabledModules.includes(module.id));
+  }, [enabledModules]);
 
   const filteredModules = useMemo(() => {
     const query = searchTerm.trim().toLowerCase();
-    if (!query) return MODULES;
+    if (!query) return visibleModules;
 
-    return MODULES.filter((mod) => {
+    return visibleModules.filter((mod) => {
       const searchableText = `${mod.title} ${mod.desc} ${mod.status}`.toLowerCase();
       return searchableText.includes(query);
     });
-  }, [searchTerm]);
+  }, [visibleModules, searchTerm]);
 
   return (
     <div className="home-container">
@@ -153,7 +44,7 @@ const Home = ({ onNavigate, profile, signOut }) => {
           />
         </label>
         <span className="module-count">
-          {filteredModules.length} de {MODULES.length}
+          {filteredModules.length} de {visibleModules.length}
         </span>
       </section>
 

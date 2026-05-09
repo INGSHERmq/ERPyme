@@ -48,17 +48,49 @@ const useFinanzas = () => {
         fechaEmision: c.fecha_emision
       })));
 
-      const totalIngresos = ingRes.data?.reduce((s, i) => s + i.monto, 0) || 0;
-      const ingresosCobrados = ingRes.data?.filter(i => i.estado === 'Cobrado').reduce((s, i) => s + i.monto, 0) || 0;
-      const totalEgresos = egrRes.data?.reduce((s, e) => s + e.monto, 0) || 0;
-      const totalPorCobrar = cpcRes.data?.filter(c => c.estado === 'Pendiente').reduce((s, c) => s + c.monto, 0) || 0;
+      const ingresosData = ingRes.data || [];
+      const egresosData = egrRes.data || [];
+      const cuentasData = cpcRes.data || [];
+      const totalIngresos = ingresosData.reduce((s, i) => s + Number(i.monto || 0), 0);
+      const ingresosCobrados = ingresosData
+        .filter(i => i.estado === 'Cobrado')
+        .reduce((s, i) => s + Number(i.monto || 0), 0);
+      const totalEgresos = egresosData.reduce((s, e) => s + Number(e.monto || 0), 0);
+      const totalPorCobrar = cuentasData
+        .filter(c => c.estado === 'Pendiente')
+        .reduce((s, c) => s + Number(c.monto || 0), 0);
+      const monthFormatter = new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: '2-digit' });
+      const months = Array.from({ length: 6 }, (_, index) => {
+        const date = new Date();
+        date.setDate(1);
+        date.setMonth(date.getMonth() - (5 - index));
+        return monthFormatter.format(date);
+      });
+      const ingresosPorMes = months.map((mes) => ({
+        mes,
+        ingresos: ingresosData
+          .filter(i => i.fecha?.startsWith(mes))
+          .reduce((s, i) => s + Number(i.monto || 0), 0),
+        egresos: egresosData
+          .filter(e => e.fecha?.startsWith(mes))
+          .reduce((s, e) => s + Number(e.monto || 0), 0)
+      }));
+      const egresosPorCategoria = Object.entries(
+        egresosData.reduce((acc, egreso) => {
+          const categoria = egreso.categoria || egreso.tipo || 'Otros';
+          acc[categoria] = (acc[categoria] || 0) + Number(egreso.monto || 0);
+          return acc;
+        }, {})
+      ).map(([name, value]) => ({ name, value }));
 
       setDashboardData({
         totalIngresos,
         ingresosCobrados,
         totalEgresos,
         balance: ingresosCobrados - totalEgresos,
-        totalPorCobrar
+        totalPorCobrar,
+        ingresosPorMes,
+        egresosPorCategoria
       });
     } catch (err) {
       console.error('Error cargando finanzas:', err);

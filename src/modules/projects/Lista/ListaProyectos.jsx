@@ -1,6 +1,13 @@
 import { useState, useMemo } from 'react';
 import './ListaProyectos.css';
 
+const formatDate = (value) => {
+  if (!value) return '-';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '-';
+  return date.toISOString().split('T')[0];
+};
+
 const ListaProyectos = ({ proyectos, onSelect }) => {
   const [search, setSearch] = useState('');
   const [filterEstado, setFilterEstado] = useState('Todos');
@@ -64,7 +71,11 @@ const ListaProyectos = ({ proyectos, onSelect }) => {
                       {p.prioridad}
                     </span>
                   </td>
-                  <td className="text-small">{p.inicio} al {p.fin}</td>
+                  <td className="text-small">
+                    {formatDate(p.inicio || p.fecha_inicio || p.fecha_inicio_plan || p.created_at)}{' '}
+                    al{' '}
+                    {formatDate(p.fin || p.fecha_fin || p.fecha_fin_plan || p.updated_at || p.created_at)}
+                  </td>
                   <td>
                     <button className="btn-ver" onClick={() => onSelect(p)}>
                       Ver 👁️

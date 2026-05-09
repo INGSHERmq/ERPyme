@@ -1,71 +1,72 @@
 import { useState } from 'react';
 import useMarketing from '../../hooks/useMarketing';
+import { useAuth } from '../../context/auth/useAuth';
+import { uploadPrivateFile } from '../../lib/storage';
 import './CotizacionesView.css';
 
 const initialForm = () => ({
   cliente_id: '',
   titulo: '',
   monto: '',
-  estado: 'Pendiente',
+  estado: 'borrador',
   fecha: new Date().toISOString().split('T')[0],
   descripcion: '',
   validez: '30 dias'
 });
 
 const CotizacionesView = () => {
+  const { user } = useAuth();
   const { clientes, cotizaciones, addCotizacion, convertirCotizacion, refetch, loading } = useMarketing();
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState(initialForm);
+  const [adjuntoFile, setAdjuntoFile] = useState(null);
+  const [subiendoAdjunto, setSubiendoAdjunto] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      let archivoAdjuntoPath = null;
+      if (adjuntoFile) {
+        setSubiendoAdjunto(true);
+        const upload = await uploadPrivateFile({
+          file: adjuntoFile,
+          folder: 'cotizaciones',
+          userId: user?.id
+        });
+        archivoAdjuntoPath = upload.publicUrl;
+      }
+
       await addCotizacion({
         ...formData,
+        archivo_adjunto_path: archivoAdjuntoPath,
         monto: Number(formData.monto),
         cliente_id: Number(formData.cliente_id)
       });
       setShowForm(false);
       setFormData(initialForm());
+      setAdjuntoFile(null);
       refetch();
       alert('Cotizacion creada correctamente');
     } catch (error) {
       console.error('Error al guardar:', error);
       alert('No se pudo crear la cotizacion');
+    } finally {
+      setSubiendoAdjunto(false);
     }
   };
 
   const handleChange = (e) => setFormData(p => ({ ...p, [e.target.name]: e.target.value }));
 
   const handleConvertir = async (cotizacion) => {
-    if (!window.confirm('Confirmar cotizacion y crear el ingreso pendiente?')) return;
+    if (!window.confirm('Aprobar cotizacion y generar proyecto + factura de venta borrador automaticamente?')) return;
 
     try {
-      const fechaInicio = new Date();
-      const fechaFin = new Date();
-      fechaFin.setDate(fechaInicio.getDate() + 30);
-
-      const hoy = fechaInicio.toISOString().split('T')[0];
-      const finEstimado = fechaFin.toISOString().split('T')[0];
-
-      await convertirCotizacion(cotizacion.id, {
-        nombre: cotizacion.titulo,
-        cliente_id: cotizacion.cliente_id,
-        cotizacion_id: cotizacion.id,
-        estado: 'En Progreso',
-        prioridad: 'Media',
-        inicio: hoy,
-        fin: finEstimado,
-        descripcion: cotizacion.descripcion || 'Proyecto creado desde cotizacion',
-        monto: cotizacion.monto,
-        progreso: 0
-      });
-
-      alert('Cotizacion confirmada. Ya aparece como ingreso pendiente en Dinero.');
+      await convertirCotizacion(cotizacion.id);
+      alert('Cotizacion aprobada. Se crearon automaticamente el proyecto y la factura de venta borrador.');
       refetch();
     } catch (error) {
-      console.error('Error al confirmar:', error);
-      alert(error.message || 'No se pudo confirmar la cotizacion');
+      console.error('Error al aprobar:', error);
+      alert(error.message || 'No se pudo aprobar la cotizacion');
     }
   };
 
@@ -91,7 +92,14 @@ const CotizacionesView = () => {
           <input name="fecha" type="date" required value={formData.fecha} onChange={handleChange} />
           <textarea name="descripcion" placeholder="Descripcion" value={formData.descripcion} onChange={handleChange} />
           <input name="validez" placeholder="Validez (ej: 30 dias)" value={formData.validez} onChange={handleChange} />
-          <button type="submit" className="btn-primary">Crear cotizacion</button>
+          <input
+            type="file"
+            onChange={(event) => setAdjuntoFile(event.target.files?.[0] || null)}
+            accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
+          />
+          <button type="submit" className="btn-primary" disabled={subiendoAdjunto}>
+            {subiendoAdjunto ? 'Subiendo archivo...' : 'Crear cotizacion'}
+          </button>
         </form>
       )}
 
@@ -103,24 +111,35 @@ const CotizacionesView = () => {
               <th>Titulo</th>
               <th>Monto</th>
               <th>Estado</th>
-              <th>Proyecto</th>
               <th>Fecha</th>
+              <th>Adjunto</th>
               <th>Acciones</th>
             </tr>
           </thead>
           <tbody>
             {cotizaciones.map(c => (
               <tr key={c.id}>
-                <td className="cell-bold">{c.clienteNombre || '-'}</td>
+                <td className="cell-bold">{c.clienteNombre || c.cliente_nombre || '-'}</td>
                 <td>{c.titulo}</td>
                 <td><strong>S/ {Number(c.monto || 0).toLocaleString()}</strong></td>
-                <td><span className={`badge badge-${c.estado === 'Aceptada' ? 'green' : c.estado === 'Rechazada' ? 'red' : 'yellow'}`}>{c.estado}</span></td>
-                <td>{c.proyectoNombre || 'Sin proyecto'}</td>
+                <td>
+                  <span className={`badge badge-${
+                    c.estado === 'aprobada' ? 'green' : c.estado === 'rechazada' || c.estado === 'vencida' ? 'red' : 'yellow'
+                  }`}
+                  >
+                    {c.estado}
+                  </span>
+                </td>
                 <td>{c.fecha}</td>
                 <td>
-                  {c.estado === 'Pendiente' && (
+                  {c.archivo_adjunto_path ? (
+                    <a href={c.archivo_adjunto_path} target="_blank" rel="noreferrer">Ver</a>
+                  ) : '—'}
+                </td>
+                <td>
+                  {c.estado === 'borrador' && (
                     <button className="btn-action btn-convert" onClick={() => handleConvertir(c)}>
-                      Confirmar
+                      Aprobar
                     </button>
                   )}
                 </td>
