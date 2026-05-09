@@ -278,6 +278,18 @@ textarea:focus,
   border-bottom-color: var(--color-hairline-soft) !important;
 }
 
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-field label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-body-strong);
+}
+
 .recharts-wrapper text {
   fill: var(--color-body-strong);
   font-size: 12px;

@@ -27,6 +27,20 @@ const addDays = (date, days) => {
 };
 
 const taskFallbackEnd = (taskStart, taskEnd) => taskEnd || taskStart;
+const resolveProjectStart = (proyecto) =>
+  parseDate(
+    proyecto?.inicio ||
+    proyecto?.fecha_inicio ||
+    proyecto?.fecha_inicio_plan ||
+    proyecto?.created_at
+  );
+
+const resolveProjectEnd = (proyecto) =>
+  parseDate(
+    proyecto?.fin ||
+    proyecto?.fecha_fin ||
+    proyecto?.fecha_fin_plan
+  );
 
 const Cronograma = ({ proyectoId }) => {
   const { proyectos } = useProjects();
@@ -39,10 +53,6 @@ const Cronograma = ({ proyectoId }) => {
 
   const timelineData = useMemo(() => {
     if (!proyectoData) return null;
-
-    const projectStart = parseDate(proyectoData.inicio);
-    const projectEnd = parseDate(proyectoData.fin);
-    if (!projectStart || !projectEnd) return null;
 
     const taskItems = tareas
       .map((tarea) => {
@@ -62,6 +72,17 @@ const Cronograma = ({ proyectoId }) => {
         };
       })
       .filter(Boolean);
+
+    const taskMinStart = taskItems.length
+      ? taskItems.reduce((min, item) => (item.start < min ? item.start : min), taskItems[0].start)
+      : null;
+    const taskMaxEnd = taskItems.length
+      ? taskItems.reduce((max, item) => (item.end > max ? item.end : max), taskItems[0].end)
+      : null;
+
+    const projectStart = resolveProjectStart(proyectoData) || taskMinStart;
+    const projectEnd = resolveProjectEnd(proyectoData) || taskMaxEnd;
+    if (!projectStart || !projectEnd) return null;
 
     const projectItem = {
       id: `project-${proyectoData.id}`,
@@ -159,8 +180,8 @@ const Cronograma = ({ proyectoId }) => {
       <div className="proyecto-info-bar">
         <div className="info-item"><strong>Proyecto:</strong> {proyecto.nombre}</div>
         <div className="info-item"><strong>Tareas con fecha:</strong> {items.length - 1}</div>
-        <div className="info-item"><strong>Inicio:</strong> {proyecto.inicio}</div>
-        <div className="info-item"><strong>Fin:</strong> {proyecto.fin}</div>
+        <div className="info-item"><strong>Inicio:</strong> {proyecto.inicio || proyecto.fecha_inicio || proyecto.fecha_inicio_plan || '-'}</div>
+        <div className="info-item"><strong>Fin:</strong> {proyecto.fin || proyecto.fecha_fin || proyecto.fecha_fin_plan || '-'}</div>
       </div>
     </div>
   );

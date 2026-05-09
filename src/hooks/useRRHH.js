@@ -30,7 +30,7 @@ const useRRHH = () => {
         supabase.from('v_empleados_stats').select('*').eq('user_id', user.id).order('nombre'),
         supabase.from('asistencias').select('*').eq('user_id', user.id).order('fecha', { ascending: false }).limit(50),
         supabase.from('asignaciones_proyecto').select('*').eq('user_id', user.id).eq('estado', 'Activo'),
-        supabase.from('incidentes_ssoma').select('*').eq('user_id', user.id).order('fecha', { ascending: false }).limit(20)
+        supabase.from('registro_accidentes').select('*').eq('user_id', user.id).order('fecha', { ascending: false }).limit(20)
       ]);
       
       if (empRes.error) throw empRes.error;
@@ -174,7 +174,7 @@ const useRRHH = () => {
     if (!user?.id) throw new Error('Usuario no autenticado');
     
     const { data: nuevo, error } = await supabase
-      .from('incidentes_ssoma')
+      .from('registro_accidentes')
       .insert([{ ...data, user_id: user.id, fecha: data.fecha || new Date().toISOString().split('T')[0], fecha_reporte: data.fecha_reporte || new Date().toISOString().split('T')[0], estado: data.estado || 'Abierto' }])
       .select()
       .single();

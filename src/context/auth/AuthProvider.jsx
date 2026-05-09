@@ -182,33 +182,32 @@ export default function AuthProvider({ children }) {
         if (error || !data?.session?.user?.id) return;
 
         const currentUserId = data.session.user.id;
-        accessChannel = supabase
-          .channel(`auth-access-${currentUserId}`)
-          .on(
-            'postgres_changes',
-            {
-              event: '*',
-              schema: 'public',
-              table: 'user_module_access',
-              filter: `user_id=eq.${currentUserId}`
-            },
-            () => {
-              safeCheckSession({ refresh: true, silent: true });
-            }
-          )
-          .on(
-            'postgres_changes',
-            {
-              event: '*',
-              schema: 'public',
-              table: 'empresa_usuarios',
-              filter: `user_id=eq.${currentUserId}`
-            },
-            () => {
-              safeCheckSession({ refresh: true, silent: true });
-            }
-          )
-          .subscribe();
+        accessChannel = supabase.channel(`auth-access-${currentUserId}-${Date.now()}`);
+        accessChannel.on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'user_module_access',
+            filter: `user_id=eq.${currentUserId}`
+          },
+          () => {
+            safeCheckSession({ refresh: true, silent: true });
+          }
+        );
+        accessChannel.on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'empresa_usuarios',
+            filter: `user_id=eq.${currentUserId}`
+          },
+          () => {
+            safeCheckSession({ refresh: true, silent: true });
+          }
+        );
+        accessChannel.subscribe();
       } catch (error) {
         console.error('Error subscribing auth access changes:', error);
       }

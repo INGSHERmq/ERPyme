@@ -23,6 +23,21 @@ const endOfDay = (date) => {
   return result;
 };
 
+const resolveProjectStart = (proyecto) =>
+  parseDate(
+    proyecto?.inicio ||
+    proyecto?.fecha_inicio ||
+    proyecto?.fecha_inicio_plan ||
+    proyecto?.created_at
+  );
+
+const resolveProjectEnd = (proyecto) =>
+  parseDate(
+    proyecto?.fin ||
+    proyecto?.fecha_fin ||
+    proyecto?.fecha_fin_plan
+  );
+
 const Calendario = ({ proyectoId }) => {
   const { proyectos } = useProjects();
   const { tareas, loading: tareasLoading } = useTareas(proyectoId);
@@ -38,8 +53,8 @@ const Calendario = ({ proyectoId }) => {
   const events = useMemo(() => {
     if (!proyecto) return [];
 
-    const projectStart = parseDate(proyecto.inicio);
-    const projectEnd = parseDate(proyecto.fin);
+    const projectStart = resolveProjectStart(proyecto);
+    const projectEnd = resolveProjectEnd(proyecto);
     const projectEvent = projectStart && projectEnd
       ? [{
           id: `project-${proyecto.id}`,
@@ -148,7 +163,7 @@ const Calendario = ({ proyectoId }) => {
       <div className="proyecto-legend">
         <div className="legend-item">
           <span className="legend-color project"></span>
-          <span>{proyecto.nombre} ({proyecto.inicio} - {proyecto.fin})</span>
+          <span>{proyecto.nombre} ({proyecto.inicio || proyecto.fecha_inicio || proyecto.fecha_inicio_plan || '-'} - {proyecto.fin || proyecto.fecha_fin || proyecto.fecha_fin_plan || '-'})</span>
         </div>
         <div className="legend-item">
           <span className="legend-color task"></span>

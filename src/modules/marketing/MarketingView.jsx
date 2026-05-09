@@ -22,8 +22,8 @@ const MarketingView = ({ onBack }) => {
         <button onClick={onBack} className="module-hero-back" aria-label="Volver al inicio">
           Volver al inicio
         </button>
-        <h1>Clientes y cotizaciones</h1>
-        <p>Gestiona clientes, oportunidades comerciales, cotizaciones y conversiones a proyectos.</p>
+        <h1>Ventas</h1>
+        <p>Gestiona clientes, cotizaciones y su conversion automatica a proyectos aprobados.</p>
       </section>
 
       <nav className="tabs-nav" role="tablist">

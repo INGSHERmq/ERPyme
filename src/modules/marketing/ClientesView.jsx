@@ -6,7 +6,7 @@ const ClientesView = () => {
   const { clientes, addCliente, updateClienteEstado, loading, refetch } = useMarketing();
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
-    nombre: '', contacto: '', email: '', telefono: '', industria: '', estado: 'Activo'
+    dni_ruc: '', nombre: '', contacto: '', email: '', telefono: '', industria: '', estado: 'Activo'
   });
 
   const handleSubmit = async (e) => {
@@ -16,7 +16,7 @@ const ClientesView = () => {
       await addCliente(formData);
       refetch();
       setShowForm(false);
-      setFormData({ nombre: '', contacto: '', email: '', telefono: '', industria: '', estado: 'Activo' });
+      setFormData({ dni_ruc: '', nombre: '', contacto: '', email: '', telefono: '', industria: '', estado: 'Activo' });
       alert('✅ Cliente guardado correctamente');
     } catch (error) {
       console.error('Error al crear cliente:', error);
@@ -53,6 +53,7 @@ const ClientesView = () => {
 
       {showForm && (
         <form onSubmit={handleSubmit} className="simple-form">
+          <input name="dni_ruc" placeholder="DNI o RUC *" required value={formData.dni_ruc} onChange={handleInputChange} />
           <input name="nombre" placeholder="Nombre *" required value={formData.nombre} onChange={handleInputChange} />
           <input name="contacto" placeholder="Contacto *" required value={formData.contacto} onChange={handleInputChange} />
           <input name="email" type="email" placeholder="Email *" required value={formData.email} onChange={handleInputChange} />
@@ -70,6 +71,7 @@ const ClientesView = () => {
         <table className="data-table">
           <thead>
             <tr>
+              <th>DNI/RUC</th>
               <th>Nombre</th>
               <th>Contacto</th>
               <th>Email</th>
@@ -81,6 +83,7 @@ const ClientesView = () => {
           <tbody>
             {clientes.map(cliente => (
               <tr key={cliente.id}>
+                <td>{cliente.dni_ruc || '—'}</td>
                 <td className="cell-bold">{cliente.nombre}</td>
                 <td>{cliente.contacto}</td>
                 <td><a href={`mailto:${cliente.email}`}>{cliente.email}</a></td>
