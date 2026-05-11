@@ -50,7 +50,7 @@ const DashboardRRHH = () => {
       </div>
 
       <div className="chart-wrapper">
-        <h3>Empleados por area</h3>
+        <h3>Empleados por área</h3>
         {chartData.length > 0 ? (
           <ResponsiveContainer width="100%" height={300}>
             <PieChart>
@@ -71,7 +71,7 @@ const DashboardRRHH = () => {
             </PieChart>
           </ResponsiveContainer>
         ) : (
-          <div className="empty-chart">No hay datos de areas para mostrar</div>
+          <div className="empty-chart">No hay datos de áreas para mostrar</div>
         )}
       </div>
     </div>

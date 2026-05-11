@@ -121,8 +121,8 @@ const FacturasCompraView = () => {
       {showForm && (
         <form className="simple-form" onSubmit={handleSubmit}>
           <div className="form-field">
-            <label htmlFor="fc-numero">Numero de factura</label>
-            <input id="fc-numero" placeholder="Numero factura" required value={formData.numero} onChange={(e) => setFormData((p) => ({ ...p, numero: e.target.value }))} />
+            <label htmlFor="fc-numero">Número de factura</label>
+            <input id="fc-numero" placeholder="Número factura" required value={formData.numero} onChange={(e) => setFormData((p) => ({ ...p, numero: e.target.value }))} />
           </div>
           <div className="form-field">
             <label htmlFor="fc-orden">Orden de compra</label>
@@ -143,7 +143,7 @@ const FacturasCompraView = () => {
             </select>
           </div>
           <div className="form-field">
-            <label htmlFor="fc-fecha">Fecha de emision</label>
+            <label htmlFor="fc-fecha">Fecha de emisión</label>
             <input id="fc-fecha" type="date" required value={formData.fecha_emision} onChange={(e) => setFormData((p) => ({ ...p, fecha_emision: e.target.value }))} />
           </div>
           <div className="form-field">
@@ -158,14 +158,14 @@ const FacturasCompraView = () => {
         <table className="data-table">
           <thead>
             <tr>
-              <th>Numero</th>
+              <th>Número</th>
               <th>Orden compra</th>
               <th>Proveedor</th>
               <th>Estado orden</th>
               <th>Estado factura</th>
-              <th>Fecha emision</th>
+              <th>Fecha emisión</th>
               <th>Total</th>
-              <th>Accion</th>
+              <th>Acción</th>
             </tr>
           </thead>
           <tbody>

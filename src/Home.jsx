@@ -25,7 +25,7 @@ const Home = ({ onNavigate, profile, signOut, enabledModules }) => {
       <header className="home-header">
         <div className="header-content">
           <h1>ERPyme</h1>
-          <p>Sistema integral de gestion empresarial</p>
+          <p>Sistema integral de gestión empresarial</p>
         </div>
         <div className="home-actions">
           <span>{profile?.nombre_completo || 'Usuario'}</span>
@@ -33,14 +33,14 @@ const Home = ({ onNavigate, profile, signOut, enabledModules }) => {
         </div>
       </header>
 
-      <section className="home-toolbar" aria-label="Busqueda de modulos">
+      <section className="home-toolbar" aria-label="Búsqueda de módulos">
         <label className="module-search">
-          <span>Buscar modulo</span>
+          <span>BUSCAR MÓDULO</span>
           <input
             type="search"
             value={searchTerm}
             onChange={(event) => setSearchTerm(event.target.value)}
-            placeholder="Buscar por nombre, area o funcion..."
+            placeholder="Buscar por nombre, área o función..."
           />
         </label>
         <span className="module-count">
@@ -77,7 +77,7 @@ const Home = ({ onNavigate, profile, signOut, enabledModules }) => {
         ))}
         {filteredModules.length === 0 && (
           <div className="modules-empty">
-            No se encontraron modulos con ese criterio.
+            No se encontraron módulos con ese criterio.
           </div>
         )}
       </main>

@@ -80,8 +80,8 @@ const EmpleadosView = () => {
             <input id="emp-email" name="email" type="email" placeholder="Email corporativo *" required value={formData.email} onChange={handleChange} />
           </div>
           <div className="form-field">
-            <label htmlFor="emp-telefono">Telefono</label>
-            <input id="emp-telefono" name="telefono" placeholder="Telefono" value={formData.telefono} onChange={handleChange} />
+            <label htmlFor="emp-telefono">Teléfono</label>
+            <input id="emp-telefono" name="telefono" placeholder="Teléfono" value={formData.telefono} onChange={handleChange} />
           </div>
           <div className="form-field">
             <label htmlFor="emp-cargo">Cargo *</label>
@@ -111,7 +111,7 @@ const EmpleadosView = () => {
               onChange={(event) => setFormData((prev) => ({ ...prev, puede_subir_documentos: event.target.value === 'si' }))}
             >
               <option value="no">No</option>
-              <option value="si">Si</option>
+              <option value="si">Sí</option>
             </select>
           </div>
           {formData.puede_subir_documentos && (
@@ -144,14 +144,14 @@ const EmpleadosView = () => {
               alert(error.message || 'No se pudo crear la solicitud');
               return;
             }
-            alert('Solicitud creada. Se alertara por vencimiento.');
+            alert('Solicitud creada. Se alertará por vencimiento.');
             setSolicitudEmpleadoId(null);
             setFechaLimite('');
           }}
         >
-          <label>Fecha maxima para entregar documentos</label>
+          <label>Fecha máxima para entregar documentos</label>
           <input type="date" required value={fechaLimite} onChange={(event) => setFechaLimite(event.target.value)} />
-          <button type="submit" className="btn-primary">Guardar fecha limite</button>
+          <button type="submit" className="btn-primary">Guardar fecha límite</button>
           <button type="button" className="btn-primary" onClick={() => { setSolicitudEmpleadoId(null); setFechaLimite(''); }}>Cancelar</button>
         </form>
       )}

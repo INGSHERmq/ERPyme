@@ -22,9 +22,9 @@
 }
 
 .vista-selector button.active {
-  background: var(--color-brand-pink);
-  color: white;
-  border-color: var(--color-brand-pink);
+  background: var(--binance-yellow);
+  color: var(--on-primary);
+  border-color: var(--binance-yellow);
 }
 
 .scrum-board {
@@ -37,23 +37,23 @@
   border-radius: var(--radius-xl);
   padding: 16px;
   min-height: 400px;
-  border: 2px solid rgba(10, 10, 10, 0.12);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.45);
+  border: 1px solid var(--border-color);
+  background: var(--surface-bg);
 }
 
 .columna-pendiente {
-  background: #fff1d1;
-  border-color: #e8b94a;
+  background: rgba(252, 213, 53, 0.05);
+  border-color: rgba(252, 213, 53, 0.2);
 }
 
 .columna-en-progreso {
-  background: #ffe4ef;
-  border-color: #ff4d8b;
+  background: rgba(59, 130, 246, 0.05);
+  border-color: rgba(59, 130, 246, 0.2);
 }
 
 .columna-completado {
-  background: #dff4ed;
-  border-color: #1a3a3a;
+  background: rgba(14, 203, 129, 0.05);
+  border-color: rgba(14, 203, 129, 0.2);
 }
 
 .columna h3 {

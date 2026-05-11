@@ -25,7 +25,10 @@ function App() {
   if (authLoading) {
     return (
       <div className="app-loading">
-        <div className="spinner"></div>
+        <div className="loading-logo">E</div>
+        <div className="loading-bar-container">
+          <div className="loading-bar-progress"></div>
+        </div>
         <p>Cargando ERPyme...</p>
       </div>
     );
@@ -37,7 +40,7 @@ function App() {
     return (
       <div className="app">
         <main className="app-content">
-          <Suspense fallback={<div className="loading">Cargando area...</div>}>
+          <Suspense fallback={<div className="loading">Cargando área...</div>}>
             <AdminView signOut={signOut} />
           </Suspense>
         </main>
@@ -50,7 +53,7 @@ function App() {
   return (
     <div className="app">
       <main className="app-content">
-        <Suspense fallback={<div className="loading">Cargando area...</div>}>
+        <Suspense fallback={<div className="loading">Cargando área...</div>}>
           {module === 'home' && (
             <Home
               onNavigate={setModule}

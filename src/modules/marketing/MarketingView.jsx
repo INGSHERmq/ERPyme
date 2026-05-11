@@ -23,7 +23,7 @@ const MarketingView = ({ onBack }) => {
           Volver al inicio
         </button>
         <h1>Ventas</h1>
-        <p>Gestiona clientes, cotizaciones y su conversion automatica a proyectos aprobados.</p>
+        <p>Gestiona clientes, cotizaciones y su conversión automática a proyectos aprobados.</p>
       </section>
 
       <nav className="tabs-nav" role="tablist">
