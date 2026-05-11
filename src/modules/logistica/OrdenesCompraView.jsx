@@ -95,7 +95,7 @@ const OrdenesCompraView = () => {
     }]);
 
     if (materialError) {
-      alert(materialError.message || 'Se creo la orden, pero fallo el material');
+      alert(materialError.message || 'Se creó la orden, pero falló el registro del material');
     }
 
     setFormData({ numero: '', nombre_compra: '', proveedor_id: '', fecha: getToday(), cantidad: '1', costo_unitario: '0' });
@@ -154,7 +154,7 @@ const OrdenesCompraView = () => {
   return (
     <div className="logistica-view">
       <div className="view-header">
-        <h2>Ordenes de compra</h2>
+        <h2>Órdenes de compra</h2>
         <button type="button" className="btn-primary" onClick={() => setShowForm(!showForm)}>
           {showForm ? 'Cancelar' : '+ Nueva orden'}
         </button>
@@ -163,12 +163,12 @@ const OrdenesCompraView = () => {
       {showForm && (
         <form className="simple-form" onSubmit={handleSubmit}>
           <div className="form-field">
-            <label htmlFor="oc-numero">Numero de orden</label>
-            <input id="oc-numero" placeholder="Numero" required value={formData.numero} onChange={(e) => setFormData((p) => ({ ...p, numero: e.target.value }))} />
+            <label htmlFor="oc-numero">Número de orden</label>
+            <input id="oc-numero" placeholder="Número" required value={formData.numero} onChange={(e) => setFormData((p) => ({ ...p, numero: e.target.value }))} />
           </div>
           <div className="form-field">
-            <label htmlFor="oc-compra">Que se compra</label>
-            <input id="oc-compra" placeholder="Que se compra" required value={formData.nombre_compra} onChange={(e) => setFormData((p) => ({ ...p, nombre_compra: e.target.value }))} />
+            <label htmlFor="oc-compra">Qué se compra</label>
+            <input id="oc-compra" placeholder="Qué se compra" required value={formData.nombre_compra} onChange={(e) => setFormData((p) => ({ ...p, nombre_compra: e.target.value }))} />
           </div>
           <div className="form-field">
             <label htmlFor="oc-proveedor">Proveedor</label>
@@ -197,7 +197,7 @@ const OrdenesCompraView = () => {
         <table className="data-table">
           <thead>
             <tr>
-              <th>Numero</th>
+              <th>Número</th>
               <th>Compra</th>
               <th>Proveedor</th>
               <th>Fecha</th>
@@ -210,7 +210,7 @@ const OrdenesCompraView = () => {
           <tbody>
             {ordenes.map((orden) => (
               <tr key={orden.id}>
-                <td>{orden.numero}</td>
+                <td className="cell-bold">{orden.numero}</td>
                 <td>{orden.nombre_compra}</td>
                 <td>{proveedores.find((p) => p.id === orden.proveedor_id)?.nombre || '-'}</td>
                 <td>{orden.fecha}</td>

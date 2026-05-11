@@ -4,9 +4,9 @@ import useMarketing from '../../hooks/useMarketing';
 import './DashboardMarketing.css';
 
 const STATUS_COLORS = {
-  Aceptada: '#1a3a3a',
-  Pendiente: '#e8b94a',
-  Rechazada: '#ff4d8b'
+  Aceptada: '#0ecb81', // Trading Up
+  Pendiente: '#fcd535', // Binance Yellow
+  Rechazada: '#f6465d'  // Trading Down
 };
 
 const DashboardMarketing = () => {
@@ -107,10 +107,10 @@ const DashboardMarketing = () => {
           {stats.projectsByClient.length > 0 ? (
             <ResponsiveContainer width="100%" height={280}>
               <BarChart data={stats.projectsByClient} layout="vertical">
-                <XAxis type="number" />
-                <YAxis dataKey="name" type="category" width={100} />
+                <XAxis type="number" hide />
+                <YAxis dataKey="name" type="category" width={100} axisLine={false} tickLine={false} />
                 <Tooltip />
-                <Bar dataKey="value" fill="#ff4d8b" radius={[0, 8, 8, 0]} />
+                <Bar dataKey="value" fill="#fcd535" radius={[0, 4, 4, 0]} />
               </BarChart>
             </ResponsiveContainer>
           ) : (

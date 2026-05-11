@@ -1,46 +1,98 @@
-.module-container { padding: 20px; min-height: 100vh; background: #f8f9fa; }
-.btn-back { background: none; border: none; color: #0052cc; font-weight: 600; cursor: pointer; margin-bottom: 20px; font-size: 14px; display: flex; align-items: center; gap: 6px; }
-.btn-back:hover { color: #003d99; text-decoration: underline; }
+.module-container { padding: 24px; min-height: 100vh; background: var(--canvas-bg); }
 
-.tabs-nav { display: flex; gap: 10px; margin-bottom: 24px; background: white; padding: 12px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); overflow-x: auto; }
-.tabs-nav button { background: none; border: none; padding: 10px 18px; cursor: pointer; font-size: 14px; font-weight: 500; color: #6c757d; border-radius: 8px; white-space: nowrap; transition: all 0.2s; }
-.tabs-nav button.active { background: #0052cc; color: white; font-weight: 600; box-shadow: 0 2px 6px rgba(0,82,204,0.3); }
-.tabs-nav button:hover:not(.active) { background: #f1f3f5; }
+.tabs-nav { 
+  display: flex; 
+  gap: 8px; 
+  margin-bottom: 30px; 
+  background: var(--surface-bg); 
+  padding: 4px; 
+  border-radius: var(--radius-md); 
+  border: 1px solid var(--border-color); 
+  width: fit-content;
+}
 
-.view-header { display: flex; justify-content: space-between; align-items: center; background: white; padding: 16px 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-bottom: 20px; }
-.view-header h2 { margin: 0; font-size: 18px; color: #333; }
-.btn-primary { background: #0052cc; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.2s; }
-.btn-primary:hover { background: #003d99; transform: translateY(-1px); }
+.tabs-nav button { 
+  background: transparent; 
+  border: none; 
+  padding: 10px 20px; 
+  cursor: pointer; 
+  font-size: 14px; 
+  font-weight: 600; 
+  color: var(--text-muted); 
+  border-radius: var(--radius-sm); 
+  transition: 0.2s;
+}
 
-.simple-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-bottom: 20px; align-items: end; }
-.simple-form input, .simple-form select { padding: 10px 14px; border: 2px solid #e9ecef; border-radius: 8px; font-size: 14px; background: white; color: #212529; outline: none; transition: border 0.2s; }
-.simple-form input:focus, .simple-form select:focus { border-color: #0052cc; }
-.simple-form button { grid-column: 1 / -1; width: fit-content; }
+.tabs-nav button.active { 
+  background: var(--binance-yellow); 
+  color: var(--on-primary); 
+}
 
-.table-responsive { overflow-x: auto; background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-.data-table { width: 100%; border-collapse: collapse; min-width: 650px; }
-.data-table th, .data-table td { padding: 14px 16px; text-align: left; border-bottom: 1px solid #f1f3f5; color: #212529; }
-.data-table th { background: #f8f9fa; font-weight: 600; color: #495057; font-size: 12px; text-transform: uppercase; }
-.data-table tbody tr:hover { background: #fcfcfc; }
+.tabs-nav button:hover:not(.active) { 
+  background: var(--surface-elevated-dark);
+  color: var(--on-surface);
+}
 
-.badge { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
-.badge-green { background: #d4edda; color: #155724; }
-.badge-yellow { background: #fff3cd; color: #856404; }
-.badge-red { background: #f8d7da; color: #721c24; }
-.badge-blue { background: #e3f2fd; color: #0052cc; }
-.badge-gray { background: #e9ecef; color: #6c757d; }
-.badge-purple { background: #e8daef; color: #6c3483; }
+.view-header { 
+  display: flex; 
+  justify-content: space-between; 
+  align-items: center; 
+  background: var(--surface-bg); 
+  padding: 20px 24px; 
+  border-radius: var(--radius-xl); 
+  border: 1px solid var(--border-color); 
+  margin-bottom: 20px; 
+}
 
-.loading, .empty-state { text-align: center; padding: 50px; color: #6c757d; background: white; border-radius: 12px; }
-.cell-bold { font-weight: 600; }
-.text-muted { color: #6c757d; font-size: 12px; }
-.btn-action { background: #f1f3f5; border: none; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 13px; margin-right: 6px; transition: all 0.2s; }
-.btn-action:hover { background: #e2e6ea; }
-.btn-cobrar { background: #d4edda; color: #155724; }
-.btn-cobrar:hover { background: #c3e6cb; }
+.view-header h2 { margin: 0; font-size: 20px; color: var(--on-surface); font-weight: 700; }
 
-.estado-badge { display: inline-block; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
-.estado-borrador { background: #e9ecef; color: #6c757d; }
-.estado-enviada { background: #fff3cd; color: #856404; }
-.estado-pagado { background: #d4edda; color: #155724; }
-.estado-anulado { background: #f8d7da; color: #721c24; }
+.simple-form { 
+  display: grid; 
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
+  gap: 16px; 
+  background: var(--surface-bg); 
+  padding: 24px; 
+  border-radius: var(--radius-xl); 
+  border: 1px solid var(--border-color); 
+  margin-bottom: 20px; 
+  align-items: end;
+}
+
+.simple-form input, .simple-form select { 
+  padding: 12px 16px; 
+  border: 1px solid var(--border-color); 
+  border-radius: var(--radius-md); 
+  font-size: 14px; 
+  background: var(--surface-elevated-dark); 
+  color: var(--text-main); 
+  outline: none; 
+}
+
+.simple-form input:focus, .simple-form select:focus { border-color: var(--binance-yellow); }
+
+.badge { display: inline-block; padding: 4px 10px; border-radius: var(--radius-pill); font-size: 11px; font-weight: 700; }
+.badge-green { background: var(--kpi-green-bg); color: var(--kpi-green-text); }
+.badge-yellow { background: var(--kpi-yellow-bg); color: var(--kpi-yellow-text); }
+.badge-red { background: var(--kpi-red-bg); color: var(--kpi-red-text); }
+.badge-blue { background: var(--kpi-blue-bg); color: var(--kpi-blue-text); }
+.badge-gray { background: var(--surface-elevated-dark); color: var(--text-muted); }
+
+.loading, .empty-state { text-align: center; padding: 60px; color: var(--text-muted); background: var(--surface-bg); border-radius: var(--radius-xl); border: 1px solid var(--border-color); }
+.cell-bold { font-weight: 700; color: var(--on-surface); }
+
+.btn-action {
+  border: 1px solid var(--border-color);
+  background: var(--surface-elevated-dark);
+  color: var(--text-main);
+  border-radius: var(--radius-pill);
+  padding: 6px 14px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  transition: 0.2s;
+}
+
+.btn-action:hover {
+  border-color: var(--binance-yellow);
+  color: var(--binance-yellow);
+}

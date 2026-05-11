@@ -102,11 +102,11 @@ const FacturasVentaView = () => {
       {showForm && (
         <form className="simple-form" onSubmit={handleSubmit}>
           <div className="form-field">
-            <label htmlFor="fv-numero">Numero de factura</label>
-            <input id="fv-numero" placeholder="Numero factura" required value={formData.numero} onChange={(e) => setFormData((p) => ({ ...p, numero: e.target.value }))} />
+            <label htmlFor="fv-numero">Número de factura</label>
+            <input id="fv-numero" placeholder="Número factura" required value={formData.numero} onChange={(e) => setFormData((p) => ({ ...p, numero: e.target.value }))} />
           </div>
           <div className="form-field">
-            <label htmlFor="fv-cotizacion">Cotizacion</label>
+            <label htmlFor="fv-cotizacion">Cotización</label>
             <select id="fv-cotizacion" value={formData.cotizacion_id} onChange={(e) => {
               const cotId = e.target.value;
               const coti = cotizaciones.find((item) => String(item.id) === String(cotId));
@@ -117,7 +117,7 @@ const FacturasVentaView = () => {
                 total: coti?.monto ? String(coti.monto) : p.total
               }));
             }}>
-              <option value="">Seleccionar cotizacion</option>
+              <option value="">Seleccionar cotización</option>
               {cotizaciones.map((cot) => <option key={cot.id} value={cot.id}>{cot.titulo}</option>)}
             </select>
           </div>
@@ -129,7 +129,7 @@ const FacturasVentaView = () => {
             </select>
           </div>
           <div className="form-field">
-            <label htmlFor="fv-fecha">Fecha de emision</label>
+            <label htmlFor="fv-fecha">Fecha de emisión</label>
             <input id="fv-fecha" type="date" required value={formData.fecha_emision} onChange={(e) => setFormData((p) => ({ ...p, fecha_emision: e.target.value }))} />
           </div>
           <div className="form-field">
@@ -144,13 +144,13 @@ const FacturasVentaView = () => {
         <table className="data-table">
           <thead>
             <tr>
-              <th>Numero</th>
-              <th>Cotizacion</th>
+              <th>Número</th>
+              <th>Cotización</th>
               <th>Cliente</th>
               <th>Estado factura</th>
-              <th>Fecha emision</th>
+              <th>Fecha emisión</th>
               <th>Total</th>
-              <th>Accion</th>
+              <th>Acción</th>
             </tr>
           </thead>
           <tbody>

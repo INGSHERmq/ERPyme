@@ -10,7 +10,7 @@ const ProjectsView = ({ onBack }) => {
   if (loading) return <div className="loading">Cargando proyectos...</div>;
 
   return (
-    <div className="projects-module">
+    <div className="module-container">
       {/* Botón para volver al Home siempre visible */}
       {!proyectoSeleccionado && (
         <button onClick={onBack} className="btn-back">← Volver al Inicio</button>

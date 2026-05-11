@@ -55,10 +55,10 @@ const CotizacionesView = () => {
       setFormData(initialForm());
       setAdjuntos([]);
       refetch();
-      alert('Cotizacion creada correctamente');
+      alert('Cotización creada correctamente');
     } catch (error) {
       console.error('Error al guardar:', error);
-      alert('No se pudo crear la cotizacion');
+      alert('No se pudo crear la cotización');
     } finally {
       setSubiendoAdjunto(false);
     }
@@ -78,11 +78,11 @@ const CotizacionesView = () => {
   };
 
   const handleConvertir = async (cotizacion) => {
-    if (!window.confirm('Aprobar cotizacion y generar proyecto + factura de venta borrador automaticamente?')) return;
+    if (!window.confirm('¿Aprobar cotización y generar proyecto + factura de venta borrador automáticamente?')) return;
 
     try {
       await convertirCotizacion(cotizacion.id);
-      alert('Cotizacion aprobada. Se crearon automaticamente el proyecto y la factura de venta borrador.');
+      alert('Cotización aprobada. Se crearon automáticamente el proyecto y la factura de venta borrador.');
       refetch();
     } catch (error) {
       console.error('Error al aprobar:', error);
@@ -97,7 +97,7 @@ const CotizacionesView = () => {
       <div className="view-header">
         <h2>Cotizaciones</h2>
         <button className="btn-primary" onClick={() => setShowForm(!showForm)}>
-          {showForm ? 'Cancelar' : '+ Nueva cotizacion'}
+          {showForm ? 'Cancelar' : '+ Nueva cotización'}
         </button>
       </div>
 
@@ -107,7 +107,7 @@ const CotizacionesView = () => {
             <option value="">Cliente *</option>
             {clientes.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
           </select>
-          <input name="titulo" placeholder="Titulo del proyecto *" required value={formData.titulo} onChange={handleChange} />
+          <input name="titulo" placeholder="Título del proyecto *" required value={formData.titulo} onChange={handleChange} />
           <div className="form-row">
             <input name="cantidad" type="number" placeholder="Cantidad" value={formData.cantidad} onChange={handleChange} min="1" />
             <select name="unidad" value={formData.unidad} onChange={handleChange}>
@@ -125,8 +125,8 @@ const CotizacionesView = () => {
             <input name="precio_total" type="number" placeholder="Precio Total (S/)" value={formData.precio_total} readOnly className="input-readonly" />
           </div>
           <input name="fecha" type="date" required value={formData.fecha} onChange={handleChange} />
-          <textarea name="descripcion" placeholder="Descripcion" value={formData.descripcion} onChange={handleChange} />
-          <input name="validez" placeholder="Validez (ej: 30 dias)" value={formData.validez} onChange={handleChange} />
+          <textarea name="descripcion" placeholder="Descripción" value={formData.descripcion} onChange={handleChange} />
+          <input name="validez" placeholder="Validez (ej: 30 días)" value={formData.validez} onChange={handleChange} />
           <div className="file-input-wrapper">
             <input
               type="file"
@@ -150,7 +150,7 @@ const CotizacionesView = () => {
             </div>
           )}
           <button type="submit" className="btn-primary" disabled={subiendoAdjunto}>
-            {subiendoAdjunto ? 'Subiendo archivo...' : 'Crear cotizacion'}
+            {subiendoAdjunto ? 'Subiendo archivo...' : 'Crear cotización'}
           </button>
         </form>
       )}
@@ -160,7 +160,7 @@ const CotizacionesView = () => {
           <thead>
             <tr>
               <th>Cliente</th>
-              <th>Titulo</th>
+              <th>Título</th>
               <th>Cantidad</th>
               <th>Unidad</th>
               <th>Precio Unit.</th>
