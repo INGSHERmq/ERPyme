@@ -30,7 +30,25 @@ const OrdenesCompraView = () => {
       supabase.from('facturas_compra').select('id,orden_compra_id,numero,estado,total').order('created_at', { ascending: false })
     ]);
     setProveedores(provRes.data || []);
-    setOrdenes(ordenRes.data || []);
+    
+    const ordenesData = ordenRes.data || [];
+    const facturasData = facturasRes.data || [];
+    
+    const ordenesSync = ordenesData.map(orden => {
+      const factura = facturasData.find(f => f.orden_compra_id === orden.id);
+      if (factura) {
+        if (factura.estado === 'pagada') {
+          return { ...orden, estado: 'Pagado' };
+        } else if (factura.estado === 'anulada') {
+          return { ...orden, estado: 'Anulado' };
+        } else if (orden.estado === 'Borrador') {
+          return { ...orden, estado: 'Enviada' };
+        }
+      }
+      return orden;
+    });
+    
+    setOrdenes(ordenesSync);
     const mapaMateriales = (materialesRes.data || []).reduce((acc, item) => {
       if (!item.orden_compra_id || acc[item.orden_compra_id]) return acc;
       acc[item.orden_compra_id] = item;
@@ -199,16 +217,14 @@ const OrdenesCompraView = () => {
                 <td>{materialesPorOrden[orden.id]?.cantidad ?? '-'}</td>
                 <td>S/ {Number(materialesPorOrden[orden.id]?.costo_unitario || 0).toLocaleString()}</td>
                 <td>
-                  <select 
-                    value={orden.estado || 'Borrador'} 
-                    onChange={(event) => handleEstadoChange(orden.id, event.target.value)}
-                    style={orden.estado === 'Cancelada' ? { color: 'red', fontWeight: 'bold' } : {}}
-                  >
-                    <option value="Borrador">Borrador</option>
-                    <option value="Enviada">Enviada</option>
-                    <option value="Recibida">Recibida</option>
-                    <option value="Cancelada">Cancelada</option>
-                  </select>
+                  <span className={`estado-badge ${
+                    orden.estado === 'Pagado' ? 'estado-pagado' : 
+                    orden.estado === 'Anulado' ? 'estado-anulado' :
+                    orden.estado === 'Borrador' ? 'estado-borrador' :
+                    orden.estado === 'Enviada' ? 'estado-enviada' : ''
+                  }`}>
+                    {orden.estado || 'Borrador'}
+                  </span>
                 </td>
                 <td>
                   {facturasPorOrden[orden.id] ? (

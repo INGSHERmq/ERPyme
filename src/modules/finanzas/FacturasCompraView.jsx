@@ -60,6 +60,7 @@ const FacturasCompraView = () => {
         alert(materialError.message || 'Se pago, pero no se pudo enviar a Materiales');
         return;
       }
+      await supabase.from('ordenes_compra').update({ estado: 'Pagado' }).eq('id', row.orden_compra_id);
     }
 
     setPayingId(null);
@@ -67,6 +68,8 @@ const FacturasCompraView = () => {
   };
 
   const handleCancelar = async (row) => {
+    if (!window.confirm('¿Anular esta factura? La orden de compra también se marcará como anulada.')) return;
+    
     setPayingId(row.id);
     const { error: facturaError } = await supabase
       .from('facturas_compra')
@@ -80,7 +83,7 @@ const FacturasCompraView = () => {
     }
 
     if (row.orden_compra_id) {
-      await supabase.from('ordenes_compra').update({ estado: 'Cancelada' }).eq('id', row.orden_compra_id);
+      await supabase.from('ordenes_compra').update({ estado: 'Anulado' }).eq('id', row.orden_compra_id);
       await supabase.from('logistica_materiales').update({ estado: 'anulado' }).eq('orden_compra_id', row.orden_compra_id);
     }
 

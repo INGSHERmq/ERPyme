@@ -6,17 +6,41 @@ const ClientesView = () => {
   const { clientes, addCliente, updateClienteEstado, loading, refetch } = useMarketing();
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
-    dni_ruc: '', nombre: '', contacto: '', email: '', telefono: '', industria: '', estado: 'Activo'
+    tipo_identificacion: 'DNI', dni_ruc: '', nombre: '', contacto: '', email: '', telefono: '', industria: '', estado: 'Activo'
   });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      const dniRuc = formData.dni_ruc?.trim();
+      const dniLength = 8;
+      const rucLength = 10;
+
+      if (formData.tipo_identificacion === 'DNI') {
+        if (!dniRuc || dniRuc.length !== dniLength) {
+          alert(`❌ El DNI debe tener exactamente ${dniLength} dígitos`);
+          return;
+        }
+        if (!/^\d+$/.test(dniRuc)) {
+          alert('❌ El DNI solo puede contener números');
+          return;
+        }
+      } else if (formData.tipo_identificacion === 'RUC') {
+        if (!dniRuc || dniRuc.length !== rucLength) {
+          alert(`❌ El RUC debe tener exactamente ${rucLength} dígitos`);
+          return;
+        }
+        if (!/^\d+$/.test(dniRuc)) {
+          alert('❌ El RUC solo puede contener números');
+          return;
+        }
+      }
+
       // ✅ Usamos el hook de Supabase en lugar de axios
       await addCliente(formData);
       refetch();
       setShowForm(false);
-      setFormData({ dni_ruc: '', nombre: '', contacto: '', email: '', telefono: '', industria: '', estado: 'Activo' });
+      setFormData({ tipo_identificacion: 'DNI', dni_ruc: '', nombre: '', contacto: '', email: '', telefono: '', industria: '', estado: 'Activo' });
       alert('✅ Cliente guardado correctamente');
     } catch (error) {
       console.error('Error al crear cliente:', error);
@@ -53,8 +77,26 @@ const ClientesView = () => {
 
       {showForm && (
         <form onSubmit={handleSubmit} className="simple-form">
-          <input name="dni_ruc" placeholder="DNI o RUC *" required value={formData.dni_ruc} onChange={handleInputChange} />
-          <input name="nombre" placeholder="Nombre *" required value={formData.nombre} onChange={handleInputChange} />
+          <div className="form-group">
+            <label>Tipo de Identificación</label>
+            <select
+              name="tipo_identificacion"
+              value={formData.tipo_identificacion}
+              onChange={handleInputChange}
+            >
+              <option value="DNI">DNI</option>
+              <option value="RUC">RUC</option>
+            </select>
+          </div>
+          <input
+            name="dni_ruc"
+            placeholder={`${formData.tipo_identificacion === 'DNI' ? 'DNI' : 'RUC'} *`}
+            required
+            maxLength={formData.tipo_identificacion === 'DNI' ? 8 : 10}
+            value={formData.dni_ruc}
+            onChange={handleInputChange}
+          />
+          <input name="nombre" placeholder="Nombre de la empresa" required value={formData.nombre} onChange={handleInputChange} />
           <input name="contacto" placeholder="Contacto *" required value={formData.contacto} onChange={handleInputChange} />
           <input name="email" type="email" placeholder="Email *" required value={formData.email} onChange={handleInputChange} />
           <input name="telefono" placeholder="Teléfono" value={formData.telefono} onChange={handleInputChange} />
@@ -71,7 +113,8 @@ const ClientesView = () => {
         <table className="data-table">
           <thead>
             <tr>
-              <th>DNI/RUC</th>
+              <th>Tipo</th>
+              <th>{formData.tipo_identificacion === 'DNI' ? 'DNI' : 'RUC'}</th>
               <th>Nombre</th>
               <th>Contacto</th>
               <th>Email</th>
@@ -83,6 +126,7 @@ const ClientesView = () => {
           <tbody>
             {clientes.map(cliente => (
               <tr key={cliente.id}>
+                <td><span className={`badge ${cliente.tipo_identificacion === 'DNI' ? 'badge-pink' : 'badge-teal'}`}>{cliente.tipo_identificacion || '—'}</span></td>
                 <td>{cliente.dni_ruc || '—'}</td>
                 <td className="cell-bold">{cliente.nombre}</td>
                 <td>{cliente.contacto}</td>
