@@ -138,6 +138,94 @@
   font-size: 13px; 
 }
 
+.form-row {
+  display: flex;
+  gap: 12px;
+}
+
+.form-row input,
+.form-row select {
+  flex: 1;
+}
+
+.input-readonly {
+  background: #f8f9fa !important;
+  color: #495057 !important;
+  cursor: not-allowed;
+}
+
+.file-input-wrapper {
+  position: relative;
+}
+
+.file-input-wrapper input[type="file"] {
+  display: none;
+}
+
+.file-label {
+  display: inline-block;
+  padding: 12px 16px;
+  background: #f8f9fa;
+  border: 2px dashed #dee2e6;
+  border-radius: 8px;
+  cursor: pointer;
+  color: #495057;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.file-label:hover {
+  background: #e9ecef;
+  border-color: #0052cc;
+}
+
+.file-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.file-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: #e3f2fd;
+  border-radius: 20px;
+  font-size: 13px;
+  color: #0052cc;
+}
+
+.file-tag button {
+  background: none;
+  border: none;
+  color: #0052cc;
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  padding: 0;
+}
+
+.adjuntos-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.adjunto-link {
+  padding: 4px 8px;
+  background: #e3f2fd;
+  border-radius: 4px;
+  color: #0052cc;
+  text-decoration: none;
+  font-size: 12px;
+}
+
+.adjunto-link:hover {
+  background: #bbdefb;
+}
+
 /* Tabla */
 .table-responsive {
   overflow-x: auto;
