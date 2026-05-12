@@ -1,7 +1,9 @@
 import { Suspense, lazy, useState } from 'react';
 import { useAuth } from './context/auth/useAuth';
+import ThemeToggleButton from './components/ThemeToggleButton';
 import Login from './components/Login/Login';
 import Home from './Home';
+import './styles/theme.css';
 
 const ProjectsView = lazy(() => import('./modules/projects/ProjectsView'));
 const MarketingView = lazy(() => import('./modules/marketing/MarketingView'));
@@ -36,22 +38,35 @@ function App() {
 
   if (!isAuthenticated) return <Login />;
 
-  if (canAccessAdminPanel) {
-    return (
-      <div className="app">
-        <main className="app-content">
-          <Suspense fallback={<div className="loading">Cargando área...</div>}>
-            <AdminView signOut={signOut} />
-          </Suspense>
-        </main>
-      </div>
-    );
-  }
+  const AppContent = () => (
+    <>
+      <header className="header">
+        <div className="header-left">
+          <div className="header-logo" onClick={() => setModule('home')}>
+            <span className="logo-text">ERPyme</span>
+          </div>
+          <div className="header-divider"></div>
+          <div className="header-stats">
+            <div className="header-stat-item">
+              <span className="stat-value">{enabledModules?.length || 0}</span>
+              <span className="stat-desc">Módulos</span>
+            </div>
+            <div className="header-stat-item">
+              <span className="stat-value">{profile?.nombre_completo ? '1' : '0'}</span>
+              <span className="stat-desc">Usuario</span>
+            </div>
+          </div>
+        </div>
 
-  const back = () => setModule('home');
-
-  return (
-    <div className="app">
+        <div className="header-right">
+          <div className="header-user">
+            <span className="user-name">{profile?.nombre_completo || 'Usuario'}</span>
+            <button className="logout-link" onClick={signOut}>Salir</button>
+          </div>
+          <ThemeToggleButton />
+        </div>
+      </header>
+      
       <main className="app-content">
         <Suspense fallback={<div className="loading">Cargando área...</div>}>
           {module === 'home' && (
@@ -70,6 +85,22 @@ function App() {
           {module === 'assistant' && <AssistantView onBack={back} />}
         </Suspense>
       </main>
+    </>
+  );
+
+  if (canAccessAdminPanel) {
+    return (
+      <div className="app">
+        <AppContent />
+      </div>
+    );
+  }
+
+  const back = () => setModule('home');
+
+  return (
+    <div className="app">
+      <AppContent />
     </div>
   );
 }

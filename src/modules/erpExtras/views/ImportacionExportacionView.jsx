@@ -280,7 +280,7 @@ const ImportacionExportacionView = ({ onBack }) => {
 
   const handleImport = async () => {
     if (!user?.id) {
-      setError('Tu sesion no esta activa. Inicia sesion nuevamente antes de importar.');
+      setError('Tu sesión no esta activa. Inicia sesión nuevamente antes de importar.');
       return;
     }
 

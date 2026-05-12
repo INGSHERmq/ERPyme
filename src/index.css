@@ -3,6 +3,22 @@
   --binance-yellow: #fcd535;
   --binance-yellow-active: #f0b90b;
   --binance-yellow-disabled: #3a3a1f;
+
+  /* Base Theme Variables (Default to Dark) */
+  --canvas: #0b0e11;
+  --surface-card: #1e2329;
+  --surface-elevated: #2b3139;
+  --surface-soft: #fafafa;
+  --surface-strong: #f5f5f5;
+  --ink: #181a20;
+  --body: #eaecef;
+  --muted: #707a8a;
+  --hairline: #2b3139;
+  --on-dark: #ffffff;
+  --on-primary: #181a20;
+  --trading-up: #0ecb81;
+  --trading-down: #f6465d;
+  --info: #3b82f6;
   
   /* Canvas & Surface - Dark (Default) */
   --canvas-dark: #0b0e11;
@@ -55,14 +71,14 @@
   --font-main: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font-number: "IBM Plex Sans", "JetBrains Mono", monospace;
 
-  /* Current Theme State (Dynamic) - Defaulting to DARK */
-  --canvas-bg: var(--canvas-dark);
-  --surface-bg: var(--surface-card-dark);
-  --text-main: var(--body-on-dark);
+  /* Current Theme State (Dynamic) - Now mapped to ThemeContext variables */
+  --canvas-bg: var(--canvas);
+  --surface-bg: var(--surface-card);
+  --text-main: var(--body);
   --text-muted: var(--muted);
-  --border-color: var(--hairline-on-dark);
-  --input-bg: var(--surface-card-dark);
-  --on-surface: var(--on-dark);
+  --border-color: var(--hairline);
+  --input-bg: var(--surface-card);
+  --on-surface: var(--body);
 
   /* Legacy Compat/Mappings (Aliases) */
   --color-primary: var(--binance-yellow);
@@ -253,9 +269,9 @@ body {
 }
 
 .module-hero-back, .btn-back {
-  background-color: var(--surface-elevated-dark);
-  color: var(--on-dark);
-  border: 1px solid var(--hairline-on-dark);
+  background-color: var(--surface-elevated);
+  color: var(--on-surface);
+  border: 1px solid var(--border-color);
   padding: 8px 16px;
   border-radius: var(--radius-md);
   font-size: 13px;
@@ -303,7 +319,7 @@ body {
 
 .tabs-nav button:hover:not(.active) {
   color: var(--on-surface);
-  background-color: var(--surface-elevated-dark);
+  background-color: var(--surface-elevated);
 }
 
 /* --- Tables & Data --- */
@@ -345,7 +361,7 @@ body {
 }
 
 .data-table tbody tr:hover {
-  background-color: var(--surface-elevated-dark) !important;
+  background-color: var(--surface-elevated) !important;
 }
 
 /* --- Buttons --- */
@@ -383,9 +399,9 @@ body {
 }
 
 .recharts-default-tooltip {
-  background-color: var(--surface-card-dark) !important;
+  background-color: var(--surface-card) !important;
   border: 1px solid var(--binance-yellow) !important;
-  color: var(--on-dark) !important;
+  color: var(--on-surface) !important;
   border-radius: var(--radius-md) !important;
 }
 

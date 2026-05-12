@@ -15,7 +15,7 @@ const Login = () => {
       await signIn(formData.email, formData.password);
     } catch (err) {
       console.error('Login error:', err);
-      setError(err.message || 'Error al iniciar sesion');
+      setError(err.message || 'Error al iniciar sesión');
     }
   };
 
@@ -28,7 +28,7 @@ const Login = () => {
       <div className="login-card">
         <div className="login-header">
           <h1>ERPyme</h1>
-          <p>Inicia sesion para continuar</p>
+          <p>Inicia sesión para continuar</p>
         </div>
 
         <form onSubmit={handleSubmit} className="login-form">
@@ -63,7 +63,7 @@ const Login = () => {
           </div>
 
           <button type="submit" className="btn-login" disabled={loading}>
-            {loading ? 'Cargando...' : 'Iniciar sesion'}
+            {loading ? 'Cargando...' : 'Iniciar sesión'}
           </button>
         </form>
 
