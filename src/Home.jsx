@@ -1,8 +1,11 @@
 import { useMemo, useState } from 'react';
+import { useTheme } from './context/ThemeContext';
 import './Home.css';
+import './styles/theme.css';
 import { ERP_MODULES } from './config/modules';
 
 const Home = ({ onNavigate, profile, signOut, enabledModules }) => {
+  const { theme } = useTheme();
   const [searchTerm, setSearchTerm] = useState('');
 
   const visibleModules = useMemo(() => {
@@ -22,32 +25,28 @@ const Home = ({ onNavigate, profile, signOut, enabledModules }) => {
 
   return (
     <div className="home-container">
-      <header className="home-header">
-        <div className="header-content">
-          <h1>ERPyme</h1>
-          <p>Sistema integral de gestión empresarial</p>
-        </div>
-        <div className="home-actions">
-          <span>{profile?.nombre_completo || 'Usuario'}</span>
-          <button type="button" className="btn-logout" onClick={signOut}>Salir</button>
-        </div>
-      </header>
+      {/* El título y estadísticas ahora residen en la cabecera (App.jsx) */}
 
-      <section className="home-toolbar" aria-label="Búsqueda de módulos">
-        <label className="module-search">
-          <span>BUSCAR MÓDULO</span>
-          <input
-            type="search"
-            value={searchTerm}
-            onChange={(event) => setSearchTerm(event.target.value)}
-            placeholder="Buscar por nombre, área o función..."
-          />
-        </label>
-        <span className="module-count">
-          {filteredModules.length} de {visibleModules.length}
-        </span>
+      {/* Toolbar de búsqueda */}
+      <section className="home-toolbar">
+        <div className="search-container">
+          <span className="search-label">BUSCAR MÓDULO</span>
+          <div className="search-input-wrapper">
+            <input
+              type="search"
+              className="text-input module-search-input"
+              value={searchTerm}
+              onChange={(event) => setSearchTerm(event.target.value)}
+              placeholder="Buscar por nombre, área o función..."
+            />
+            <span className="module-count">
+              {filteredModules.length} de {visibleModules.length}
+            </span>
+          </div>
+        </div>
       </section>
 
+      {/* Grid de módulos */}
       <main className="modules-grid">
         {filteredModules.map((mod) => (
           <button
@@ -62,7 +61,8 @@ const Home = ({ onNavigate, profile, signOut, enabledModules }) => {
                 className="module-icon"
                 style={{
                   backgroundColor: `${mod.color}18`,
-                  color: mod.color
+                  color: mod.color,
+                  border: `2px solid ${mod.color}33`
                 }}
               >
                 {mod.title.charAt(0)}
@@ -73,14 +73,24 @@ const Home = ({ onNavigate, profile, signOut, enabledModules }) => {
             </div>
             <span className="module-title">{mod.title}</span>
             <span className="module-desc">{mod.desc}</span>
+            <div className="card-footer">
+              <span className="module-action">Abrir →</span>
+            </div>
           </button>
         ))}
         {filteredModules.length === 0 && (
           <div className="modules-empty">
-            No se encontraron módulos con ese criterio.
+            <span className="empty-icon">🔍</span>
+            <p>No se encontraron módulos con ese criterio.</p>
+            <p className="empty-hint">Intenta con otros términos de búsqueda.</p>
           </div>
         )}
       </main>
+
+      {/* Footer simplificado */}
+      <footer className="home-footer">
+        <p>© 2024 ERPyme - Sistema de gestión empresarial</p>
+      </footer>
     </div>
   );
 };

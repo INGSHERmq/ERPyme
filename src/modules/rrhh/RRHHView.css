@@ -29,7 +29,7 @@
 }
 
 .tabs-nav button:hover:not(.active) { 
-  background: var(--surface-elevated-dark);
+  background: var(--surface-elevated);
   color: var(--on-surface);
 }
 
@@ -74,7 +74,7 @@
 .badge-yellow { background: var(--kpi-yellow-bg); color: var(--kpi-yellow-text); }
 .badge-red { background: var(--kpi-red-bg); color: var(--kpi-red-text); }
 .badge-blue { background: var(--kpi-blue-bg); color: var(--kpi-blue-text); }
-.badge-gray { background: var(--surface-elevated-dark); color: var(--text-muted); }
+.badge-gray { background: var(--surface-elevated); color: var(--text-muted); }
 
 .loading, .empty-state { text-align: center; padding: 60px; color: var(--text-muted); background: var(--surface-bg); border-radius: var(--radius-xl); border: 1px solid var(--border-color); }
 .cell-bold { font-weight: 700; color: var(--on-surface); }

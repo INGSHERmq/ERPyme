@@ -34,7 +34,7 @@
 
 .tabs-nav button:hover:not(.active) {
   color: var(--on-surface);
-  background-color: var(--surface-elevated-dark);
+  background-color: var(--surface-elevated);
 }
 
 .view-header {
