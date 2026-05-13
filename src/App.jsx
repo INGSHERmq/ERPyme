@@ -1,8 +1,8 @@
 import { Suspense, lazy, useState } from 'react';
 import { useAuth } from './context/auth/useAuth';
 import ThemeToggleButton from './components/ThemeToggleButton';
-import Login from './components/Login/Login';
 import Home from './Home';
+import LandingPage from './LandingPage';
 import './styles/theme.css';
 
 const ProjectsView = lazy(() => import('./modules/projects/ProjectsView'));
@@ -11,7 +11,6 @@ const FinanzasView = lazy(() => import('./modules/finanzas/FinanzasView'));
 const RRHHView = lazy(() => import('./modules/rrhh/RRHHView'));
 const LogisticaView = lazy(() => import('./modules/logistica/LogisticaView'));
 const AssistantView = lazy(() => import('./modules/assistant/AssistantView'));
-const AdminView = lazy(() => import('./modules/admin/AdminView'));
 
 function App() {
   const {
@@ -36,9 +35,11 @@ function App() {
     );
   }
 
-  if (!isAuthenticated) return <Login />;
+  if (!isAuthenticated) return <LandingPage />;
 
-  const AppContent = () => (
+  const back = () => setModule('home');
+
+  const appContent = (
     <>
       <header className="header">
         <div className="header-left">
@@ -91,16 +92,14 @@ function App() {
   if (canAccessAdminPanel) {
     return (
       <div className="app">
-        <AppContent />
+        {appContent}
       </div>
     );
   }
 
-  const back = () => setModule('home');
-
   return (
     <div className="app">
-      <AppContent />
+      {appContent}
     </div>
   );
 }

@@ -46,11 +46,11 @@ html[data-theme="dark"] {
 
 /* Modo Claro */
 html[data-theme="light"] {
-  --canvas: #ffffff;
+  --canvas: #f5f5f5;
   --surface-card: #ffffff;
-  --surface-elevated: #f5f5f5;
+  --surface-elevated: #fafafa;
   --surface-soft: #fafafa;
-  --surface-strong: #f5f5f5;
+  --surface-strong: #ffffff;
   --ink: #181a20;
   --body: #181a20;
   --body-on-light: #181a20;
@@ -70,11 +70,11 @@ html[data-theme="light"] {
 
   /* Variables dinámicas para módulos */
   --canvas-bg: var(--canvas);
-  --surface-bg: var(--surface-soft); /* Un tono gris muy suave para profundidad */
+  --surface-bg: var(--surface-card);
   --text-main: var(--body);
   --text-muted: var(--muted);
   --border-color: var(--hairline);
-  --input-bg: var(--surface-strong);
+  --input-bg: var(--surface-card);
   --on-surface: var(--ink);
 
   /* KPI & Dashboard */
@@ -152,12 +152,12 @@ body {
 
 /* Inputs */
 .text-input {
-  background-color: var(--canvas);
+  background-color: var(--input-bg);
   border: 1px solid var(--hairline);
   border-radius: 6px;
   padding: 10px 16px;
   height: 40px;
-  color: var(--ink);
+  color: var(--text-main);
   font-size: 14px;
   line-height: 1.5;
   letter-spacing: 0;

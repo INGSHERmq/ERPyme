@@ -250,7 +250,7 @@ body {
 
 .module-hero {
   padding: var(--spacing-xl);
-  border-radius: var(--radius-xl);
+  border-radius: var(--radius-lg);
   margin-bottom: var(--spacing-lg);
   border: 1px solid var(--border-color);
   background-color: var(--surface-bg);
@@ -327,7 +327,7 @@ body {
 .table-responsive {
   background-color: var(--surface-bg) !important;
   border: 1px solid var(--border-color) !important;
-  border-radius: var(--radius-xl) !important;
+  border-radius: var(--radius-lg) !important;
   padding: 0 !important;
   overflow-x: auto;
   margin-top: var(--spacing-md);
@@ -362,6 +362,27 @@ body {
 
 .data-table tbody tr:hover {
   background-color: var(--surface-elevated) !important;
+}
+
+.simple-form,
+.form-grid,
+.content-area > form {
+  background: var(--surface-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+}
+
+input,
+select,
+textarea {
+  background-color: var(--input-bg);
+  color: var(--text-main);
+  border-color: var(--border-color);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--text-muted);
 }
 
 /* --- Buttons --- */

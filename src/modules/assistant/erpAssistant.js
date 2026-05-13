@@ -1,4 +1,5 @@
 import { supabase } from '../../lib/supabase';
+import { generateExecutiveBriefing, scoreOpportunity } from './executiveBriefing';
 
 const DEFAULT_MODEL = import.meta.env.VITE_GROQ_MODEL || 'llama-3.3-70b-versatile';
 const GROQ_CHAT_URL = import.meta.env.VITE_GROQ_URL || '/groq/openai/v1/chat/completions';
@@ -109,11 +110,11 @@ const CREATE_SCHEMAS = {
   },
   leads: {
     required: ['nombre'],
-    fields: ['nombre', 'contacto', 'email', 'telefono', 'origen', 'estado']
+    fields: ['nombre', 'contacto', 'email', 'telefono', 'origen', 'industria', 'cargo_contacto', 'empleados_estimados', 'tiempo_respuesta_horas', 'ultimo_contacto', 'estado']
   },
   oportunidades: {
     required: ['titulo'],
-    fields: ['lead_id', 'cliente_id', 'titulo', 'cliente_potencial', 'monto_estimado', 'etapa', 'fecha_cierre_estimada']
+    fields: ['lead_id', 'cliente_id', 'titulo', 'cliente_potencial', 'monto_estimado', 'etapa', 'origen', 'industria', 'tiempo_respuesta_horas', 'fecha_cierre_estimada']
   },
   pedidos_venta: {
     required: ['numero'],
@@ -176,7 +177,11 @@ const FIELD_ALIASES = {
   entidadId: 'entidad_id',
   referenciaTipo: 'referencia_tipo',
   referenciaId: 'referencia_id',
-  saldoInicial: 'saldo_inicial'
+  saldoInicial: 'saldo_inicial',
+  cargoContacto: 'cargo_contacto',
+  empleadosEstimados: 'empleados_estimados',
+  tiempoRespuestaHoras: 'tiempo_respuesta_horas',
+  ultimoContacto: 'ultimo_contacto'
 };
 
 const tools = [
@@ -217,13 +222,25 @@ const tools = [
         }
       }
     }
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'get_executive_briefing',
+      description: 'Genera un briefing ejecutivo proactivo con cobranzas, riesgos de proyectos y oportunidades comerciales priorizadas.',
+      parameters: {
+        type: 'object',
+        properties: {}
+      }
+    }
   }
 ];
 
 const systemPrompt = `
 Eres el asistente interno de ERPyme. Responde en espanol claro y breve.
 Tienes herramientas para leer datos y crear registros reales en Supabase.
-Antes de crear un registro valida que existan TODOS los campos del esquema de la tabla objetivo.
+Tambien puedes generar un briefing ejecutivo proactivo y usarlo cuando pidan resumen matutino, alertas ejecutivas o prioridades del dia.
+Antes de crear un registro valida que existan los campos obligatorios del esquema de la tabla objetivo.
 Si falta uno o mas campos, no crees el registro y solicita explicitamente los campos faltantes.
 No inventes datos existentes: consulta el ERP cuando la pregunta dependa de registros.
 Si una herramienta devuelve error o no fue llamada, no digas que no existen registros. Informa que no pudiste verificar.
@@ -291,6 +308,11 @@ const getErpContext = async ({ module = 'all', limit = 12 }) => {
 
   const results = await Promise.all(uniqueTables.map(table => fetchTable(table, user.id, normalizedLimit)));
   return { modules, results };
+};
+
+const getExecutiveBriefing = async () => {
+  const user = await getCurrentUser();
+  return generateExecutiveBriefing(user.id);
 };
 
 const isReadRequest = (content) => {
@@ -362,6 +384,7 @@ const addDefaultValues = (table, payload, fields) => {
   if (table === 'tareas' && !payload.estado) payload.estado = 'Pendiente';
   if (table === 'tareas' && !payload.prioridad) payload.prioridad = 'Media';
   if (table === 'leads' && !payload.estado) payload.estado = 'Nuevo';
+  if (table === 'oportunidades' && !payload.etapa) payload.etapa = 'Prospeccion';
   if (table === 'pedidos_venta' && !payload.estado) payload.estado = 'Pendiente';
   if (table === 'movimientos_inventario' && !payload.tipo) payload.tipo = 'Entrada';
   if (table === 'notificaciones' && !payload.tipo) payload.tipo = 'Info';
@@ -381,8 +404,7 @@ const createErpRecord = async ({ table, data }) => {
     return false;
   };
 
-  // Regla estricta: para altas desde IA se exige completar todo el formulario del modulo.
-  const missing = schema.fields.filter(field => isEmpty(providedPayload[field]));
+  const missing = schema.required.filter(field => isEmpty(providedPayload[field]));
   if (missing.length > 0) {
     return {
       created: false,
@@ -410,6 +432,7 @@ const executeToolCall = async (toolCall) => {
   const args = typeof rawArgs === 'string' ? JSON.parse(rawArgs || '{}') : rawArgs;
   if (name === 'get_erp_context') return getErpContext(args);
   if (name === 'create_erp_record') return createErpRecord(args);
+  if (name === 'get_executive_briefing') return getExecutiveBriefing();
   throw new Error(`Herramienta no soportada: ${name}`);
 };
 
@@ -470,5 +493,6 @@ export const sendAssistantMessage = async (history, userContent) => {
 
 export const assistantConfig = {
   model: DEFAULT_MODEL,
-  tables: MODULE_TABLES
+  tables: MODULE_TABLES,
+  scoreOpportunity
 };

@@ -7,6 +7,8 @@ const useMarketing = () => {
   const [clientes, setClientes] = useState([]);
   const [cotizaciones, setCotizaciones] = useState([]);
   const [proyectos, setProyectos] = useState([]);
+  const [leads, setLeads] = useState([]);
+  const [oportunidades, setOportunidades] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -15,6 +17,8 @@ const useMarketing = () => {
       setClientes([]);
       setCotizaciones([]);
       setProyectos([]);
+      setLeads([]);
+      setOportunidades([]);
       setLoading(false);
       return;
     }
@@ -22,19 +26,25 @@ const useMarketing = () => {
     try {
       setLoading(true);
       setError(null);
-      const [clientesRes, cotizacionesRes, proyectosRes] = await Promise.all([
+      const [clientesRes, cotizacionesRes, proyectosRes, leadsRes, oportunidadesRes] = await Promise.all([
         supabase.from('clientes').select('*').eq('user_id', user.id).order('nombre'),
         supabase.from('v_cotizaciones_completas').select('*').eq('user_id', user.id).order('fecha', { ascending: false }),
-        supabase.from('proyectos').select('*').eq('user_id', user.id).order('created_at', { ascending: false })
+        supabase.from('proyectos').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
+        supabase.from('leads').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
+        supabase.from('oportunidades').select('*').eq('user_id', user.id).order('created_at', { ascending: false })
       ]);
 
       if (clientesRes.error) throw clientesRes.error;
       if (cotizacionesRes.error) throw cotizacionesRes.error;
       if (proyectosRes.error) throw proyectosRes.error;
+      if (leadsRes.error) throw leadsRes.error;
+      if (oportunidadesRes.error) throw oportunidadesRes.error;
 
       setClientes(clientesRes.data || []);
       setCotizaciones(cotizacionesRes.data || []);
       setProyectos(proyectosRes.data || []);
+      setLeads(leadsRes.data || []);
+      setOportunidades(oportunidadesRes.data || []);
     } catch (err) {
       console.error('Error cargando marketing:', err);
       setError(err.message);
@@ -92,6 +102,44 @@ const useMarketing = () => {
     return nueva;
   };
 
+  const addLead = async (data) => {
+    if (!user?.id) throw new Error('Usuario no autenticado');
+
+    const { data: nuevo, error } = await supabase
+      .from('leads')
+      .insert([{ ...data, user_id: user.id, estado: data.estado || 'Nuevo' }])
+      .select()
+      .single();
+
+    if (error) throw error;
+    setLeads(prev => [nuevo, ...prev]);
+    return nuevo;
+  };
+
+  const addOportunidad = async (data) => {
+    if (!user?.id) throw new Error('Usuario no autenticado');
+
+    const payload = {
+      ...data,
+      user_id: user.id,
+      lead_id: data.lead_id || null,
+      cliente_id: data.cliente_id || null,
+      monto_estimado: Number(data.monto_estimado || 0),
+      tiempo_respuesta_horas: data.tiempo_respuesta_horas === '' ? null : Number(data.tiempo_respuesta_horas || 0),
+      etapa: data.etapa || 'Prospeccion'
+    };
+
+    const { data: nueva, error } = await supabase
+      .from('oportunidades')
+      .insert([payload])
+      .select()
+      .single();
+
+    if (error) throw error;
+    setOportunidades(prev => [nueva, ...prev]);
+    return nueva;
+  };
+
   const convertirCotizacion = async (cotizacionId) => {
     if (!user?.id) throw new Error('Usuario no autenticado');
 
@@ -114,11 +162,15 @@ const useMarketing = () => {
     clientes,
     cotizaciones,
     proyectos,
+    leads,
+    oportunidades,
     loading,
     error,
     addCliente,
     updateClienteEstado,
     addCotizacion,
+    addLead,
+    addOportunidad,
     convertirCotizacion,
     refetch: fetchData
   };
