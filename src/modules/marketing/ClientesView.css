@@ -23,7 +23,7 @@
   border-radius: var(--radius-md);
   font-size: 14px;
   outline: none;
-  background: var(--surface-elevated-dark);
+  background: var(--input-bg);
   color: var(--text-main);
   width: 100%;
 }
@@ -45,7 +45,7 @@
 
 .badge-green { background: var(--kpi-green-bg); color: var(--kpi-green-text); }
 .badge-blue { background: var(--kpi-blue-bg); color: var(--kpi-blue-text); }
-.badge-gray { background: var(--surface-elevated-dark); color: var(--text-muted); }
+.badge-gray { background: var(--surface-elevated); color: var(--text-muted); }
 
 .cell-bold { 
   font-weight: 700; 
@@ -54,7 +54,7 @@
 
 .btn-action {
   border: 1px solid var(--border-color);
-  background: var(--surface-elevated-dark);
+  background: var(--surface-elevated);
   color: var(--text-main);
   border-radius: var(--radius-pill);
   padding: 6px 14px;

@@ -2,6 +2,8 @@ import { useState } from 'react';
 import DashboardMarketing from './DashboardMarketing';
 import ClientesView from './ClientesView';
 import CotizacionesView from './CotizacionesView';
+import CRMView from './CRMView';
+import LeadScoringView from './LeadScoringView';
 import './MarketingView.css';
 
 const MarketingView = ({ onBack }) => {
@@ -12,6 +14,8 @@ const MarketingView = ({ onBack }) => {
       case 'dashboard': return <DashboardMarketing />;
       case 'clientes': return <ClientesView />;
       case 'cotizaciones': return <CotizacionesView />;
+      case 'crm': return <CRMView />;
+      case 'scoring': return <LeadScoringView />;
       default: return <DashboardMarketing />;
     }
   };
@@ -35,6 +39,12 @@ const MarketingView = ({ onBack }) => {
         </button>
         <button role="tab" aria-selected={tab === 'cotizaciones'} className={tab === 'cotizaciones' ? 'active' : ''} onClick={() => setTab('cotizaciones')}>
           Cotizaciones
+        </button>
+        <button role="tab" aria-selected={tab === 'crm'} className={tab === 'crm' ? 'active' : ''} onClick={() => setTab('crm')}>
+          CRM
+        </button>
+        <button role="tab" aria-selected={tab === 'scoring'} className={tab === 'scoring' ? 'active' : ''} onClick={() => setTab('scoring')}>
+          Lead scoring
         </button>
       </nav>
 

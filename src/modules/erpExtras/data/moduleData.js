@@ -44,6 +44,8 @@ export const MODULE_CONFIG = {
           { name: 'email', label: 'Email', type: 'email' },
           { name: 'telefono', label: 'Telefono' },
           { name: 'origen', label: 'Origen' },
+          { name: 'industria', label: 'Industria' },
+          { name: 'tiempo_respuesta_horas', label: 'Tiempo de respuesta (horas)', type: 'number' },
           { name: 'estado', label: 'Estado', type: 'select', options: ['Nuevo', 'Contactado', 'Calificado', 'Perdido'] }
         ]
       },
@@ -56,7 +58,10 @@ export const MODULE_CONFIG = {
           { name: 'titulo', label: 'Titulo', required: true },
           { name: 'cliente_potencial', label: 'Cliente potencial' },
           { name: 'monto_estimado', label: 'Monto estimado', type: 'number' },
-          { name: 'etapa', label: 'Avance', type: 'select', options: ['Nuevo contacto', 'Interesado', 'Propuesta', 'Negociando', 'Ganada', 'Perdida'] },
+          { name: 'etapa', label: 'Avance', type: 'select', options: ['Prospeccion', 'Calificacion', 'Propuesta', 'Negociacion', 'Ganada', 'Perdida'] },
+          { name: 'origen', label: 'Origen' },
+          { name: 'industria', label: 'Industria' },
+          { name: 'tiempo_respuesta_horas', label: 'Tiempo de respuesta (horas)', type: 'number' },
           { name: 'fecha_cierre_estimada', label: 'Cierre estimado', type: 'date' }
         ]
       }

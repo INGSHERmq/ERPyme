@@ -1,5 +1,7 @@
 import { useState } from 'react';
+import { useAuth } from '../../context/auth/useAuth';
 import { assistantConfig, sendAssistantMessage } from './erpAssistant';
+import { generateExecutiveBriefing } from './executiveBriefing';
 import './AssistantView.css';
 
 const INITIAL_MESSAGES = [
@@ -10,9 +12,12 @@ const INITIAL_MESSAGES = [
 ];
 
 const AssistantView = ({ onBack }) => {
+  const { user } = useAuth();
   const [messages, setMessages] = useState(INITIAL_MESSAGES);
+  const [briefing, setBriefing] = useState(null);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [briefingLoading, setBriefingLoading] = useState(false);
   const [error, setError] = useState('');
 
   const handleSubmit = async (event) => {
@@ -40,6 +45,24 @@ const AssistantView = ({ onBack }) => {
     }
   };
 
+  const handleBriefing = async () => {
+    if (briefingLoading) return;
+    setError('');
+    setBriefingLoading(true);
+
+    try {
+      const nextBriefing = await generateExecutiveBriefing(user?.id);
+      setBriefing(nextBriefing);
+      setMessages(prev => [...prev, { role: 'assistant', content: nextBriefing.summary }]);
+    } catch (err) {
+      const message = err.message || 'No se pudo generar el briefing ejecutivo.';
+      setError(message);
+      setMessages(prev => [...prev, { role: 'assistant', content: message }]);
+    } finally {
+      setBriefingLoading(false);
+    }
+  };
+
   return (
     <div className="assistant-page">
       <aside className="assistant-sidebar">
@@ -56,6 +79,8 @@ const AssistantView = ({ onBack }) => {
           <span>Consultar modulos</span>
           <span>Crear proveedores</span>
           <span>Crear cotizaciones</span>
+          <span>Briefing matutino proactivo</span>
+          <span>Lead scoring predictivo</span>
           <span>Crear tareas y documentos base</span>
         </div>
       </aside>
@@ -66,7 +91,40 @@ const AssistantView = ({ onBack }) => {
             <strong>Asistente ERPyme</strong>
             <span>{loading ? 'Procesando solicitud...' : 'Groq API'}</span>
           </div>
+          <button type="button" onClick={handleBriefing} disabled={briefingLoading}>
+            {briefingLoading ? 'Analizando...' : 'Briefing ejecutivo'}
+          </button>
         </div>
+
+        {briefing && (
+          <section className="briefing-panel" aria-label="Briefing ejecutivo">
+            <div>
+              <span className="briefing-kicker">Proactive Executive Briefing</span>
+              <h2>Prioridades de hoy</h2>
+            </div>
+            <div className="briefing-grid">
+              <article>
+                <strong>{briefing.dueToday.length}</strong>
+                <span>Vencen hoy</span>
+              </article>
+              <article>
+                <strong>{briefing.overdue.length}</strong>
+                <span>Vencidas</span>
+              </article>
+              <article>
+                <strong>{briefing.projectRisks.length}</strong>
+                <span>Riesgos proyecto</span>
+              </article>
+              <article>
+                <strong>{briefing.topOpportunities[0]?.probabilidad || 0}%</strong>
+                <span>Mejor oportunidad</span>
+              </article>
+            </div>
+            <ul>
+              {briefing.actions.map(action => <li key={action}>{action}</li>)}
+            </ul>
+          </section>
+        )}
 
         <div className="chat-messages">
           {messages.map((message, index) => (
