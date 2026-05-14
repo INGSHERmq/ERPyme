@@ -1,11 +1,9 @@
 import { useMemo, useState } from 'react';
-import { useTheme } from './context/ThemeContext';
 import './Home.css';
 import './styles/theme.css';
 import { ERP_MODULES } from './config/modules';
 
-const Home = ({ onNavigate, profile, signOut, enabledModules }) => {
-  const { theme } = useTheme();
+const Home = ({ onNavigate, enabledModules }) => {
   const [searchTerm, setSearchTerm] = useState('');
 
   const visibleModules = useMemo(() => {

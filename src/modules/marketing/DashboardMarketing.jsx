@@ -4,9 +4,12 @@ import useMarketing from '../../hooks/useMarketing';
 import './DashboardMarketing.css';
 
 const STATUS_COLORS = {
-  Aceptada: '#0ecb81', // Trading Up
-  Pendiente: '#fcd535', // Binance Yellow
-  Rechazada: '#f6465d'  // Trading Down
+  aprobada: '#0ecb81',
+  aceptada: '#0ecb81',
+  borrador: '#fcd535',
+  pendiente: '#fcd535',
+  rechazada: '#f6465d',
+  vencida: '#f6465d'
 };
 
 const DashboardMarketing = () => {
@@ -17,12 +20,13 @@ const DashboardMarketing = () => {
     const proyectosData = proyectos || [];
     const clientesData = clientes || [];
 
-    const aceptadas = cotizacionesData.filter(c => c.estado === 'Aceptada');
+    const aceptadas = cotizacionesData.filter(c => ['aprobada', 'aceptada'].includes((c.estado || '').toLowerCase()));
     const montoAceptado = aceptadas.reduce((sum, c) => sum + (c.monto || 0), 0);
 
     const statusDist = Object.entries(
       cotizacionesData.reduce((acc, c) => {
-        acc[c.estado] = (acc[c.estado] || 0) + 1;
+        const estado = (c.estado || 'borrador').toLowerCase();
+        acc[estado] = (acc[estado] || 0) + 1;
         return acc;
       }, {})
     ).map(([name, value]) => ({

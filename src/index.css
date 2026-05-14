@@ -445,3 +445,118 @@ textarea::placeholder {
 .board-column-pendiente { background-color: rgba(252, 213, 53, 0.05); border-color: rgba(252, 213, 53, 0.2); }
 .board-column-progreso { background-color: rgba(59, 130, 246, 0.05); border-color: rgba(59, 130, 246, 0.2); }
 .board-column-completado { background-color: rgba(14, 203, 129, 0.05); border-color: rgba(14, 203, 129, 0.2); }
+
+.profile-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  background: rgba(0, 0, 0, 0.58);
+  display: grid;
+  place-items: center;
+  padding: 20px;
+}
+
+.profile-modal {
+  width: min(760px, 100%);
+  max-height: calc(100vh - 40px);
+  overflow: auto;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  background: var(--surface-bg);
+  padding: 20px;
+}
+
+.profile-modal header {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.profile-modal header span {
+  color: var(--binance-yellow);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.profile-modal h2 {
+  margin: 6px 0 0;
+  color: var(--on-surface);
+}
+
+.profile-modal header button,
+.profile-form button {
+  min-height: 40px;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  cursor: pointer;
+  padding: 0 14px;
+  font-weight: 800;
+}
+
+.profile-modal header button {
+  background: var(--surface-elevated);
+  color: var(--on-surface);
+}
+
+.profile-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.profile-form label {
+  display: grid;
+  gap: 6px;
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.profile-form input {
+  min-height: 42px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background: var(--input-bg);
+  color: var(--text-main);
+  padding: 0 12px;
+}
+
+.profile-form button,
+.profile-success,
+.profile-error {
+  grid-column: 1 / -1;
+}
+
+.profile-form button {
+  background: var(--binance-yellow);
+  color: var(--on-primary);
+  border: none;
+}
+
+.profile-success,
+.profile-error {
+  margin: 0;
+  border-radius: 6px;
+  padding: 10px 12px;
+  font-weight: 800;
+}
+
+.profile-success {
+  color: #0ecb81;
+  background: rgba(14, 203, 129, 0.12);
+}
+
+.profile-error {
+  color: #ff7a8d;
+  background: rgba(246, 70, 93, 0.12);
+}
+
+@media (max-width: 620px) {
+  .profile-form {
+    grid-template-columns: 1fr;
+  }
+}

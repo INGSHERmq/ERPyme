@@ -33,7 +33,7 @@ const CotizacionesView = () => {
         setSubiendoAdjunto(true);
         for (const file of adjuntos) {
           const upload = await uploadPrivateFile({
-            file: file,
+            file,
             folder: 'cotizaciones',
             userId: user?.id
           });
@@ -55,10 +55,10 @@ const CotizacionesView = () => {
       setFormData(initialForm());
       setAdjuntos([]);
       refetch();
-      alert('Cotización creada correctamente');
+      alert('Cotizacion creada correctamente');
     } catch (error) {
       console.error('Error al guardar:', error);
-      alert('No se pudo crear la cotización');
+      alert('No se pudo crear la cotizacion');
     } finally {
       setSubiendoAdjunto(false);
     }
@@ -78,11 +78,11 @@ const CotizacionesView = () => {
   };
 
   const handleConvertir = async (cotizacion) => {
-    if (!window.confirm('¿Aprobar cotización y generar proyecto + factura de venta borrador automáticamente?')) return;
+    if (!window.confirm('Aprobar cotizacion y generar proyecto + factura de venta borrador automaticamente?')) return;
 
     try {
       await convertirCotizacion(cotizacion.id);
-      alert('Cotización aprobada. Se crearon automáticamente el proyecto y la factura de venta borrador.');
+      alert('Cotizacion aprobada. Se crearon automaticamente el proyecto y la factura de venta borrador.');
       refetch();
     } catch (error) {
       console.error('Error al aprobar:', error);
@@ -97,17 +97,17 @@ const CotizacionesView = () => {
       <div className="view-header">
         <h2>Cotizaciones</h2>
         <button className="btn-primary" onClick={() => setShowForm(!showForm)}>
-          {showForm ? 'Cancelar' : '+ Nueva cotización'}
+          {showForm ? 'Cancelar' : '+ Nueva cotizacion'}
         </button>
       </div>
 
       {showForm && (
         <form onSubmit={handleSubmit} className="simple-form">
           <select name="cliente_id" required value={formData.cliente_id} onChange={handleChange}>
-            <option value="">Cliente *</option>
+            <option value="">Lead / cliente *</option>
             {clientes.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
           </select>
-          <input name="titulo" placeholder="Título del proyecto *" required value={formData.titulo} onChange={handleChange} />
+          <input name="titulo" placeholder="Titulo del proyecto *" required value={formData.titulo} onChange={handleChange} />
           <div className="form-row">
             <input name="cantidad" type="number" placeholder="Cantidad" value={formData.cantidad} onChange={handleChange} min="1" />
             <select name="unidad" value={formData.unidad} onChange={handleChange}>
@@ -121,12 +121,12 @@ const CotizacionesView = () => {
             </select>
           </div>
           <div className="form-row">
-            <input name="precio_unitario" type="number" placeholder="Precio Unitario (S/)" required value={formData.precio_unitario} onChange={handleChange} step="0.01" />
-            <input name="precio_total" type="number" placeholder="Precio Total (S/)" value={formData.precio_total} readOnly className="input-readonly" />
+            <input name="precio_unitario" type="number" placeholder="Precio unitario (S/)" required value={formData.precio_unitario} onChange={handleChange} step="0.01" />
+            <input name="precio_total" type="number" placeholder="Precio total (S/)" value={formData.precio_total} readOnly className="input-readonly" />
           </div>
           <input name="fecha" type="date" required value={formData.fecha} onChange={handleChange} />
-          <textarea name="descripcion" placeholder="Descripción" value={formData.descripcion} onChange={handleChange} />
-          <input name="validez" placeholder="Validez (ej: 30 días)" value={formData.validez} onChange={handleChange} />
+          <textarea name="descripcion" placeholder="Descripcion" value={formData.descripcion} onChange={handleChange} />
+          <input name="validez" placeholder="Validez (ej: 30 dias)" value={formData.validez} onChange={handleChange} />
           <div className="file-input-wrapper">
             <input
               type="file"
@@ -136,7 +136,7 @@ const CotizacionesView = () => {
               id="adjuntos"
             />
             <label htmlFor="adjuntos" className="file-label">
-              📎 Adjuntar archivos
+              Adjuntar archivos
             </label>
           </div>
           {adjuntos.length > 0 && (
@@ -144,13 +144,13 @@ const CotizacionesView = () => {
               {adjuntos.map((file, index) => (
                 <span key={index} className="file-tag">
                   {file.name}
-                  <button type="button" onClick={() => setAdjuntos(adjuntos.filter((_, i) => i !== index))}>×</button>
+                  <button type="button" onClick={() => setAdjuntos(adjuntos.filter((_, i) => i !== index))}>x</button>
                 </span>
               ))}
             </div>
           )}
           <button type="submit" className="btn-primary" disabled={subiendoAdjunto}>
-            {subiendoAdjunto ? 'Subiendo archivo...' : 'Crear cotización'}
+            {subiendoAdjunto ? 'Subiendo archivo...' : 'Crear cotizacion'}
           </button>
         </form>
       )}
@@ -159,12 +159,12 @@ const CotizacionesView = () => {
         <table className="data-table">
           <thead>
             <tr>
-              <th>Cliente</th>
-              <th>Título</th>
+              <th>Lead / Cliente</th>
+              <th>Titulo</th>
               <th>Cantidad</th>
               <th>Unidad</th>
-              <th>Precio Unit.</th>
-              <th>Precio Total</th>
+              <th>Precio unit.</th>
+              <th>Precio total</th>
               <th>Estado</th>
               <th>Fecha</th>
               <th>Adjunto</th>
@@ -200,7 +200,7 @@ const CotizacionesView = () => {
                     </div>
                   ) : c.archivo_adjunto_path ? (
                     <a href={c.archivo_adjunto_path} target="_blank" rel="noreferrer">Ver</a>
-                  ) : '—'}
+                  ) : '-'}
                 </td>
                 <td>
                   {c.estado === 'borrador' && (

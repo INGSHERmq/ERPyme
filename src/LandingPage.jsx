@@ -26,7 +26,7 @@ const benefits = [
   },
   {
     title: 'Ventas con foco real',
-    copy: 'Lead scoring ordena oportunidades por probabilidad de cierre para que tu equipo atienda primero lo que mas puede convertirse.'
+    copy: 'Scoring de cotizaciones ordena propuestas por probabilidad de aceptacion para que tu equipo atienda primero lo que mas puede convertirse.'
   },
   {
     title: 'Operacion conectada',
@@ -128,7 +128,7 @@ const LandingPage = () => {
           </div>
           <div className="ai-card">
             <span>Hoy, 7:30 a.m.</span>
-            <p>Detecte 3 facturas por cobrar que vencen hoy y una oportunidad comercial con 82% de probabilidad de cierre.</p>
+            <p>Detecte 3 facturas por cobrar que vencen hoy y una cotizacion comercial con 82% de probabilidad de aceptacion.</p>
             <button type="button" onClick={() => setShowLogin(true)}>Abrir briefing</button>
           </div>
         </section>

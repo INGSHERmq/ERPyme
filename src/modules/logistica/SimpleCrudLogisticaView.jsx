@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../context/auth/useAuth';
+import useProjects from '../../hooks/useProjects';
 
 const SimpleCrudLogisticaView = ({ title, table, fields }) => {
-  const { user } = useAuth();
+  const { user, membership, profile } = useAuth();
+  const { proyectos } = useProjects();
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -24,7 +26,7 @@ const SimpleCrudLogisticaView = ({ title, table, fields }) => {
   };
 
   useEffect(() => {
-    fetchRows();
+    (async () => { await fetchRows(); })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id, table]);
 
@@ -36,6 +38,9 @@ const SimpleCrudLogisticaView = ({ title, table, fields }) => {
       if (raw === '' || raw === null || raw === undefined) return;
       payload[field.name] = field.type === 'number' ? Number(raw) : raw;
     });
+    const empresaId = membership?.empresa_id || profile?.empresa_actual_id;
+    if (empresaId) payload.empresa_id = empresaId;
+    if (!['inventario_objetos', 'mantenimiento_objetos'].includes(table)) payload.user_id = user.id;
 
     if (table === 'inventario_objetos' && payload.codigo) {
       const { data: existing } = await supabase.from(table).select('id, stock_actual').eq('codigo', payload.codigo).single();
@@ -80,7 +85,19 @@ const SimpleCrudLogisticaView = ({ title, table, fields }) => {
           {fields.map((field) => (
             <div className="form-field" key={field.name}>
               <label htmlFor={`${table}-${field.name}`}>{field.label}</label>
-              {field.type === 'select' ? (
+              {field.type === 'project' ? (
+                <select
+                  id={`${table}-${field.name}`}
+                  required={field.required}
+                  value={formData[field.name]}
+                  onChange={(event) => setFormData((prev) => ({ ...prev, [field.name]: event.target.value }))}
+                >
+                  <option value="">Sin proyecto</option>
+                  {proyectos.map((proyecto) => (
+                    <option key={proyecto.id} value={proyecto.id}>{proyecto.nombre_mostrar || proyecto.nombre}</option>
+                  ))}
+                </select>
+              ) : field.type === 'select' ? (
                 <select
                   id={`${table}-${field.name}`}
                   required={field.required}
@@ -109,13 +126,19 @@ const SimpleCrudLogisticaView = ({ title, table, fields }) => {
         <table className="data-table">
           <thead>
             <tr>
-              {fields.slice(0, 5).map((field) => <th key={field.name}>{field.label}</th>)}
+              {fields.slice(0, 6).map((field) => <th key={field.name}>{field.label}</th>)}
             </tr>
           </thead>
           <tbody>
             {rows.map((row) => (
               <tr key={row.id}>
-                {fields.slice(0, 5).map((field) => <td key={field.name}>{String(row[field.name] ?? '-')}</td>)}
+                {fields.slice(0, 6).map((field) => (
+                  <td key={field.name}>
+                    {field.type === 'project'
+                      ? proyectos.find((proyecto) => Number(proyecto.id) === Number(row[field.name]))?.nombre_mostrar || proyectos.find((proyecto) => Number(proyecto.id) === Number(row[field.name]))?.nombre || '-'
+                      : String(row[field.name] ?? '-')}
+                  </td>
+                ))}
               </tr>
             ))}
           </tbody>

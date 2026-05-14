@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useAuth } from '../../context/auth/useAuth';
 import DashboardMarketing from './DashboardMarketing';
 import ClientesView from './ClientesView';
 import CotizacionesView from './CotizacionesView';
@@ -7,10 +8,19 @@ import LeadScoringView from './LeadScoringView';
 import './MarketingView.css';
 
 const MarketingView = ({ onBack }) => {
+  const { canAccessFeature } = useAuth();
   const [tab, setTab] = useState('dashboard');
+  const tabs = [
+    { id: 'dashboard', feature: 'ventas.summary', label: 'Resumen' },
+    { id: 'crm', feature: 'ventas.leads', label: 'Leads' },
+    { id: 'cotizaciones', feature: 'ventas.quotes', label: 'Cotizaciones' },
+    { id: 'clientes', feature: 'ventas.clients', label: 'Clientes' },
+    { id: 'scoring', feature: 'ventas.scoring', label: 'Scoring cotizaciones' }
+  ].filter((item) => canAccessFeature(item.feature));
+  const activeTab = tabs.some((item) => item.id === tab) ? tab : tabs[0]?.id;
 
   const renderTab = () => {
-    switch (tab) {
+    switch (activeTab) {
       case 'dashboard': return <DashboardMarketing />;
       case 'clientes': return <ClientesView />;
       case 'cotizaciones': return <CotizacionesView />;
@@ -27,29 +37,19 @@ const MarketingView = ({ onBack }) => {
           Volver al inicio
         </button>
         <h1>Ventas</h1>
-        <p>Gestiona clientes, cotizaciones y su conversión automática a proyectos aprobados.</p>
+        <p>Gestiona leads, cotizaciones y su conversion automatica a proyectos aprobados.</p>
       </section>
 
       <nav className="tabs-nav" role="tablist">
-        <button role="tab" aria-selected={tab === 'dashboard'} className={tab === 'dashboard' ? 'active' : ''} onClick={() => setTab('dashboard')}>
-          Resumen
-        </button>
-        <button role="tab" aria-selected={tab === 'clientes'} className={tab === 'clientes' ? 'active' : ''} onClick={() => setTab('clientes')}>
-          Clientes
-        </button>
-        <button role="tab" aria-selected={tab === 'cotizaciones'} className={tab === 'cotizaciones' ? 'active' : ''} onClick={() => setTab('cotizaciones')}>
-          Cotizaciones
-        </button>
-        <button role="tab" aria-selected={tab === 'crm'} className={tab === 'crm' ? 'active' : ''} onClick={() => setTab('crm')}>
-          CRM
-        </button>
-        <button role="tab" aria-selected={tab === 'scoring'} className={tab === 'scoring' ? 'active' : ''} onClick={() => setTab('scoring')}>
-          Lead scoring
-        </button>
+        {tabs.map((item) => (
+          <button key={item.id} role="tab" aria-selected={activeTab === item.id} className={activeTab === item.id ? 'active' : ''} onClick={() => setTab(item.id)}>
+            {item.label}
+          </button>
+        ))}
       </nav>
 
       <main className="content-area" role="tabpanel">
-        {renderTab()}
+        {tabs.length ? renderTab() : <div className="empty-state">No tienes apartados habilitados en ventas.</div>}
       </main>
     </div>
   );

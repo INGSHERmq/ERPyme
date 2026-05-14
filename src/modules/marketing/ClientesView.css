@@ -4,6 +4,12 @@
   gap: 24px;
 }
 
+.view-subtitle {
+  margin: 4px 0 0;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
 .simple-form {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -46,6 +52,14 @@
 .badge-green { background: var(--kpi-green-bg); color: var(--kpi-green-text); }
 .badge-blue { background: var(--kpi-blue-bg); color: var(--kpi-blue-text); }
 .badge-gray { background: var(--surface-elevated); color: var(--text-muted); }
+.badge-pink { background: var(--kpi-red-bg); color: var(--kpi-red-text); }
+.badge-teal { background: var(--kpi-blue-bg); color: var(--kpi-blue-text); }
+
+.empty-table-cell {
+  color: var(--text-muted);
+  padding: 22px;
+  text-align: center;
+}
 
 .cell-bold { 
   font-weight: 700; 

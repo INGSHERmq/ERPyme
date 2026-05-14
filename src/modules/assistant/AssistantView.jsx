@@ -12,7 +12,7 @@ const INITIAL_MESSAGES = [
 ];
 
 const AssistantView = ({ onBack }) => {
-  const { user } = useAuth();
+  const { user, canAccessFeature } = useAuth();
   const [messages, setMessages] = useState(INITIAL_MESSAGES);
   const [briefing, setBriefing] = useState(null);
   const [input, setInput] = useState('');
@@ -46,7 +46,7 @@ const AssistantView = ({ onBack }) => {
   };
 
   const handleBriefing = async () => {
-    if (briefingLoading) return;
+    if (briefingLoading || !canAccessFeature('assistant.briefing')) return;
     setError('');
     setBriefingLoading(true);
 
@@ -79,8 +79,8 @@ const AssistantView = ({ onBack }) => {
           <span>Consultar modulos</span>
           <span>Crear proveedores</span>
           <span>Crear cotizaciones</span>
-          <span>Briefing matutino proactivo</span>
-          <span>Lead scoring predictivo</span>
+          {canAccessFeature('assistant.briefing') && <span>Briefing matutino proactivo</span>}
+          <span>Scoring de cotizaciones</span>
           <span>Crear tareas y documentos base</span>
         </div>
       </aside>
@@ -91,9 +91,11 @@ const AssistantView = ({ onBack }) => {
             <strong>Asistente ERPyme</strong>
             <span>{loading ? 'Procesando solicitud...' : 'Groq API'}</span>
           </div>
-          <button type="button" onClick={handleBriefing} disabled={briefingLoading}>
-            {briefingLoading ? 'Analizando...' : 'Briefing ejecutivo'}
-          </button>
+          {canAccessFeature('assistant.briefing') && (
+            <button type="button" onClick={handleBriefing} disabled={briefingLoading}>
+              {briefingLoading ? 'Analizando...' : 'Briefing ejecutivo'}
+            </button>
+          )}
         </div>
 
         {briefing && (
@@ -117,7 +119,7 @@ const AssistantView = ({ onBack }) => {
               </article>
               <article>
                 <strong>{briefing.topOpportunities[0]?.probabilidad || 0}%</strong>
-                <span>Mejor oportunidad</span>
+                <span>Mejor cotizacion</span>
               </article>
             </div>
             <ul>

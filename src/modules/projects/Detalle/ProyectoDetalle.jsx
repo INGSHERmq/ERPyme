@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useAuth } from '../../../context/auth/useAuth';
 import Resumen from '../resumen/Resumen';
 import Actividades from '../Actividades/Actividades';
 import Cronograma from '../Cronograma/Cronograma';
@@ -8,10 +9,20 @@ import Herramientas from '../Herramientas/Herramientas';
 import './ProyectoDetalle.css';
 
 const ProyectoDetalle = ({ proyecto, onBack }) => {
+  const { canAccessFeature } = useAuth();
   const [tab, setTab] = useState('resumen');
+  const tabs = [
+    { id: 'resumen', feature: 'projects.summary', label: 'Resumen' },
+    { id: 'actividades', feature: 'projects.activities', label: 'Actividades' },
+    { id: 'cronograma', feature: 'projects.schedule', label: 'Cronograma' },
+    { id: 'calendario', feature: 'projects.calendar', label: 'Calendario' },
+    { id: 'personal', feature: 'projects.people', label: 'Personal' },
+    { id: 'herramientas', feature: 'projects.tools', label: 'Herramientas' }
+  ].filter((item) => canAccessFeature(item.feature));
+  const activeTab = tabs.some((item) => item.id === tab) ? tab : tabs[0]?.id;
 
   const renderContent = () => {
-    switch (tab) {
+    switch (activeTab) {
       case 'resumen': return <Resumen proyecto={proyecto} />;
       case 'actividades': return <Actividades proyectoId={proyecto.id} />;
       case 'cronograma': return <Cronograma proyectoId={proyecto.id} />;
@@ -33,16 +44,13 @@ const ProyectoDetalle = ({ proyecto, onBack }) => {
       </div>
 
       <nav className="detalle-tabs">
-        <button className={tab === 'resumen' ? 'active' : ''} onClick={() => setTab('resumen')}>Resumen</button>
-        <button className={tab === 'actividades' ? 'active' : ''} onClick={() => setTab('actividades')}>Actividades</button>
-        <button className={tab === 'cronograma' ? 'active' : ''} onClick={() => setTab('cronograma')}>Cronograma</button>
-        <button className={tab === 'calendario' ? 'active' : ''} onClick={() => setTab('calendario')}>Calendario</button>
-        <button className={tab === 'personal' ? 'active' : ''} onClick={() => setTab('personal')}>Personal</button>
-        <button className={tab === 'herramientas' ? 'active' : ''} onClick={() => setTab('herramientas')}>Herramientas</button>
+        {tabs.map((item) => (
+          <button key={item.id} className={activeTab === item.id ? 'active' : ''} onClick={() => setTab(item.id)}>{item.label}</button>
+        ))}
       </nav>
 
       <main className="detalle-content">
-        {renderContent()}
+        {tabs.length ? renderContent() : <div className="empty-state">No tienes apartados habilitados en proyectos.</div>}
       </main>
     </div>
   );

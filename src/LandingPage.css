@@ -412,6 +412,7 @@
 .landing-login-shell {
   min-height: 100vh;
   background: #0b0e11;
+  overflow-x: hidden;
 }
 
 .landing-back {
