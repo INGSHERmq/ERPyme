@@ -1,8 +1,9 @@
-import { Suspense, lazy, useState } from 'react';
+import { Suspense, lazy, useEffect, useState } from 'react';
 import { useAuth } from './context/auth/useAuth';
 import ThemeToggleButton from './components/ThemeToggleButton';
 import Home from './Home';
 import LandingPage from './LandingPage';
+import { getPlanConfig } from './config/modules';
 import './styles/theme.css';
 
 const ProjectsView = lazy(() => import('./modules/projects/ProjectsView'));
@@ -11,6 +12,7 @@ const FinanzasView = lazy(() => import('./modules/finanzas/FinanzasView'));
 const RRHHView = lazy(() => import('./modules/rrhh/RRHHView'));
 const LogisticaView = lazy(() => import('./modules/logistica/LogisticaView'));
 const AssistantView = lazy(() => import('./modules/assistant/AssistantView'));
+const AdminView = lazy(() => import('./modules/admin/AdminView'));
 
 function App() {
   const {
@@ -19,9 +21,21 @@ function App() {
     profile,
     signOut,
     enabledModules,
-    canAccessAdminPanel
+    canAccessAdminPanel,
+    updateProfile,
+    company
   } = useAuth();
   const [module, setModule] = useState('home');
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [profileForm, setProfileForm] = useState({});
+  const [profileMessage, setProfileMessage] = useState('');
+  const [profileError, setProfileError] = useState('');
+  const planLabel = getPlanConfig(company?.plan || company?.plan_key).shortName;
+
+  useEffect(() => {
+    if (module === 'home') return;
+    if (!enabledModules?.includes(module)) setModule('home');
+  }, [enabledModules, module, profile?.id]);
 
   if (authLoading) {
     return (
@@ -38,6 +52,48 @@ function App() {
   if (!isAuthenticated) return <LandingPage />;
 
   const back = () => setModule('home');
+
+  const navigate = (nextModule) => {
+    if (nextModule !== 'home' && !enabledModules?.includes(nextModule)) {
+      setModule('home');
+      return;
+    }
+    setModule(nextModule);
+  };
+
+  const openProfile = () => {
+    setProfileForm({
+      nombres: profile?.nombres || '',
+      apellidos: profile?.apellidos || '',
+      nombre_completo: profile?.nombre_completo || '',
+      fecha_nacimiento: profile?.fecha_nacimiento || '',
+      telefono: profile?.telefono || '',
+      documento_identidad: profile?.documento_identidad || '',
+      direccion: profile?.direccion || '',
+      cargo: profile?.cargo || '',
+      departamento: profile?.departamento || ''
+    });
+    setProfileMessage('');
+    setProfileError('');
+    setProfileOpen(true);
+  };
+
+  const handleProfileChange = (event) => {
+    const { name, value } = event.target;
+    setProfileForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleProfileSubmit = async (event) => {
+    event.preventDefault();
+    setProfileMessage('');
+    setProfileError('');
+    try {
+      await updateProfile(profileForm);
+      setProfileMessage('Datos actualizados correctamente.');
+    } catch (error) {
+      setProfileError(error.message || 'No se pudo actualizar el perfil.');
+    }
+  };
 
   const appContent = (
     <>
@@ -61,8 +117,14 @@ function App() {
 
         <div className="header-right">
           <div className="header-user">
-            <span className="user-name">{profile?.nombre_completo || 'Usuario'}</span>
-            <button className="logout-link" onClick={signOut}>Salir</button>
+            <div className="user-identity">
+              <span className="user-name">{profile?.nombre_completo || 'Usuario'}</span>
+              <span className="user-plan">{company?.plan ? planLabel : 'plan activo'}</span>
+            </div>
+            <div className="user-actions">
+              <button className="logout-link" onClick={openProfile}>Mi perfil</button>
+              <button className="logout-link" onClick={signOut}>Salir</button>
+            </div>
           </div>
           <ThemeToggleButton />
         </div>
@@ -72,20 +134,49 @@ function App() {
         <Suspense fallback={<div className="loading">Cargando área...</div>}>
           {module === 'home' && (
             <Home
-              onNavigate={setModule}
+              onNavigate={navigate}
               profile={profile}
               signOut={signOut}
               enabledModules={enabledModules}
             />
           )}
-          {module === 'projects' && <ProjectsView onBack={back} />}
-          {module === 'ventas' && <MarketingView onBack={back} />}
-          {module === 'contabilidad' && <FinanzasView onBack={back} />}
-          {module === 'rrhh' && <RRHHView onBack={back} />}
-          {module === 'logistica' && <LogisticaView onBack={back} />}
-          {module === 'assistant' && <AssistantView onBack={back} />}
+          {module === 'projects' && enabledModules?.includes('projects') && <ProjectsView onBack={back} />}
+          {module === 'ventas' && enabledModules?.includes('ventas') && <MarketingView onBack={back} />}
+          {module === 'contabilidad' && enabledModules?.includes('contabilidad') && <FinanzasView onBack={back} />}
+          {module === 'rrhh' && enabledModules?.includes('rrhh') && <RRHHView onBack={back} />}
+          {module === 'logistica' && enabledModules?.includes('logistica') && <LogisticaView onBack={back} />}
+          {module === 'assistant' && enabledModules?.includes('assistant') && <AssistantView onBack={back} />}
+          {module === 'admin' && enabledModules?.includes('admin') && <AdminView onBack={back} signOut={signOut} />}
         </Suspense>
       </main>
+      {profileOpen && (
+        <div className="profile-modal-backdrop" role="presentation" onClick={() => setProfileOpen(false)}>
+          <section className="profile-modal" role="dialog" aria-modal="true" onClick={(event) => event.stopPropagation()}>
+            <header>
+              <div>
+                <span>Perfil personal</span>
+                <h2>Actualiza tus datos</h2>
+              </div>
+              <button type="button" onClick={() => setProfileOpen(false)}>Cerrar</button>
+            </header>
+            <form onSubmit={handleProfileSubmit} className="profile-form">
+              <label>Nombres<input name="nombres" value={profileForm.nombres || ''} onChange={handleProfileChange} /></label>
+              <label>Apellidos<input name="apellidos" value={profileForm.apellidos || ''} onChange={handleProfileChange} /></label>
+              <label>Nombre visible<input name="nombre_completo" value={profileForm.nombre_completo || ''} onChange={handleProfileChange} /></label>
+              <label>Fecha nacimiento<input name="fecha_nacimiento" type="date" value={profileForm.fecha_nacimiento || ''} onChange={handleProfileChange} /></label>
+              <label>Documento<input name="documento_identidad" value={profileForm.documento_identidad || ''} onChange={handleProfileChange} /></label>
+              <label>Telefono<input name="telefono" value={profileForm.telefono || ''} onChange={handleProfileChange} /></label>
+              <label>Direccion<input name="direccion" value={profileForm.direccion || ''} onChange={handleProfileChange} /></label>
+              <label>Cargo<input name="cargo" value={profileForm.cargo || ''} onChange={handleProfileChange} /></label>
+              <label>Departamento<input name="departamento" value={profileForm.departamento || ''} onChange={handleProfileChange} /></label>
+              {(profileMessage || profileError) && (
+                <p className={profileError ? 'profile-error' : 'profile-success'}>{profileError || profileMessage}</p>
+              )}
+              <button type="submit">Guardar cambios</button>
+            </form>
+          </section>
+        </div>
+      )}
     </>
   );
 

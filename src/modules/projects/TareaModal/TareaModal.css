@@ -19,8 +19,9 @@
    Modal Content - Caja blanca centrada
    ========================================= */
 .modal-content {
-  background: white;
-  border-radius: 16px;
+  background: var(--color-surface-card);
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-lg);
   width: 90%;
   max-width: 600px;
   max-height: 90vh;
@@ -37,13 +38,13 @@
   justify-content: space-between;
   align-items: center;
   padding: 24px;
-  border-bottom: 1px solid #e9ecef;
+  border-bottom: 1px solid var(--color-hairline);
 }
 
 .modal-header h2 {
   margin: 0;
   font-size: 20px;
-  color: #212529;
+  color: var(--color-ink);
 }
 
 .btn-close {
@@ -51,7 +52,7 @@
   border: none;
   font-size: 28px;
   cursor: pointer;
-  color: #6c757d;
+  color: var(--color-muted);
   line-height: 1;
   padding: 0;
   width: 32px;
@@ -64,8 +65,8 @@
 }
 
 .btn-close:hover {
-  background: #f8f9fa;
-  color: #212529;
+  background: var(--surface-elevated);
+  color: var(--color-ink);
 }
 
 /* =========================================
@@ -83,7 +84,7 @@
   display: block;
   margin-bottom: 8px;
   font-weight: 600;
-  color: #495057;
+  color: var(--color-ink);
   font-size: 14px;
 }
 
@@ -92,8 +93,10 @@
 .form-group textarea {
   width: 100%;
   padding: 12px 16px;
-  border: 2px solid #e9ecef;
-  border-radius: 8px;
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-sm);
+  background: var(--input-bg);
+  color: var(--text-main);
   font-size: 14px;
   font-family: inherit;
   transition: all 0.2s;
@@ -128,8 +131,10 @@
 .date-input {
   width: 100%;
   padding: 12px 16px;
-  border: 2px solid #e9ecef;
-  border-radius: 8px;
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-sm);
+  background: var(--input-bg);
+  color: var(--text-main);
   cursor: pointer;
   box-sizing: border-box;
 }

@@ -1,11 +1,25 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../context/auth/useAuth';
+import useProjects from '../../hooks/useProjects';
 
 const getToday = () => new Date().toISOString().split('T')[0];
+const formatDateTime = (value) => {
+  if (!value) return '-';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleString('es-PE', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+};
 
 const OrdenesCompraView = () => {
-  const { user } = useAuth();
+  const { user, membership, profile } = useAuth();
+  const { proyectos } = useProjects();
   const [proveedores, setProveedores] = useState([]);
   const [ordenes, setOrdenes] = useState([]);
   const [materialesPorOrden, setMaterialesPorOrden] = useState({});
@@ -16,7 +30,9 @@ const OrdenesCompraView = () => {
     numero: '',
     nombre_compra: '',
     proveedor_id: '',
+    proyecto_id: '',
     fecha: getToday(),
+    fecha_vencimiento: '',
     cantidad: '1',
     costo_unitario: '0'
   });
@@ -26,7 +42,7 @@ const OrdenesCompraView = () => {
     const [provRes, ordenRes, materialesRes, facturasRes] = await Promise.all([
       supabase.from('proveedores').select('id,nombre').eq('user_id', user.id).order('nombre'),
       supabase.from('ordenes_compra').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
-      supabase.from('logistica_materiales').select('orden_compra_id,cantidad,costo_unitario').order('created_at', { ascending: false }),
+      supabase.from('logistica_materiales').select('orden_compra_id,cantidad,costo_unitario,proyecto_id').order('created_at', { ascending: false }),
       supabase.from('facturas_compra').select('id,orden_compra_id,numero,estado,total').order('created_at', { ascending: false })
     ]);
     setProveedores(provRes.data || []);
@@ -64,19 +80,24 @@ const OrdenesCompraView = () => {
   };
 
   useEffect(() => {
-    fetchData();
+    (async () => { await fetchData(); })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
     const total = Number(formData.cantidad || 0) * Number(formData.costo_unitario || 0);
+    const empresaId = membership?.empresa_id || profile?.empresa_actual_id;
 
     const { data: orden, error: ordenError } = await supabase.from('ordenes_compra').insert([{
+      user_id: user?.id,
+      empresa_id: empresaId,
       numero: formData.numero,
       nombre_compra: formData.nombre_compra,
       proveedor_id: Number(formData.proveedor_id),
+      proyecto_id: formData.proyecto_id ? Number(formData.proyecto_id) : null,
       fecha: formData.fecha,
+      fecha_vencimiento: formData.fecha_vencimiento || null,
       subtotal: total,
       total
     }]).select().single();
@@ -87,7 +108,9 @@ const OrdenesCompraView = () => {
     }
 
     const { error: materialError } = await supabase.from('logistica_materiales').insert([{
+      empresa_id: empresaId,
       orden_compra_id: orden.id,
+      proyecto_id: formData.proyecto_id ? Number(formData.proyecto_id) : null,
       descripcion: formData.nombre_compra,
       cantidad: Number(formData.cantidad || 0),
       costo_unitario: Number(formData.costo_unitario || 0),
@@ -98,18 +121,9 @@ const OrdenesCompraView = () => {
       alert(materialError.message || 'Se creó la orden, pero falló el registro del material');
     }
 
-    setFormData({ numero: '', nombre_compra: '', proveedor_id: '', fecha: getToday(), cantidad: '1', costo_unitario: '0' });
+    setFormData({ numero: '', nombre_compra: '', proveedor_id: '', proyecto_id: '', fecha: getToday(), fecha_vencimiento: '', cantidad: '1', costo_unitario: '0' });
     setShowForm(false);
     await fetchData();
-  };
-
-  const handleEstadoChange = async (ordenId, estado) => {
-    const { error } = await supabase.from('ordenes_compra').update({ estado }).eq('id', ordenId).eq('user_id', user?.id);
-    if (error) {
-      alert(error.message || 'No se pudo actualizar el estado');
-      return;
-    }
-    setOrdenes((prev) => prev.map((orden) => (orden.id === ordenId ? { ...orden, estado } : orden)));
   };
 
   const handleEnviarContabilidad = async (orden) => {
@@ -130,10 +144,13 @@ const OrdenesCompraView = () => {
 
     setEnviandoOrdenId(orden.id);
     const { error } = await supabase.from('facturas_compra').insert([{
+      empresa_id: membership?.empresa_id || profile?.empresa_actual_id,
       orden_compra_id: orden.id,
       proveedor_id: orden.proveedor_id || null,
+      proyecto_id: orden.proyecto_id || null,
       numero: numeroFactura,
       fecha_emision: orden.fecha || getToday(),
+      fecha_vencimiento: orden.fecha_vencimiento || null,
       total,
       estado: 'registrada'
     }]);
@@ -178,8 +195,21 @@ const OrdenesCompraView = () => {
             </select>
           </div>
           <div className="form-field">
+            <label htmlFor="oc-proyecto">Proyecto</label>
+            <select id="oc-proyecto" value={formData.proyecto_id} onChange={(e) => setFormData((p) => ({ ...p, proyecto_id: e.target.value }))}>
+              <option value="">Sin proyecto</option>
+              {proyectos.map((proyecto) => (
+                <option key={proyecto.id} value={proyecto.id}>{proyecto.nombre_mostrar || proyecto.nombre}</option>
+              ))}
+            </select>
+          </div>
+          <div className="form-field">
             <label htmlFor="oc-fecha">Fecha</label>
             <input id="oc-fecha" type="date" required value={formData.fecha} onChange={(e) => setFormData((p) => ({ ...p, fecha: e.target.value }))} />
+          </div>
+          <div className="form-field">
+            <label htmlFor="oc-vencimiento">Vencimiento</label>
+            <input id="oc-vencimiento" type="datetime-local" value={formData.fecha_vencimiento} onChange={(e) => setFormData((p) => ({ ...p, fecha_vencimiento: e.target.value }))} />
           </div>
           <div className="form-field">
             <label htmlFor="oc-cantidad">Cantidad</label>
@@ -200,7 +230,9 @@ const OrdenesCompraView = () => {
               <th>Número</th>
               <th>Compra</th>
               <th>Proveedor</th>
+              <th>Proyecto</th>
               <th>Fecha</th>
+              <th>Vencimiento</th>
               <th>Cantidad</th>
               <th>Costo unitario</th>
               <th>Estado</th>
@@ -213,7 +245,9 @@ const OrdenesCompraView = () => {
                 <td className="cell-bold">{orden.numero}</td>
                 <td>{orden.nombre_compra}</td>
                 <td>{proveedores.find((p) => p.id === orden.proveedor_id)?.nombre || '-'}</td>
+                <td>{proyectos.find((p) => Number(p.id) === Number(orden.proyecto_id))?.nombre_mostrar || proyectos.find((p) => Number(p.id) === Number(orden.proyecto_id))?.nombre || '-'}</td>
                 <td>{orden.fecha}</td>
+                <td>{formatDateTime(orden.fecha_vencimiento)}</td>
                 <td>{materialesPorOrden[orden.id]?.cantidad ?? '-'}</td>
                 <td>S/ {Number(materialesPorOrden[orden.id]?.costo_unitario || 0).toLocaleString()}</td>
                 <td>

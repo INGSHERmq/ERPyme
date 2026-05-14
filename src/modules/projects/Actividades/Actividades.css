@@ -86,7 +86,7 @@
 }
 
 .tarea-card {
-  background: var(--color-canvas);
+  background: var(--color-surface-card);
   padding: 16px;
   border-radius: var(--radius-md);
   box-shadow: 0 6px 16px rgba(10, 10, 10, 0.08);
@@ -94,7 +94,7 @@
   transition: box-shadow 0.2s, opacity 0.2s, transform 0.2s;
   touch-action: none;
   user-select: none;
-  border: 1px solid rgba(10, 10, 10, 0.1);
+  border: 1px solid var(--color-hairline);
 }
 
 .tarea-card:active {
@@ -143,7 +143,7 @@
 
 .btn-icon {
   border: 1px solid var(--color-hairline);
-  background: #fff;
+  background: var(--surface-elevated);
   border-radius: var(--radius-xs);
   color: var(--color-ink);
   cursor: pointer;
@@ -162,20 +162,20 @@
 }
 
 .badge-red {
-  background: #ffe4ef;
-  color: #9f1239;
+  background: rgba(246, 70, 93, 0.16);
+  color: #ff8fa0;
   border: 1px solid #ff4d8b;
 }
 
 .badge-yellow {
-  background: #fff1d1;
-  color: #6f4e00;
+  background: rgba(252, 213, 53, 0.18);
+  color: #fcd535;
   border: 1px solid #e8b94a;
 }
 
 .badge-green {
-  background: #dff4ed;
-  color: #0a3d35;
+  background: rgba(14, 203, 129, 0.16);
+  color: #3ee0a0;
   border: 1px solid #1a3a3a;
 }
 
@@ -215,7 +215,7 @@
 }
 
 .tarea-card.completada {
-  background: #f7fbf8;
+  background: rgba(14, 203, 129, 0.08);
 }
 
 .tarea-card.completada h4 {

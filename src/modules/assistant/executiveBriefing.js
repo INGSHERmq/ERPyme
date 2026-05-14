@@ -10,9 +10,15 @@ const todayISO = () => new Date().toISOString().split('T')[0];
 
 const daysBetween = (dateValue, reference = new Date()) => {
   if (!dateValue) return null;
-  const date = new Date(`${dateValue}T00:00:00`);
+  const date = String(dateValue).includes('T') ? new Date(dateValue) : new Date(`${dateValue}T00:00:00`);
   const ref = new Date(reference.toISOString().split('T')[0]);
   return Math.round((date - ref) / 86400000);
+};
+
+const hoursBetween = (dateValue, reference = new Date()) => {
+  if (!dateValue) return null;
+  const date = String(dateValue).includes('T') ? new Date(dateValue) : new Date(`${dateValue}T23:59:59`);
+  return Math.round((date - reference) / 3600000);
 };
 
 const numberValue = (value) => Number(value || 0);
@@ -49,6 +55,37 @@ export const classifyOpportunity = (score) => {
   if (score >= 75) return 'Alta';
   if (score >= 45) return 'Media';
   return 'Baja';
+};
+
+export const scoreQuotationAcceptance = (quotation = {}, customer = {}, lead = {}, allQuotes = []) => {
+  const status = (quotation.estado || '').toLowerCase();
+  if (status === 'aprobada' || status === 'aceptada') return 100;
+  if (status === 'rechazada' || status === 'vencida') return 0;
+
+  const amount = numberValue(quotation.precio_total || quotation.monto);
+  const industry = (lead.industria || customer.industria || '').toLowerCase();
+  const quoteAge = quotation.fecha ? Math.max(0, -daysBetween(quotation.fecha)) : null;
+  const validDays = Number.parseInt(String(quotation.validez || '').match(/\d+/)?.[0] || '30', 10);
+  const daysUntilExpiry = quoteAge === null ? null : validDays - quoteAge;
+  const customerQuotes = allQuotes.filter(item => (
+    item.cliente_id && quotation.cliente_id && Number(item.cliente_id) === Number(quotation.cliente_id)
+  ));
+  const hasAcceptedBefore = customerQuotes.some(item => ['aprobada', 'aceptada'].includes((item.estado || '').toLowerCase()));
+
+  let score = 42;
+  if (hasAcceptedBefore) score += 12;
+  if (amount >= 20000) score += 6;
+  if (amount > 0 && amount < 1500) score -= 5;
+  if (customer.email || lead.email) score += 4;
+  if (customer.telefono || lead.telefono) score += 4;
+  if (customer.dni_ruc || lead.dni_ruc) score += 6;
+  if (industry.includes('mineria') || industry.includes('tecnologia') || industry.includes('servicio')) score += 5;
+  if (quoteAge !== null && quoteAge <= 3) score += 8;
+  if (quoteAge !== null && quoteAge > 14) score -= 10;
+  if (daysUntilExpiry !== null && daysUntilExpiry < 0) score -= 18;
+  if (daysUntilExpiry !== null && daysUntilExpiry >= 0 && daysUntilExpiry <= 5) score -= 6;
+
+  return Math.min(100, Math.max(0, Math.round(score)));
 };
 
 const buildProjectRisks = (projects = [], tasks = []) => {
@@ -90,7 +127,7 @@ const buildProjectRisks = (projects = [], tasks = []) => {
 export const generateExecutiveBriefing = async (userId) => {
   if (!userId) throw new Error('Usuario no autenticado');
 
-  const [cobrosRes, projectsRes, tasksRes, leadsRes, opportunitiesRes] = await Promise.all([
+  const [cobrosRes, projectsRes, tasksRes, quotesRes, clientesRes, purchaseInvoicesRes] = await Promise.all([
     supabase
       .from('cuentas_por_cobrar')
       .select('id,concepto,monto,fecha_vencimiento,estado,cliente_id')
@@ -106,16 +143,20 @@ export const generateExecutiveBriefing = async (userId) => {
       .select('id,proyecto_id,titulo,estado,prioridad,fecha_fin')
       .eq('user_id', userId),
     supabase
-      .from('leads')
-      .select('id,nombre,origen,estado,industria,tiempo_respuesta_horas')
+      .from('v_cotizaciones_completas')
+      .select('*')
       .eq('user_id', userId),
     supabase
-      .from('oportunidades')
-      .select('*')
-      .eq('user_id', userId)
+      .from('clientes')
+      .select('id,nombre,email,telefono,industria,dni_ruc')
+      .eq('user_id', userId),
+    supabase
+      .from('facturas_compra')
+      .select('id,numero,total,estado,fecha_emision,fecha_vencimiento,proyecto_id,ordenes_compra(numero,nombre_compra,fecha_vencimiento,proyecto_id)')
+      .order('fecha_emision', { ascending: false })
   ]);
 
-  const firstError = [cobrosRes, projectsRes, tasksRes, leadsRes, opportunitiesRes].find(result => result.error);
+  const firstError = [cobrosRes, projectsRes, tasksRes, quotesRes, clientesRes, purchaseInvoicesRes].find(result => result.error);
   if (firstError?.error) throw firstError.error;
 
   const today = todayISO();
@@ -123,18 +164,30 @@ export const generateExecutiveBriefing = async (userId) => {
   const dueToday = cobros.filter(item => item.estado === 'Pendiente' && item.fecha_vencimiento === today);
   const overdue = cobros.filter(item => item.estado === 'Pendiente' && daysBetween(item.fecha_vencimiento) < 0);
   const projectRisks = buildProjectRisks(projectsRes.data || [], tasksRes.data || []);
-  const leadsById = Object.fromEntries((leadsRes.data || []).map(lead => [lead.id, lead]));
-  const topOpportunities = (opportunitiesRes.data || [])
-    .filter(item => !['Ganada', 'Perdida'].includes(item.etapa))
+  const clientesById = Object.fromEntries((clientesRes.data || []).map(cliente => [cliente.id, cliente]));
+  const leads = clientesRes.data || [];
+  const quotes = quotesRes.data || [];
+  const findLeadForCustomer = (customer = {}) => leads.find(lead => (
+    (lead.email && customer.email && lead.email.toLowerCase() === customer.email.toLowerCase())
+    || (lead.nombre && customer.nombre && lead.nombre.toLowerCase() === customer.nombre.toLowerCase())
+  )) || {};
+  const topOpportunities = quotes
+    .filter(item => !['aprobada', 'aceptada', 'rechazada', 'vencida'].includes((item.estado || '').toLowerCase()))
     .map(item => ({
       ...item,
-      probabilidad: scoreOpportunity(item, leadsById[item.lead_id])
+      probabilidad: scoreQuotationAcceptance(item, clientesById[item.cliente_id], findLeadForCustomer(clientesById[item.cliente_id]), quotes)
     }))
     .sort((a, b) => b.probabilidad - a.probabilidad)
     .slice(0, 3);
 
   const totalDueToday = dueToday.reduce((sum, item) => sum + numberValue(item.monto), 0);
   const totalOverdue = overdue.reduce((sum, item) => sum + numberValue(item.monto), 0);
+  const purchaseInvoices = purchaseInvoicesRes.data || [];
+  const purchaseDueSoon = purchaseInvoices.filter(item => {
+    const dueDate = item.fecha_vencimiento || item.ordenes_compra?.fecha_vencimiento;
+    const hours = hoursBetween(dueDate);
+    return item.estado === 'registrada' && hours !== null && hours >= 0 && hours <= 168;
+  });
   const highlights = [];
   const actions = [];
 
@@ -152,8 +205,13 @@ export const generateExecutiveBriefing = async (userId) => {
     actions.push(`Revisar alcance y carga del proyecto "${project.nombre}".`);
   }
   if (topOpportunities[0]) {
-    highlights.push(`La oportunidad con mejor probabilidad es "${topOpportunities[0].titulo}" con ${topOpportunities[0].probabilidad}% de cierre.`);
-    actions.push('Contactar primero las oportunidades con probabilidad alta.');
+    highlights.push(`La cotizacion con mejor probabilidad es "${topOpportunities[0].titulo}" con ${topOpportunities[0].probabilidad}% de aceptacion.`);
+    actions.push('Contactar primero las cotizaciones pendientes con probabilidad alta.');
+  }
+  if (purchaseDueSoon.length) {
+    const totalPurchasesDue = purchaseDueSoon.reduce((sum, item) => sum + numberValue(item.total), 0);
+    highlights.push(`${purchaseDueSoon.length} factura${purchaseDueSoon.length === 1 ? '' : 's'} de compra vencen en los proximos 7 dias por ${currencyFormatter.format(totalPurchasesDue)}.`);
+    actions.push('Revisar vencimientos de ordenes de compra antes del cierre contable.');
   }
   if (!highlights.length) {
     highlights.push('No encontré urgencias críticas para hoy. El negocio luce estable con los datos disponibles.');
@@ -168,6 +226,7 @@ export const generateExecutiveBriefing = async (userId) => {
     dueToday,
     overdue,
     projectRisks,
-    topOpportunities
+    topOpportunities,
+    purchaseDueSoon
   };
 };

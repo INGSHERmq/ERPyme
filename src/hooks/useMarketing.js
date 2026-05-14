@@ -26,24 +26,23 @@ const useMarketing = () => {
     try {
       setLoading(true);
       setError(null);
-      const [clientesRes, cotizacionesRes, proyectosRes, leadsRes, oportunidadesRes] = await Promise.all([
+      const [clientesRes, cotizacionesRes, proyectosRes, oportunidadesRes] = await Promise.all([
         supabase.from('clientes').select('*').eq('user_id', user.id).order('nombre'),
         supabase.from('v_cotizaciones_completas').select('*').eq('user_id', user.id).order('fecha', { ascending: false }),
         supabase.from('proyectos').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
-        supabase.from('leads').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
         supabase.from('oportunidades').select('*').eq('user_id', user.id).order('created_at', { ascending: false })
       ]);
 
       if (clientesRes.error) throw clientesRes.error;
       if (cotizacionesRes.error) throw cotizacionesRes.error;
       if (proyectosRes.error) throw proyectosRes.error;
-      if (leadsRes.error) throw leadsRes.error;
       if (oportunidadesRes.error) throw oportunidadesRes.error;
 
-      setClientes(clientesRes.data || []);
+      const clientesData = clientesRes.data || [];
+      setClientes(clientesData);
       setCotizaciones(cotizacionesRes.data || []);
       setProyectos(proyectosRes.data || []);
-      setLeads(leadsRes.data || []);
+      setLeads(clientesData);
       setOportunidades(oportunidadesRes.data || []);
     } catch (err) {
       console.error('Error cargando marketing:', err);
@@ -105,15 +104,62 @@ const useMarketing = () => {
   const addLead = async (data) => {
     if (!user?.id) throw new Error('Usuario no autenticado');
 
-    const { data: nuevo, error } = await supabase
-      .from('leads')
-      .insert([{ ...data, user_id: user.id, estado: data.estado || 'Nuevo' }])
-      .select()
-      .single();
+    const leadEmail = data.email?.trim();
+    const leadName = data.nombre?.trim();
+    let clienteExistente = null;
 
-    if (error) throw error;
-    setLeads(prev => [nuevo, ...prev]);
-    return nuevo;
+    if (leadEmail) {
+      const { data: clientePorEmail, error: clienteEmailError } = await supabase
+        .from('clientes')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('email', leadEmail)
+        .limit(1);
+
+      if (clienteEmailError) throw clienteEmailError;
+      clienteExistente = clientePorEmail?.[0] || null;
+    }
+
+    if (!clienteExistente && leadName) {
+      const { data: clientePorNombre, error: clienteNombreError } = await supabase
+        .from('clientes')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('nombre', leadName)
+        .limit(1);
+
+      if (clienteNombreError) throw clienteNombreError;
+      clienteExistente = clientePorNombre?.[0] || null;
+    }
+
+    if (!clienteExistente) {
+      const payload = {
+        user_id: user.id,
+        nombre: data.nombre,
+        contacto: data.contacto || null,
+        email: data.email || null,
+        telefono: data.telefono || null,
+        industria: data.industria || null,
+        dni_ruc: data.dni_ruc || null,
+        tipo_identificacion: data.tipo_identificacion || 'DNI',
+        estado: data.estado || 'Activo',
+        creado: new Date().toISOString().split('T')[0]
+      };
+
+      const { data: nuevoCliente, error: clienteError } = await supabase
+        .from('clientes')
+        .insert([payload])
+        .select()
+        .single();
+
+      if (clienteError) throw clienteError;
+      setClientes(prev => [...prev, nuevoCliente].sort((a, b) => (a.nombre || '').localeCompare(b.nombre || '')));
+      setLeads(prev => [nuevoCliente, ...prev]);
+      return nuevoCliente;
+    }
+
+    setLeads(prev => prev.map(item => (item.id === clienteExistente.id ? clienteExistente : item)));
+    return clienteExistente;
   };
 
   const addOportunidad = async (data) => {

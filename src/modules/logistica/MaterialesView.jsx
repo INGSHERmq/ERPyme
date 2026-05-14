@@ -1,26 +1,33 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../context/auth/useAuth';
+import useProjects from '../../hooks/useProjects';
 
 const MaterialesView = () => {
-  const { user } = useAuth();
+  const { user, membership, profile } = useAuth();
+  const { proyectos } = useProjects();
   const [rows, setRows] = useState([]);
+  const [ordenes, setOrdenes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [receivingId, setReceivingId] = useState(null);
 
   const fetchData = async () => {
     if (!user?.id) return;
     setLoading(true);
-    const { data } = await supabase
+    const [{ data }, ordenesRes] = await Promise.all([
+      supabase
       .from('logistica_materiales')
       .select('*')
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: false }),
+      supabase.from('ordenes_compra').select('id,numero,proyecto_id').eq('user_id', user.id)
+    ]);
     setRows(data || []);
+    setOrdenes(ordenesRes.data || []);
     setLoading(false);
   };
 
   useEffect(() => {
-    fetchData();
+    (async () => { await fetchData(); })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
 
@@ -29,14 +36,17 @@ const MaterialesView = () => {
 
     const cantidad = Number(row.cantidad || 0);
     const costoUnitario = Number(row.costo_unitario || 0);
+    const proyectoId = row.proyecto_id || ordenes.find((orden) => orden.id === row.orden_compra_id)?.proyecto_id || null;
 
-    const { data: existente, error: existenteError } = await supabase
+    let inventarioQuery = supabase
       .from('inventario_objetos')
       .select('id,stock_actual')
       .eq('nombre', row.descripcion)
       .eq('tipo_inventario', 'consumible')
-      .limit(1)
-      .maybeSingle();
+      .limit(1);
+
+    inventarioQuery = proyectoId ? inventarioQuery.eq('proyecto_id', proyectoId) : inventarioQuery.is('proyecto_id', null);
+    const { data: existente, error: existenteError } = await inventarioQuery.maybeSingle();
 
     if (existenteError) {
       setReceivingId(null);
@@ -49,7 +59,8 @@ const MaterialesView = () => {
         .from('inventario_objetos')
         .update({
           stock_actual: Number(existente.stock_actual || 0) + cantidad,
-          costo_unitario: costoUnitario
+          costo_unitario: costoUnitario,
+          proyecto_id: proyectoId
         })
         .eq('id', existente.id);
       if (updateInvError) {
@@ -61,8 +72,10 @@ const MaterialesView = () => {
       const { error: insertInvError } = await supabase
         .from('inventario_objetos')
         .insert([{
+          empresa_id: membership?.empresa_id || profile?.empresa_actual_id,
           codigo: `MAT-${row.id}`,
           nombre: row.descripcion,
+          proyecto_id: proyectoId,
           tipo_inventario: 'consumible',
           stock_actual: cantidad,
           costo_unitario: costoUnitario
@@ -104,6 +117,7 @@ const MaterialesView = () => {
             <tr>
               <th>Orden compra</th>
               <th>Descripcion</th>
+              <th>Proyecto</th>
               <th>Cantidad</th>
               <th>Costo unitario</th>
               <th>Estado</th>
@@ -115,6 +129,7 @@ const MaterialesView = () => {
               <tr key={row.id}>
                 <td>{row.orden_compra_id}</td>
                 <td className="cell-bold">{row.descripcion}</td>
+                <td>{proyectos.find((p) => Number(p.id) === Number(row.proyecto_id || ordenes.find((orden) => orden.id === row.orden_compra_id)?.proyecto_id))?.nombre_mostrar || proyectos.find((p) => Number(p.id) === Number(row.proyecto_id || ordenes.find((orden) => orden.id === row.orden_compra_id)?.proyecto_id))?.nombre || '-'}</td>
                 <td>{row.cantidad}</td>
                 <td>S/ {Number(row.costo_unitario || 0).toLocaleString()}</td>
                 <td>{row.estado}</td>
