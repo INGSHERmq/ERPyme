@@ -6,9 +6,9 @@ import MaterialesView from './MaterialesView';
 import AsignacionesNombresView from './AsignacionesNombresView';
 import './LogisticaView.css';
 
-const LogisticaView = ({ onBack }) => {
+const LogisticaView = ({ onBack, initialTab }) => {
   const { canAccessFeature } = useAuth();
-  const [tab, setTab] = useState('proveedores');
+  const [tab, setTab] = useState(initialTab || 'proveedores');
   const tabs = [
     { id: 'proveedores', feature: 'logistica.suppliers', label: 'Proveedores' },
     { id: 'ordenes', feature: 'logistica.purchaseOrders', label: 'Orden de compra' },

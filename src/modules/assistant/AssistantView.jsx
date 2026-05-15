@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/auth/useAuth';
-import { assistantConfig, sendAssistantMessage } from './erpAssistant';
+import { assistantConfig, sendAssistantMessage, createErpRecord, getOptions } from './erpAssistant';
 import { generateExecutiveBriefing } from './executiveBriefing';
 import './AssistantView.css';
 
@@ -11,7 +11,131 @@ const INITIAL_MESSAGES = [
   }
 ];
 
-const AssistantView = ({ onBack }) => {
+const ChatForm = ({ form, onComplete }) => {
+  const [formData, setFormData] = useState(form.initialData || {});
+  const [options, setOptions] = useState({});
+  const [saving, setSaving] = useState(false);
+  const [done, setDone] = useState(false);
+
+  useEffect(() => {
+    const fetchAllOptions = async () => {
+      const newOptions = {};
+      const fieldsToFetch = form.schema.fields.filter(f => f.endsWith('_id'));
+      
+      for (const field of fieldsToFetch) {
+        let table = '';
+        if (field === 'cliente_id') table = 'clientes';
+        else if (field === 'proyecto_id') table = 'proyectos';
+        else if (field === 'proveedor_id') table = 'proveedores';
+        else if (field === 'cotizacion_id') table = 'cotizaciones';
+        else if (field === 'activo_id') table = 'activos';
+        else if (field === 'empleado_id') table = 'empleados';
+        
+        if (table) {
+          const list = await getOptions(table, user?.id);
+          newOptions[field] = list;
+        }
+      }
+      setOptions(newOptions);
+    };
+    fetchAllOptions();
+  }, [form.schema.fields]);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      await createErpRecord({ table: form.table, data: formData });
+      setDone(true);
+      onComplete(`He creado el registro en ${form.table} correctamente.`);
+    } catch (err) {
+      alert('Error al guardar: ' + err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (done) return <div className="chat-form-done">✓ Registro guardado</div>;
+
+  return (
+    <form className="chat-inline-form" onSubmit={handleSubmit}>
+      <header>
+        <strong>{form.title}</strong>
+      </header>
+      <div className="chat-form-grid">
+        {form.schema.fields.map(field => {
+          if (field === 'user_id' || field === 'id' || field === 'created_at') return null;
+          return (
+            <label key={field}>
+              {field.replace(/_/g, ' ')}
+              {options[field] || options[field === 'clienteId' ? 'cliente_id' : field === 'proyectoId' ? 'proyecto_id' : field === 'proveedorId' ? 'proveedor_id' : field] ? (
+                <select name={field} value={formData[field] || ''} onChange={handleChange} required={form.schema.required.includes(field)}>
+                  <option value="">Seleccionar...</option>
+                  {(options[field] || options[field === 'clienteId' ? 'cliente_id' : field === 'proyectoId' ? 'proyecto_id' : field === 'proveedorId' ? 'proveedor_id' : field]).map(opt => (
+                    <option key={opt.id} value={opt.id}>{opt.label}</option>
+                  ))}
+                </select>
+              ) : field === 'tipo_identificacion' || field === 'tipoIdentificacion' ? (
+                <select name={field} value={formData[field] || 'DNI'} onChange={handleChange}>
+                  <option value="DNI">DNI</option>
+                  <option value="RUC">RUC</option>
+                </select>
+              ) : field === 'estado' ? (
+                <select name={field} value={formData[field] || ''} onChange={handleChange}>
+                  <option value="Activo">Activo</option>
+                  <option value="Inactivo">Inactivo</option>
+                  <option value="Pendiente">Pendiente</option>
+                </select>
+              ) : field === 'unidad' ? (
+                <select name={field} value={formData[field] || 'UND'} onChange={handleChange}>
+                  <option value="UND">Unidades (UND)</option>
+                  <option value="GLB">Global (GLB)</option>
+                  <option value="HOR">Horas (HOR)</option>
+                </select>
+              ) : field.startsWith('fecha') || field.includes('vencimiento') ? (
+                <input 
+                  type="date"
+                  name={field} 
+                  value={formData[field] || ''} 
+                  onChange={handleChange}
+                  required={form.schema.required.includes(field)}
+                />
+              ) : ['cantidad', 'precio_unitario', 'costo_unitario', 'monto', 'total', 'precioUnitario', 'costoUnitario'].includes(field) ? (
+                <input 
+                  type="number"
+                  step="0.01"
+                  name={field} 
+                  value={formData[field] || ''} 
+                  onChange={handleChange}
+                  required={form.schema.required.includes(field)}
+                  placeholder="0.00"
+                />
+              ) : (
+                <input 
+                  name={field} 
+                  value={formData[field] || ''} 
+                  onChange={handleChange}
+                  required={form.schema.required.includes(field)}
+                  placeholder="..."
+                />
+              )}
+            </label>
+          );
+        })}
+      </div>
+      <button type="submit" disabled={saving}>
+        {saving ? 'Guardando...' : 'Guardar en ERP'}
+      </button>
+    </form>
+  );
+};
+
+const AssistantView = ({ onBack, onNavigate }) => {
   const { user, canAccessFeature } = useAuth();
   const [messages, setMessages] = useState(INITIAL_MESSAGES);
   const [briefing, setBriefing] = useState(null);
@@ -32,8 +156,8 @@ const AssistantView = ({ onBack }) => {
     setLoading(true);
 
     try {
-      const response = await sendAssistantMessage(messages, text);
-      setMessages(prev => [...prev, { role: 'assistant', content: response }]);
+      const { content, navigation, form } = await sendAssistantMessage(messages, text);
+      setMessages(prev => [...prev, { role: 'assistant', content, navigation, form }]);
     } catch (err) {
       const message = err.message?.includes('Failed to fetch')
         ? 'No pude conectar con Groq. Verifica la API key en .env.local y reinicia el servidor de Vite.'
@@ -79,7 +203,6 @@ const AssistantView = ({ onBack }) => {
           <span>Consultar módulos</span>
           <span>Crear proveedores</span>
           <span>Crear cotizaciones</span>
-          {canAccessFeature('assistant.briefing') && <span>Briefing matutino proactivo</span>}
           <span>Scoring de cotizaciones</span>
           <span>Crear tareas y documentos base</span>
         </div>
@@ -91,47 +214,32 @@ const AssistantView = ({ onBack }) => {
             <strong>Asistente ERPyme</strong>
             <span>{loading ? 'Procesando solicitud...' : 'Groq API'}</span>
           </div>
-          {canAccessFeature('assistant.briefing') && (
-            <button type="button" onClick={handleBriefing} disabled={briefingLoading}>
-              {briefingLoading ? 'Analizando...' : 'Briefing ejecutivo'}
-            </button>
-          )}
         </div>
 
-        {briefing && (
-          <section className="briefing-panel" aria-label="Briefing ejecutivo">
-            <div>
-              <span className="briefing-kicker">Proactive Executive Briefing</span>
-              <h2>Prioridades de hoy</h2>
-            </div>
-            <div className="briefing-grid">
-              <article>
-                <strong>{briefing.dueToday.length}</strong>
-                <span>Vencen hoy</span>
-              </article>
-              <article>
-                <strong>{briefing.overdue.length}</strong>
-                <span>Vencidas</span>
-              </article>
-              <article>
-                <strong>{briefing.projectRisks.length}</strong>
-                <span>Riesgos proyecto</span>
-              </article>
-              <article>
-                <strong>{briefing.topOpportunities[0]?.probabilidad || 0}%</strong>
-                <span>Mejor cotización</span>
-              </article>
-            </div>
-            <ul>
-              {briefing.actions.map(action => <li key={action}>{action}</li>)}
-            </ul>
-          </section>
-        )}
 
         <div className="chat-messages">
           {messages.map((message, index) => (
             <article key={`${message.role}-${index}`} className={`chat-message ${message.role}`}>
-              <p>{message.content}</p>
+              <div className="message-bubble">
+                <p>{message.content}</p>
+                {message.navigation && (
+                  <div className="message-actions">
+                    <button 
+                      type="button" 
+                      className="btn-navigate"
+                      onClick={() => onNavigate(message.navigation.module, message.navigation.tab)}
+                    >
+                      {message.navigation.label || 'Ir a la sección'}
+                    </button>
+                  </div>
+                )}
+                {message.form && (
+                  <ChatForm 
+                    form={message.form} 
+                    onComplete={(msg) => setMessages(prev => [...prev, { role: 'assistant', content: msg }])} 
+                  />
+                )}
+              </div>
             </article>
           ))}
           {loading && (

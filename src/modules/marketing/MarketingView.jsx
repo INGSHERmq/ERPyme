@@ -7,9 +7,9 @@ import CRMView from './CRMView';
 import LeadScoringView from './LeadScoringView';
 import './MarketingView.css';
 
-const MarketingView = ({ onBack }) => {
+const MarketingView = ({ onBack, initialTab }) => {
   const { canAccessFeature } = useAuth();
-  const [tab, setTab] = useState('dashboard');
+  const [tab, setTab] = useState(initialTab || 'dashboard');
   const tabs = [
     { id: 'dashboard', feature: 'ventas.summary', label: 'Resumen' },
     { id: 'crm', feature: 'ventas.leads', label: 'Clientes' },

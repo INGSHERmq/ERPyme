@@ -17,7 +17,7 @@ const MODULE_TABLES = {
   sistema: ['notificaciones', 'adjuntos']
 };
 
-const TABLES_WITHOUT_USER_FILTER = new Set(['cuentas_bancarias', 'almacenes']);
+const TABLES_WITHOUT_USER_FILTER = new Set(['cuentas_bancarias', 'almacenes', 'facturas_compra', 'facturas_venta']);
 
 const READ_TARGETS = [
   { table: 'clientes', label: 'clientes', patterns: ['cliente', 'clientes'] },
@@ -46,11 +46,11 @@ const READ_TARGETS = [
 const CREATE_SCHEMAS = {
   clientes: {
     required: ['nombre'],
-    fields: ['nombre', 'contacto', 'email', 'telefono', 'estado', 'industria']
+    fields: ['nombre', 'contacto', 'email', 'telefono', 'tipo_identificacion', 'dni_ruc', 'estado', 'industria']
   },
   cotizaciones: {
-    required: ['titulo', 'monto'],
-    fields: ['cliente_id', 'proyecto_id', 'titulo', 'monto', 'estado', 'fecha', 'descripcion', 'validez']
+    required: ['titulo'],
+    fields: ['cliente_id', 'proyecto_id', 'titulo', 'cantidad', 'unidad', 'precio_unitario', 'monto', 'estado', 'fecha', 'descripcion', 'validez']
   },
   proveedores: {
     required: ['nombre'],
@@ -58,11 +58,11 @@ const CREATE_SCHEMAS = {
   },
   ordenes_compra: {
     required: ['nombre_compra', 'numero'],
-    fields: ['proveedor_id', 'nombre_compra', 'numero', 'fecha', 'estado', 'subtotal', 'impuesto', 'total', 'observaciones']
+    fields: ['proveedor_id', 'proyecto_id', 'nombre_compra', 'numero', 'fecha', 'fecha_vencimiento', 'cantidad', 'costo_unitario', 'total', 'estado', 'observaciones']
   },
   facturas: {
-    required: ['asunto', 'numero'],
-    fields: ['cliente_id', 'proyecto_id', 'asunto', 'serie', 'numero', 'tipo_comprobante', 'fecha_emision', 'fecha_vencimiento', 'estado', 'subtotal', 'impuesto', 'total', 'moneda', 'observaciones']
+    required: ['numero'],
+    fields: ['numero', 'cotizacion_id', 'cliente_id', 'fecha_emision', 'total']
   },
   productos_servicios: {
     required: ['nombre'],
@@ -181,7 +181,14 @@ const FIELD_ALIASES = {
   cargoContacto: 'cargo_contacto',
   empleadosEstimados: 'empleados_estimados',
   tiempoRespuestaHoras: 'tiempo_respuesta_horas',
-  ultimoContacto: 'ultimo_contacto'
+  ultimoContacto: 'ultimo_contacto',
+  tipoIdentificacion: 'tipo_identificacion',
+  dniRuc: 'dni_ruc',
+  precioUnitario: 'precio_unitario',
+  costoUnitario: 'costo_unitario',
+  nombreCompra: 'nombre_compra',
+  fechaVencimiento: 'fecha_vencimiento',
+  cotizacionId: 'cotizacion_id'
 };
 
 const tools = [
@@ -233,18 +240,91 @@ const tools = [
         properties: {}
       }
     }
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'navigate_to_module',
+      description: 'Navega a un modulo o pestaña especifica del ERP para mostrarle al usuario donde realizar una accion.',
+      parameters: {
+        type: 'object',
+        required: ['module'],
+        properties: {
+          module: {
+            type: 'string',
+            description: 'Modulo destino. Valores: home, projects, ventas, contabilidad, rrhh, logistica, assistant, admin.'
+          },
+          tab: {
+            type: 'string',
+            description: 'Pestaña opcional dentro del modulo (ej: crm, clientes, cotizaciones, etc.)'
+          },
+          label: {
+            type: 'string',
+            description: 'Texto descriptivo para el boton de navegacion (ej: Ir a Clientes)'
+          }
+        }
+      }
+    }
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'request_form_filling',
+      description: 'Muestra un formulario interactivo en el chat para que el usuario ingrese datos de forma comoda.',
+      parameters: {
+        type: 'object',
+        required: ['table', 'title'],
+        properties: {
+          table: {
+            type: 'string',
+            description: 'Tabla del ERP para la que se requiere el formulario.'
+          },
+          title: {
+            type: 'string',
+            description: 'Titulo del formulario (ej: Nuevo Cliente)'
+          },
+          initialData: {
+            type: 'object',
+            description: 'Datos ya conocidos que deben aparecer pre-llenados.'
+          }
+        }
+      }
+    }
   }
 ];
 
 const systemPrompt = `
-Eres el asistente interno de ERPyme. Responde en espanol claro y breve.
-Tienes herramientas para leer datos y crear registros reales en Supabase.
-Tambien puedes generar un briefing ejecutivo proactivo y usarlo cuando pidan resumen matutino, alertas ejecutivas o prioridades del dia.
-Antes de crear un registro valida que existan los campos obligatorios del esquema de la tabla objetivo.
-Si falta uno o mas campos, no crees el registro y solicita explicitamente los campos faltantes.
-No inventes datos existentes: consulta el ERP cuando la pregunta dependa de registros.
-Si una herramienta devuelve error o no fue llamada, no digas que no existen registros. Informa que no pudiste verificar.
-Cuando crees algo, resume que tabla se afecto y los datos principales.
+Eres el Agente de Operaciones de ERPyme. Tu mision es ayudar al usuario a gestionar su empresa de forma proactiva.
+Tienes herramientas para:
+1. LEER datos: Consulta el ERP antes de responder sobre informacion existente.
+2. CREAR registros: Puedes llenar formularios por el usuario (clientes, proyectos, tareas, facturas, etc.).
+3. NAVEGAR: Si el usuario pregunta donde esta algo o como llegar a una seccion, usa 'navigate_to_module' para enviarle un acceso directo.
+4. FORMULARIOS: Si el usuario quiere crear un registro nuevo (un cliente, una tarea, una factura, etc.), USA OBLIGATORIAMENTE 'request_form_filling' para mostrarle un formulario limpio en el chat. ESTA PROHIBIDO pedir los datos uno por uno por texto.
+
+Reglas:
+- Responde en espanol claro y profesional.
+- Para crear cualquier registro, utiliza siempre 'request_form_filling'. 
+- Si el usuario te da algunos datos en su mensaje inicial, incluyelos en 'initialData' del formulario.
+- No inventes datos.
+- Si el usuario te pide "ir a" o "donde esta", USA la herramienta de navegacion ademas de tu respuesta de texto.
+- SEGURIDAD: Solo puedes ver y reportar datos del usuario actual (user_id). Nunca respondas con informacion que no este explícitamente en el contexto devuelto por tus herramientas para el ID de usuario activo.
+- PRIVACIDAD: Si el usuario pregunta por datos de terceros o de "otros usuarios", responde cortesmente que solo tienes acceso a su propia informacion empresarial.
+
+Mapeo de Navegacion (Usa estos valores exactos en 'navigate_to_module'):
+- Ventas > Clientes (antes leads): modulo='ventas', pestaña='crm'
+- Ventas > Tabla de clientes: modulo='ventas', pestaña='clientes'
+- Ventas > Cotizaciones: modulo='ventas', pestaña='cotizaciones'
+- Logistica > Proveedores: modulo='logistica', pestaña='proveedores'
+- Logistica > Orden de compra: modulo='logistica', pestaña='orden'
+- Logistica > Asignaciones: modulo='logistica', pestaña='asignaciones'
+- Finanzas > Facturas venta: modulo='contabilidad', pestaña='facturas-venta'
+- Finanzas > Facturas compra: modulo='contabilidad', pestaña='facturas-compra'
+- Finanzas > Analitica: modulo='contabilidad', pestaña='analitica'
+- RRHH > Empleados: modulo='rrhh', pestaña='empleados'
+- RRHH > Documentos: modulo='rrhh', pestaña='documentos'
+- RRHH > Personal en proyectos: modulo='rrhh', pestaña='asignaciones'
+- Proyectos > Lista: modulo='projects', pestaña=''
+- Mi Perfil / Salir: modulo='perfil', pestaña=''
 `;
 
 const normalizeData = (data) => {
@@ -375,6 +455,7 @@ const addDefaultValues = (table, payload, fields) => {
   if (table === 'cotizaciones' && !payload.estado) payload.estado = 'Pendiente';
   if (table === 'proveedores' && !payload.estado) payload.estado = 'Activo';
   if (table === 'clientes' && !payload.estado) payload.estado = 'Activo';
+  if (table === 'clientes' && !payload.tipo_identificacion) payload.tipo_identificacion = 'DNI';
   if (table === 'productos_servicios' && !payload.tipo) payload.tipo = 'Producto';
   if (table === 'productos_servicios' && !payload.unidad) payload.unidad = 'UND';
   if (table === 'facturas' && !payload.serie) payload.serie = 'F001';
@@ -392,7 +473,24 @@ const addDefaultValues = (table, payload, fields) => {
   return payload;
 };
 
-const createErpRecord = async ({ table, data }) => {
+export const getOptions = async (table, userId) => {
+  try {
+    let query = supabase.from(table).select('id, nombre, titulo, numero').limit(50);
+    if (userId && !TABLES_WITHOUT_USER_FILTER.has(table)) query = query.eq('user_id', userId);
+    
+    const { data, error } = await query;
+    if (error) throw error;
+    return data.map(item => ({
+      id: item.id,
+      label: item.nombre || item.titulo || item.numero || item.id
+    }));
+  } catch (err) {
+    console.error(`Error fetching options for ${table}:`, err);
+    return [];
+  }
+};
+
+export const createErpRecord = async ({ table, data }) => {
   const user = await getCurrentUser();
   const schema = CREATE_SCHEMAS[table];
   if (!schema) throw new Error(`No puedo crear registros en ${table}`);
@@ -433,6 +531,8 @@ const executeToolCall = async (toolCall) => {
   if (name === 'get_erp_context') return getErpContext(args);
   if (name === 'create_erp_record') return createErpRecord(args);
   if (name === 'get_executive_briefing') return getExecutiveBriefing();
+  if (name === 'navigate_to_module') return { status: 'ready_to_navigate', ...args };
+  if (name === 'request_form_filling') return { status: 'show_form', ...args, fields: CREATE_SCHEMAS[args.table] };
   throw new Error(`Herramienta no soportada: ${name}`);
 };
 
@@ -460,7 +560,8 @@ const callGroq = async (messages) => {
 export const sendAssistantMessage = async (history, userContent) => {
   const readTarget = findReadTarget(userContent);
   if (readTarget) {
-    return answerReadTarget(readTarget);
+    const content = await answerReadTarget(readTarget);
+    return { content };
   }
 
   const messages = [
@@ -471,12 +572,21 @@ export const sendAssistantMessage = async (history, userContent) => {
 
   let response = await callGroq(messages);
   let assistantMessage = response.choices?.[0]?.message;
+  let lastNavigation = null;
+  let lastForm = null;
 
   for (let round = 0; round < 3 && assistantMessage?.tool_calls?.length; round += 1) {
     messages.push(assistantMessage);
 
     for (const toolCall of assistantMessage.tool_calls) {
       const result = await executeToolCall(toolCall);
+      if (result?.status === 'ready_to_navigate') {
+        lastNavigation = { module: result.module, tab: result.tab, label: result.label };
+      }
+      if (result?.status === 'show_form') {
+        lastForm = { table: result.table, title: result.title, initialData: result.initialData, schema: result.fields };
+      }
+      
       messages.push({
         role: 'tool',
         tool_call_id: toolCall.id,
@@ -488,7 +598,11 @@ export const sendAssistantMessage = async (history, userContent) => {
     assistantMessage = response.choices?.[0]?.message;
   }
 
-  return assistantMessage?.content || 'Listo, procese la solicitud.';
+  return {
+    content: assistantMessage?.content || 'Listo, procese la solicitud.',
+    navigation: lastNavigation,
+    form: lastForm
+  };
 };
 
 export const assistantConfig = {

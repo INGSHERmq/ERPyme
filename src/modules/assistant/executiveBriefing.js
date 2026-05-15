@@ -127,6 +127,19 @@ const buildProjectRisks = (projects = [], tasks = []) => {
 export const generateExecutiveBriefing = async (userId) => {
   if (!userId) throw new Error('Usuario no autenticado');
 
+  // Obtenemos el perfil para saber su empresa y filtrar correctamente
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('empresa_actual_id')
+    .eq('id', userId)
+    .single();
+
+  const empresaId = profile?.empresa_actual_id;
+
+  if (!empresaId) {
+    console.warn('No se encontro empresa_actual_id para el usuario:', userId);
+  }
+
   const [cobrosRes, projectsRes, tasksRes, quotesRes, clientesRes, purchaseInvoicesRes] = await Promise.all([
     supabase
       .from('cuentas_por_cobrar')
@@ -153,6 +166,7 @@ export const generateExecutiveBriefing = async (userId) => {
     supabase
       .from('facturas_compra')
       .select('id,numero,total,estado,fecha_emision,fecha_vencimiento,proyecto_id,ordenes_compra(numero,nombre_compra,fecha_vencimiento,proyecto_id)')
+      .eq('empresa_id', empresaId)
       .order('fecha_emision', { ascending: false })
   ]);
 

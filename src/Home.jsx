@@ -2,8 +2,9 @@ import { useMemo, useState } from 'react';
 import './Home.css';
 import './styles/theme.css';
 import { ERP_MODULES } from './config/modules';
+import ExecutiveBriefing from './components/ExecutiveBriefing';
 
-const Home = ({ onNavigate, enabledModules }) => {
+const Home = ({ onNavigate, enabledModules, profile, canAccessFeature }) => {
   const [searchTerm, setSearchTerm] = useState('');
 
   const visibleModules = useMemo(() => {
@@ -23,24 +24,30 @@ const Home = ({ onNavigate, enabledModules }) => {
 
   return (
     <div className="home-container">
-      {/* El título y estadísticas ahora residen en la cabecera (App.jsx) */}
-
-      {/* Toolbar de búsqueda */}
+      {/* Toolbar de búsqueda y Briefing */}
       <section className="home-toolbar">
-        <div className="search-container">
-          <span className="search-label">BUSCAR MÓDULO</span>
-          <div className="search-input-wrapper">
-            <input
-              type="search"
-              className="text-input module-search-input"
-              value={searchTerm}
-              onChange={(event) => setSearchTerm(event.target.value)}
-              placeholder="Buscar por nombre, área o función..."
-            />
-            <span className="module-count">
-              {filteredModules.length} de {visibleModules.length}
-            </span>
+        <div className="toolbar-layout">
+          <div className="search-container">
+            <span className="search-label">BUSCAR MÓDULO</span>
+            <div className="search-input-wrapper">
+              <input
+                type="search"
+                className="text-input module-search-input"
+                value={searchTerm}
+                onChange={(event) => setSearchTerm(event.target.value)}
+                placeholder="Buscar por nombre..."
+              />
+              <span className="module-count">
+                {filteredModules.length} de {visibleModules.length}
+              </span>
+            </div>
           </div>
+
+          {canAccessFeature('assistant.briefing') && (
+            <div className="briefing-container-toolbar">
+              <ExecutiveBriefing userId={profile?.id} compact />
+            </div>
+          )}
         </div>
       </section>
 

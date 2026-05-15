@@ -7,9 +7,9 @@ import AsignacionesView from './AsignacionesView';
 import SSOMAView from './SSOMAView';
 import './RRHHView.css';
 
-const RRHHView = ({ onBack }) => {
+const RRHHView = ({ onBack, initialTab }) => {
   const { canAccessFeature } = useAuth();
-  const [tab, setTab] = useState('dashboard');
+  const [tab, setTab] = useState(initialTab || 'dashboard');
   const tabs = [
     { id: 'dashboard', feature: 'rrhh.summary', label: 'Resumen' },
     { id: 'documentos', feature: 'rrhh.documents', label: 'Documentos' },
