@@ -36,7 +36,7 @@ const Login = () => {
       await signIn(loginData.email, loginData.password);
     } catch (err) {
       console.error('Login error:', err);
-      setError(err.message || 'Error al iniciar sesion');
+      setError(err.message || 'Error al iniciar sesión');
     } finally {
       setSubmitting(false);
       setLoadingMessage('');
@@ -48,12 +48,12 @@ const Login = () => {
     setError(null);
 
     if (registerData.password.length < 8) {
-      setError('La contrasena debe tener al menos 8 caracteres.');
+      setError('La contraseña debe tener al menos 8 caracteres.');
       return;
     }
 
     if (registerData.password !== registerData.confirmPassword) {
-      setError('Las contrasenas no coinciden.');
+      setError('Las contraseñas no coinciden.');
       return;
     }
 
@@ -113,7 +113,7 @@ const Login = () => {
           <div className="auth-signal-grid">
             <article>
               <strong>6+</strong>
-              <span>areas conectadas</span>
+              <span>áreas conectadas</span>
             </article>
             <article>
               <strong>3</strong>
@@ -155,7 +155,7 @@ const Login = () => {
               <div className="login-header">
                 <span className="auth-step">Acceso seguro</span>
                 <h2>Bienvenido de vuelta</h2>
-                <p>Inicia sesion para continuar con tu ERP.</p>
+                <p>Inicia sesión para continuar con tu ERP.</p>
               </div>
 
               <form onSubmit={handleLoginSubmit} className="login-form">
@@ -176,7 +176,7 @@ const Login = () => {
                 </label>
 
                 <label className="form-group" htmlFor="password">
-                  Contrasena
+                  Contraseña
                   <input
                     id="password"
                     name="password"
@@ -190,7 +190,7 @@ const Login = () => {
                 </label>
 
                 <button type="submit" className="btn-login" disabled={isBusy}>
-                  {isBusy ? 'Cargando...' : 'Iniciar sesion'}
+                  {isBusy ? 'Cargando...' : 'Iniciar sesión'}
                 </button>
               </form>
             </>
@@ -201,8 +201,8 @@ const Login = () => {
                 <h2>{registerStep === 'data' ? 'Crea tu empresa' : 'Elige el plan'}</h2>
                 <p>
                   {registerStep === 'data'
-                    ? 'Sin verificacion de email por ahora. El primer usuario sera super admin.'
-                    : 'El ERP se abrira con las capacidades del plan seleccionado.'}
+                    ? 'Sin verificación de email por ahora. El primer usuario será super admin.'
+                    : 'El ERP se abrirá con las capacidades del plan seleccionado.'}
                 </p>
               </div>
 
@@ -226,7 +226,7 @@ const Login = () => {
                   </label>
 
                   <label className="form-group">
-                    Direccion
+                    Dirección
                     <input name="direccion" value={registerData.direccion} onChange={updateRegister} required disabled={isBusy} />
                   </label>
 
@@ -237,7 +237,7 @@ const Login = () => {
 
                   <div className="form-row">
                     <label className="form-group">
-                      Contrasena
+                      Contraseña
                       <input name="password" type="password" value={registerData.password} onChange={updateRegister} minLength={8} required disabled={isBusy} />
                     </label>
                     <label className="form-group">

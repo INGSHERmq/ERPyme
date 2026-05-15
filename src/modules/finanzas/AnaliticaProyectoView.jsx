@@ -56,8 +56,8 @@ const AnaliticaProyectoView = () => {
         setRows(await buildRowsFromTables());
       }
     } catch (err) {
-      console.error('Error cargando analitica por proyecto:', err);
-      setError(err.message || 'No se pudo cargar la analitica');
+      console.error('Error cargando analítica por proyecto:', err);
+      setError(err.message || 'No se pudo cargar la analítica');
       setRows([]);
     } finally {
       setLoading(false);
@@ -69,13 +69,13 @@ const AnaliticaProyectoView = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
 
-  if (loading) return <div className="loading">Cargando analitica...</div>;
-  if (error) return <div className="empty-state">No se pudo cargar analitica: {error}</div>;
+  if (loading) return <div className="loading">Cargando analítica...</div>;
+  if (error) return <div className="empty-state">No se pudo cargar analítica: {error}</div>;
 
   return (
     <div className="finanzas-view">
       <div className="view-header">
-        <h2>Analitica por proyecto</h2>
+        <h2>Analítica por proyecto</h2>
       </div>
       <div className="table-responsive">
         <table className="data-table">
@@ -84,7 +84,7 @@ const AnaliticaProyectoView = () => {
               <th>Proyecto</th>
               <th>Ingresos cobrados</th>
               <th>Egresos</th>
-              <th>Utilidad/Perdida</th>
+              <th>Utilidad/Pérdida</th>
             </tr>
           </thead>
           <tbody>

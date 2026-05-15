@@ -1,10 +1,10 @@
 export const ERP_MODULES = [
   { id: 'projects', title: 'Proyectos', desc: 'Tareas, calendario, avances y cronogramas', color: '#ff4d8b', status: 'Activo' },
-  { id: 'ventas', title: 'Ventas', desc: 'Leads, cotizaciones y conversion a proyecto', color: '#1a3a3a', status: 'Activo' },
-  { id: 'logistica', title: 'Logistica', desc: 'Equipos desde inventario, prestamos y mantenimiento', color: '#ff4d8b', status: 'Activo' },
+  { id: 'ventas', title: 'Ventas', desc: 'Leads, cotizaciones y conversión a proyecto', color: '#f3ba2f', status: 'Activo' },
+  { id: 'logistica', title: 'Logística', desc: 'Equipos desde inventario, préstamos y mantenimiento', color: '#ff4d8b', status: 'Activo' },
   { id: 'rrhh', title: 'RRHH', desc: 'Empleados, documentos, asignaciones y registro de accidentes', color: '#b8a4ed', status: 'Activo' },
-  { id: 'contabilidad', title: 'Contabilidad', desc: 'Facturas de compra/venta y analitica financiera por proyecto', color: '#a4d4c5', status: 'Activo' },
-  { id: 'assistant', title: 'Habla con tu asistente', desc: 'Chat interno para consultar informacion de tu empresa', color: '#1a3a3a', status: 'Nuevo' },
+  { id: 'contabilidad', title: 'Contabilidad', desc: 'Facturas de compra/venta y analítica financiera por proyecto', color: '#a4d4c5', status: 'Activo' },
+  { id: 'assistant', title: 'Habla con tu asistente', desc: 'Chat interno para consultar información de tu empresa', color: '#00d4ff', status: 'Nuevo' },
   { id: 'admin', title: 'Mis usuarios', desc: 'Usuarios, permisos, accesos y plan de la empresa', color: '#fcd535', status: 'Admin', adminOnly: true }
 ];
 
@@ -32,9 +32,9 @@ export const APP_FEATURES = [
   { id: 'assistant.briefing', moduleId: 'assistant', title: 'Briefing ejecutivo', advancedOnly: true },
   { id: 'contabilidad.purchases', moduleId: 'contabilidad', title: 'Facturas compra' },
   { id: 'contabilidad.sales', moduleId: 'contabilidad', title: 'Facturas venta' },
-  { id: 'contabilidad.analytics', moduleId: 'contabilidad', title: 'Analitica proyecto' },
+  { id: 'contabilidad.analytics', moduleId: 'contabilidad', title: 'Analítica proyecto' },
   { id: 'logistica.suppliers', moduleId: 'logistica', title: 'Proveedores' },
-  { id: 'logistica.purchaseOrders', moduleId: 'logistica', title: 'Ordenes de compra' },
+  { id: 'logistica.purchaseOrders', moduleId: 'logistica', title: 'Órdenes de compra' },
   { id: 'logistica.materials', moduleId: 'logistica', title: 'Materiales' },
   { id: 'logistica.inventory', moduleId: 'logistica', title: 'Inventario' },
   { id: 'logistica.assignments', moduleId: 'logistica', title: 'Asignaciones' },
@@ -52,8 +52,8 @@ export const APP_FEATURE_KEYS = APP_FEATURES.map((feature) => feature.id);
 export const PLAN_CONFIG = {
   [PLAN_KEYS.BASIC]: {
     id: PLAN_KEYS.BASIC,
-    name: 'Plan Basico Gratuito',
-    shortName: 'Basico',
+    name: 'Plan Básico Gratuito',
+    shortName: 'Básico',
     userLimit: 1,
     modules: ERP_MODULE_KEYS.filter((key) => key !== 'assistant'),
     features: APP_FEATURE_KEYS.filter((key) => !['ventas.scoring', 'assistant.chat', 'assistant.briefing'].includes(key))
@@ -79,11 +79,11 @@ export const PLAN_CONFIG = {
 export const PLAN_OPTIONS = [
   {
     id: PLAN_KEYS.BASIC,
-    title: 'Plan Basico Gratuito',
+    title: 'Plan Básico Gratuito',
     badge: 'Gratis',
-    description: 'Modulos esenciales para empezar a ordenar la operacion.',
+    description: 'Módulos esenciales para empezar a ordenar la operación.',
     users: '1 usuario',
-    includes: ['Proyectos, ventas, finanzas, logistica y RRHH', 'Sin asistente IA', 'Sin scoring ni briefing ejecutivo']
+    includes: ['Proyectos, ventas, finanzas, logística y RRHH', 'Sin asistente IA', 'Sin scoring ni briefing ejecutivo']
   },
   {
     id: PLAN_KEYS.INTERMEDIATE,
@@ -97,9 +97,9 @@ export const PLAN_OPTIONS = [
     id: PLAN_KEYS.ADVANCED,
     title: 'Plan Avanzado',
     badge: 'IA',
-    description: 'IA analitica, consultoria inteligente y agente proactivo.',
+    description: 'IA analítica, consultoría inteligente y agente proactivo.',
     users: 'Usuarios ilimitados',
-    includes: ['Todos los modulos y apartados', 'Habla con tu asistente', 'Scoring cotizaciones y briefing ejecutivo']
+    includes: ['Todos los módulos y apartados', 'Habla con tu asistente', 'Scoring cotizaciones y briefing ejecutivo']
   }
 ];
 

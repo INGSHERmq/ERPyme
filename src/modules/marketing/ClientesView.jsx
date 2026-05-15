@@ -21,8 +21,8 @@ const ClientesView = () => {
     <div className="clientes-view">
       <div className="view-header">
         <div>
-          <h2>Clientes</h2>
-          <p className="view-subtitle">Directorio de clientes inscritos desde leads y cotizaciones aprobadas.</p>
+          <h2>Tabla de clientes</h2>
+          <p className="view-subtitle">Directorio de clientes inscritos desde la sección de Clientes y cotizaciones aprobadas.</p>
         </div>
       </div>
 
@@ -44,7 +44,7 @@ const ClientesView = () => {
             {clientes.length === 0 ? (
               <tr>
                 <td colSpan="8" className="empty-table-cell">
-                  Aun no hay clientes. Registra primero un lead para inscribirlo automaticamente.
+                  Aún no hay clientes. Registra primero un prospecto en la sección de "Clientes" para inscribirlo automáticamente.
                 </td>
               </tr>
             ) : (

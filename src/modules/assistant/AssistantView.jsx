@@ -69,14 +69,14 @@ const AssistantView = ({ onBack }) => {
         <button type="button" onClick={onBack} className="btn-back">Volver al inicio</button>
         <h1>Habla con tu asistente</h1>
         <p>
-          Conectado a Groq y a Supabase para consultar informacion y ejecutar altas controladas.
+          Conectado a Groq y a Supabase para consultar información y ejecutar altas controladas.
         </p>
         <div className="assistant-status">
           <span>Modelo</span>
           <strong>{assistantConfig.model}</strong>
         </div>
         <div className="assistant-capabilities">
-          <span>Consultar modulos</span>
+          <span>Consultar módulos</span>
           <span>Crear proveedores</span>
           <span>Crear cotizaciones</span>
           {canAccessFeature('assistant.briefing') && <span>Briefing matutino proactivo</span>}
@@ -119,7 +119,7 @@ const AssistantView = ({ onBack }) => {
               </article>
               <article>
                 <strong>{briefing.topOpportunities[0]?.probabilidad || 0}%</strong>
-                <span>Mejor cotizacion</span>
+                <span>Mejor cotización</span>
               </article>
             </div>
             <ul>

@@ -11,7 +11,7 @@ const FinanzasView = ({ onBack }) => {
   const tabs = [
     { id: 'facturas-compra', feature: 'contabilidad.purchases', label: 'Facturas compra' },
     { id: 'facturas-venta', feature: 'contabilidad.sales', label: 'Facturas venta' },
-    { id: 'analitica', feature: 'contabilidad.analytics', label: 'Analitica proyecto' }
+    { id: 'analitica', feature: 'contabilidad.analytics', label: 'Analítica proyecto' }
   ].filter((item) => canAccessFeature(item.feature));
   const activeTab = tabs.some((item) => item.id === tab) ? tab : tabs[0]?.id;
 
@@ -35,7 +35,7 @@ const FinanzasView = ({ onBack }) => {
           Volver al inicio
         </button>
         <h1>Contabilidad</h1>
-        <p>Facturas de compra, facturas de venta y analitica de ganancia/perdida por proyecto.</p>
+        <p>Facturas de compra, facturas de venta y analítica de ganancia/pérdida por proyecto.</p>
       </section>
 
       <nav className="tabs-nav" role="tablist">

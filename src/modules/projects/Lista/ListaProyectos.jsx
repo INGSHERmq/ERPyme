@@ -24,7 +24,7 @@ const ListaProyectos = ({ proyectos, onSelect }) => {
   return (
     <div className="lista-proyectos">
       <div className="lista-header">
-        <h2>📋 Lista de Proyectos</h2>
+        <h2>Lista de Proyectos</h2>
         <div className="lista-filtros">
           <input 
             type="text" 

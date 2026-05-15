@@ -54,7 +54,7 @@ const TareaCard = ({ tarea, onEdit, onDelete }) => {
         </div>
       </div>
       <h4 className={isCompletada ? 'tachado' : ''}>{tarea.titulo}</h4>
-      <p className="descripcion">{tarea.descripcion || 'Sin descripcion'}</p>
+      <p className="descripcion">{tarea.descripcion || 'Sin descripción'}</p>
 
       {tarea.empleado_nombre && (
         <div className="asignado">
@@ -71,7 +71,7 @@ const TareaCard = ({ tarea, onEdit, onDelete }) => {
           <span className="fecha">Fin: {new Date(tarea.fecha_fin).toLocaleDateString('es-ES')}</span>
         )}
         {tarea.duracion_horas !== null && tarea.duracion_horas !== undefined && tarea.duracion_horas !== '' && (
-          <span className="fecha">Duracion: {Number(tarea.duracion_horas).toLocaleString('es-PE')} h</span>
+          <span className="fecha">Duración: {Number(tarea.duracion_horas).toLocaleString('es-PE')} h</span>
         )}
       </div>
     </article>
@@ -244,7 +244,7 @@ const Actividades = ({ proyectoId }) => {
                   <th>Prioridad</th>
                   <th>Asignado a</th>
                   <th>Fecha Fin</th>
-                  <th>Duracion</th>
+                  <th>Duración</th>
                   <th>Acciones</th>
                 </tr>
               </thead>
