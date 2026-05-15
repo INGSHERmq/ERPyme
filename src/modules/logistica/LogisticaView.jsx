@@ -27,7 +27,7 @@ const LogisticaView = ({ onBack }) => {
           { name: 'nombre', label: 'Nombre', required: true },
           { name: 'ruc', label: 'RUC' },
           { name: 'contacto', label: 'Contacto' },
-          { name: 'telefono', label: 'Telefono' },
+          { name: 'telefono', label: 'Teléfono' },
           { name: 'estado', label: 'Estado', type: 'select', options: ['Activo', 'Inactivo'], defaultValue: 'Activo' }
         ]} />;
       case 'ordenes':
@@ -36,7 +36,7 @@ const LogisticaView = ({ onBack }) => {
         return <MaterialesView />;
       case 'inventario':
         return <SimpleCrudLogisticaView title="Inventario" table="inventario_objetos" fields={[
-          { name: 'codigo', label: 'Codigo' },
+          { name: 'codigo', label: 'Código' },
           { name: 'nombre', label: 'Nombre', required: true },
           { name: 'proyecto_id', label: 'Proyecto', type: 'project' },
           { name: 'tipo_inventario', label: 'Tipo inventario', type: 'select', options: ['consumible', 'herramienta', 'activo', 'equipo_serializado'], defaultValue: 'consumible' },
@@ -48,7 +48,7 @@ const LogisticaView = ({ onBack }) => {
       case 'mantenimiento':
         return <SimpleCrudLogisticaView title="Mantenimiento" table="mantenimiento_objetos" fields={[
           { name: 'inventario_objeto_id', label: 'Objeto ID', type: 'number', required: true },
-          { name: 'proveedor_id', label: 'Proveedor tecnico ID', type: 'number' },
+          { name: 'proveedor_id', label: 'Proveedor técnico ID', type: 'number' },
           { name: 'fecha_inicio', label: 'Fecha inicio', type: 'date' },
           { name: 'fecha_fin', label: 'Fecha fin', type: 'date' },
           { name: 'costo', label: 'Costo', type: 'number', defaultValue: '0' }
@@ -56,10 +56,10 @@ const LogisticaView = ({ onBack }) => {
       case 'kardex':
         return <SimpleCrudLogisticaView title="Kardex / movimientos" table="kardex_movimientos" fields={[
           { name: 'inventario_objeto_id', label: 'Objeto ID', type: 'number', required: true },
-          { name: 'tipo_movimiento', label: 'Tipo', type: 'select', options: ['ingreso', 'salida', 'transferencia', 'mantenimiento', 'perdida', 'devolucion'], defaultValue: 'ingreso' },
+          { name: 'tipo_movimiento', label: 'Tipo', type: 'select', options: ['ingreso', 'salida', 'transferencia', 'mantenimiento', 'pérdida', 'devolución'], defaultValue: 'ingreso' },
           { name: 'cantidad', label: 'Cantidad', type: 'number', required: true, defaultValue: '1' },
           { name: 'referencia_tipo', label: 'Referencia tipo' },
-          { name: 'observacion', label: 'Observacion' }
+          { name: 'observacion', label: 'Observación' }
         ]} />;
       default:
         return null;
@@ -70,8 +70,8 @@ const LogisticaView = ({ onBack }) => {
     <div className="module-container">
       <section className="module-hero module-hero-logistica">
         <button onClick={onBack} className="module-hero-back">Volver al inicio</button>
-        <h1>Logistica</h1>
-        <p>Proveedores, ordenes, materiales, inventario, asignaciones, mantenimiento y kardex.</p>
+        <h1>Logística</h1>
+        <p>Proveedores, órdenes, materiales, inventario, asignaciones, mantenimiento y kardex.</p>
       </section>
       <nav className="tabs-nav">
         {tabs.map((item) => (
@@ -79,7 +79,7 @@ const LogisticaView = ({ onBack }) => {
         ))}
       </nav>
       <main className="content-area">
-        {tabs.length ? renderTab() : <div className="empty-state">No tienes apartados habilitados en logistica.</div>}
+        {tabs.length ? renderTab() : <div className="empty-state">No tienes apartados habilitados en logística.</div>}
       </main>
     </div>
   );

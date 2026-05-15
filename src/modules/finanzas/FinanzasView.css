@@ -12,7 +12,6 @@
   border-radius: var(--radius-md);
   border: 1px solid var(--border-color);
   margin-bottom: var(--spacing-lg);
-  width: fit-content;
 }
 
 .tabs-nav button {

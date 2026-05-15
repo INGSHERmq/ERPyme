@@ -5,8 +5,8 @@ import './LandingPage.css';
 
 const kpis = [
   { value: '30%', label: 'menos tiempo administrativo' },
-  { value: '24/7', label: 'alertas y analisis proactivo' },
-  { value: '6+', label: 'areas conectadas en un solo ERP' },
+  { value: '24/7', label: 'alertas y análisis proactivo' },
+  { value: '6+', label: 'áreas conectadas en un solo ERP' },
   { value: '100%', label: 'datos operativos centralizados' }
 ];
 
@@ -14,7 +14,7 @@ const modules = [
   'Proyectos',
   'Ventas y CRM',
   'Finanzas',
-  'Logistica',
+  'Logística',
   'RRHH',
   'Asistente IA'
 ];
@@ -26,10 +26,10 @@ const benefits = [
   },
   {
     title: 'Ventas con foco real',
-    copy: 'Scoring de cotizaciones ordena propuestas por probabilidad de aceptacion para que tu equipo atienda primero lo que mas puede convertirse.'
+    copy: 'Scoring de cotizaciones ordena propuestas por probabilidad de aceptación para que tu equipo atienda primero lo que más puede convertirse.'
   },
   {
-    title: 'Operacion conectada',
+    title: 'Operación conectada',
     copy: 'Clientes, cotizaciones, proyectos, finanzas, inventario y RRHH trabajan sobre la misma fuente de verdad.'
   }
 ];
@@ -54,10 +54,10 @@ const LandingPage = () => {
         <button type="button" className="landing-brand" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
           <span>ERP</span>yme
         </button>
-        <nav aria-label="Navegacion principal">
+        <nav aria-label="Navegación principal">
           <a href="#ventajas">Ventajas</a>
           <a href="#ia">IA ejecutiva</a>
-          <a href="#modulos">Modulos</a>
+          <a href="#modulos">Módulos</a>
         </nav>
         <button type="button" className="landing-login-button" onClick={() => setShowLogin(true)}>
           Ingresar
@@ -68,9 +68,9 @@ const LandingPage = () => {
         <section className="landing-hero">
           <div className="hero-copy">
             <span className="landing-eyebrow">ERP con IA para pymes que quieren control real</span>
-            <h1>Tu negocio no necesita mas hojas sueltas. Necesita un centro de mando.</h1>
+            <h1>Tu negocio no necesita más hojas sueltas. Necesita un centro de mando.</h1>
             <p>
-              ERPyme une ventas, proyectos, finanzas, logistica, RRHH y asistente inteligente para que cada decision nazca de datos vivos, no de reportes atrasados.
+              ERPyme une ventas, proyectos, finanzas, logística, RRHH y asistente inteligente para que cada decisión nazca de datos vivos, no de reportes atrasados.
             </p>
             <div className="hero-actions">
               <button type="button" className="primary-cta" onClick={() => setShowLogin(true)}>
@@ -105,7 +105,7 @@ const LandingPage = () => {
 
         <section id="ventajas" className="landing-section split-section">
           <div>
-            <span className="landing-eyebrow">Por que cambia la operacion</span>
+            <span className="landing-eyebrow">Por qué cambia la operación</span>
             <h2>De registrar datos a dirigir con señales.</h2>
           </div>
           <div className="benefit-grid">
@@ -123,12 +123,12 @@ const LandingPage = () => {
             <span className="landing-eyebrow">IA agéntica proactiva</span>
             <h2>Mientras descansas, ERPyme revisa lo urgente.</h2>
             <p>
-              El asistente genera un resumen ejecutivo con cobros por vencer, proyectos desviados y oportunidades calientes. Tambien puede preparar acciones como recordatorios o seguimiento comercial.
+              El asistente genera un resumen ejecutivo con cobros por vencer, proyectos desviados y oportunidades calientes. También puede preparar acciones como recordatorios o seguimiento comercial.
             </p>
           </div>
           <div className="ai-card">
             <span>Hoy, 7:30 a.m.</span>
-            <p>Detecte 3 facturas por cobrar que vencen hoy y una cotizacion comercial con 82% de probabilidad de aceptacion.</p>
+            <p>Detecté 3 facturas por cobrar que vencen hoy y una cotización comercial con 82% de probabilidad de aceptación.</p>
             <button type="button" onClick={() => setShowLogin(true)}>Abrir briefing</button>
           </div>
         </section>
@@ -136,9 +136,9 @@ const LandingPage = () => {
         <section id="modulos" className="landing-section modules-section">
           <div className="section-heading">
             <span className="landing-eyebrow">Todo conectado</span>
-            <h2>Modulos listos para operar desde el primer dia.</h2>
+            <h2>Módulos listos para operar desde el primer día.</h2>
           </div>
-          <div className="module-marquee" aria-label="Modulos de ERPyme">
+          <div className="module-marquee" aria-label="Módulos de ERPyme">
             <div className="module-strip">
               {[...modules, ...modules].map((module, index) => (
                 <span key={`${module}-${index}`}>{module}</span>

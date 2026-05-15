@@ -4,9 +4,9 @@ import useRRHH from '../../hooks/useRRHH';
 import './DashboardRRHH.css';
 
 const DEPT_COLORS = {
-  Tecnologia: '#ff4d8b',
-  Diseno: '#b8a4ed',
-  Gestion: '#1a3a3a',
+  Tecnología: '#ff4d8b',
+  Diseño: '#b8a4ed',
+  Gestión: '#1a3a3a',
   Seguridad: '#ff6b5a',
   Ventas: '#e8b94a'
 };

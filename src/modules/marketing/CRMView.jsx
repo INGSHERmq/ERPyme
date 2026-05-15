@@ -36,27 +36,27 @@ const CRMView = () => {
       await addLead(leadForm);
       setLeadForm(initialLead);
       await refetch();
-      alert('Lead guardado. Tambien queda disponible como cliente para crear cotizaciones.');
+      alert('Cliente guardado. También queda disponible para crear cotizaciones.');
     } catch (submitError) {
-      console.error('Error al guardar lead:', submitError);
-      alert(submitError.message || 'No se pudo guardar el lead');
+      console.error('Error al guardar cliente:', submitError);
+      alert(submitError.message || 'No se pudo guardar el cliente');
     } finally {
       setSaving(false);
     }
   };
 
-  if (loading) return <div className="loading">Cargando leads...</div>;
-  if (error) return <div className="empty-state">No se pudo cargar leads: {error}</div>;
+  if (loading) return <div className="loading">Cargando clientes...</div>;
+  if (error) return <div className="empty-state">No se pudo cargar clientes: {error}</div>;
 
   return (
     <div className="crm-view">
       <section className="crm-panel">
         <div className="panel-heading">
-          <h2>Nuevo lead</h2>
-          <span>Inscripcion comercial</span>
+          <h2>Nuevo cliente</h2>
+          <span>Inscripción comercial</span>
         </div>
         <p className="crm-hint">
-          Registra aqui al prospecto. Al guardar, queda inscrito como cliente para que puedas crear su cotizacion.
+          Registra aquí al prospecto. Al guardar, quedará inscrito para que puedas crear su cotización.
         </p>
         <form className="crm-form" onSubmit={submitLead}>
           <input name="nombre" placeholder="Empresa o persona *" required value={leadForm.nombre} onChange={handleLeadChange} />
@@ -74,21 +74,21 @@ const CRMView = () => {
             <option value="Inactivo">Inactivo</option>
           </select>
           <button className="btn-primary" type="submit" disabled={saving}>
-            {saving ? 'Guardando...' : 'Guardar lead'}
+            {saving ? 'Guardando...' : 'Guardar cliente'}
           </button>
         </form>
       </section>
 
       <section className="crm-panel">
         <div className="panel-heading">
-          <h2>Leads registrados</h2>
-          <span>{leads.length} leads</span>
+          <h2>Clientes registrados</h2>
+          <span>{leads.length} clientes</span>
         </div>
         <div className="table-responsive">
           <table className="data-table">
             <thead>
               <tr>
-                <th>Lead</th>
+                <th>Cliente</th>
                 <th>Contacto</th>
                 <th>Email</th>
                 <th>DNI / RUC</th>
@@ -99,7 +99,7 @@ const CRMView = () => {
             <tbody>
               {leads.length === 0 ? (
                 <tr>
-                  <td colSpan="6" className="empty-table-cell">Aun no hay leads registrados.</td>
+                  <td colSpan="6" className="empty-table-cell">Aún no hay clientes registrados.</td>
                 </tr>
               ) : (
                 leads.map(lead => (

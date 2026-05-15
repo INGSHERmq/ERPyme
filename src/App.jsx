@@ -123,7 +123,7 @@ function App() {
             </div>
             <div className="user-actions">
               <button className="logout-link" onClick={openProfile}>Mi perfil</button>
-              <button className="logout-link" onClick={signOut}>Salir</button>
+              <button className="logout-link" onClick={signOut}>Cerrar sesión</button>
             </div>
           </div>
           <ThemeToggleButton />

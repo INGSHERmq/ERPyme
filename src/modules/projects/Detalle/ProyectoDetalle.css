@@ -57,9 +57,20 @@
   border-radius: var(--radius-md);
   border: 1px solid var(--border-color);
   width: fit-content;
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.detalle-tabs::-webkit-scrollbar {
+  display: none;
 }
 
 .detalle-tabs button {
+  flex-shrink: 0;
+  white-space: nowrap;
   background: transparent;
   border: none;
   padding: 10px 20px;
@@ -89,5 +100,4 @@
 
 @media (max-width: 768px) {
   .detalle-header { padding: 18px; }
-  .detalle-tabs { width: 100%; overflow-x: auto; }
 }

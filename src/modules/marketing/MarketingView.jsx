@@ -12,9 +12,9 @@ const MarketingView = ({ onBack }) => {
   const [tab, setTab] = useState('dashboard');
   const tabs = [
     { id: 'dashboard', feature: 'ventas.summary', label: 'Resumen' },
-    { id: 'crm', feature: 'ventas.leads', label: 'Leads' },
+    { id: 'crm', feature: 'ventas.leads', label: 'Clientes' },
     { id: 'cotizaciones', feature: 'ventas.quotes', label: 'Cotizaciones' },
-    { id: 'clientes', feature: 'ventas.clients', label: 'Clientes' },
+    { id: 'clientes', feature: 'ventas.clients', label: 'Tabla de clientes' },
     { id: 'scoring', feature: 'ventas.scoring', label: 'Scoring cotizaciones' }
   ].filter((item) => canAccessFeature(item.feature));
   const activeTab = tabs.some((item) => item.id === tab) ? tab : tabs[0]?.id;
@@ -37,7 +37,7 @@ const MarketingView = ({ onBack }) => {
           Volver al inicio
         </button>
         <h1>Ventas</h1>
-        <p>Gestiona leads, cotizaciones y su conversion automatica a proyectos aprobados.</p>
+        <p>Gestiona tus clientes, cotizaciones y su conversión automática a proyectos aprobados.</p>
       </section>
 
       <nav className="tabs-nav" role="tablist">

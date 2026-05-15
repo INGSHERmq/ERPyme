@@ -8,7 +8,6 @@
   padding: 4px; 
   border-radius: var(--radius-md); 
   border: 1px solid var(--border-color); 
-  width: fit-content;
 }
 
 .tabs-nav button { 

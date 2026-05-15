@@ -418,8 +418,20 @@
 .landing-back {
   position: fixed;
   top: 18px;
-  left: 18px;
-  z-index: 10;
+  right: 18px;
+  z-index: 50;
+  background: rgba(30, 35, 41, 0.8) !important;
+  backdrop-filter: blur(8px);
+  border-color: rgba(252, 213, 53, 0.3) !important;
+  font-size: 13px !important;
+  padding: 0 14px !important;
+  height: 36px !important;
+}
+
+.landing-back:hover {
+  background: var(--binance-yellow) !important;
+  color: var(--on-primary) !important;
+  border-color: var(--binance-yellow) !important;
 }
 
 @keyframes heroIn {
@@ -503,5 +515,9 @@
 
   .hero-actions {
     flex-direction: column;
+  }
+
+  .landing-login-shell {
+    padding-top: 60px;
   }
 }

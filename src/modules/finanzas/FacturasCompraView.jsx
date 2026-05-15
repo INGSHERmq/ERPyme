@@ -73,7 +73,7 @@ const FacturasCompraView = () => {
         .eq('estado', 'pendiente_contabilidad');
       if (materialError) {
         setPayingId(null);
-        alert(materialError.message || 'Se pago, pero no se pudo enviar a Materiales');
+        alert(materialError.message || 'Se pagó, pero no se pudo enviar a Materiales');
         return;
       }
       await supabase.from('ordenes_compra').update({ estado: 'Pagado' }).eq('id', row.orden_compra_id);

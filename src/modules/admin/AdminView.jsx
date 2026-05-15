@@ -235,7 +235,6 @@ const AdminView = ({ onBack, signOut }) => {
       <header className="admin-hero">
         <div className="admin-hero-actions">
           {onBack && <button type="button" className="admin-back" onClick={onBack}>Volver</button>}
-          {signOut && <button type="button" className="admin-back" onClick={signOut}>Salir</button>}
         </div>
         <div>
           <p className="admin-eyebrow">Mis usuarios</p>
