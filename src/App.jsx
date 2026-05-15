@@ -23,9 +23,11 @@ function App() {
     enabledModules,
     canAccessAdminPanel,
     updateProfile,
-    company
+    company,
+    canAccessFeature
   } = useAuth();
   const [module, setModule] = useState('home');
+  const [moduleTab, setModuleTab] = useState(null);
   const [profileOpen, setProfileOpen] = useState(false);
   const [profileForm, setProfileForm] = useState({});
   const [profileMessage, setProfileMessage] = useState('');
@@ -53,12 +55,14 @@ function App() {
 
   const back = () => setModule('home');
 
-  const navigate = (nextModule) => {
+  const navigate = (nextModule, tab = null) => {
     if (nextModule !== 'home' && !enabledModules?.includes(nextModule)) {
       setModule('home');
+      setModuleTab(null);
       return;
     }
     setModule(nextModule);
+    setModuleTab(tab);
   };
 
   const openProfile = () => {
@@ -138,15 +142,16 @@ function App() {
               profile={profile}
               signOut={signOut}
               enabledModules={enabledModules}
+              canAccessFeature={canAccessFeature}
             />
           )}
-          {module === 'projects' && enabledModules?.includes('projects') && <ProjectsView onBack={back} />}
-          {module === 'ventas' && enabledModules?.includes('ventas') && <MarketingView onBack={back} />}
-          {module === 'contabilidad' && enabledModules?.includes('contabilidad') && <FinanzasView onBack={back} />}
-          {module === 'rrhh' && enabledModules?.includes('rrhh') && <RRHHView onBack={back} />}
-          {module === 'logistica' && enabledModules?.includes('logistica') && <LogisticaView onBack={back} />}
-          {module === 'assistant' && enabledModules?.includes('assistant') && <AssistantView onBack={back} />}
-          {module === 'admin' && enabledModules?.includes('admin') && <AdminView onBack={back} signOut={signOut} />}
+          {module === 'projects' && enabledModules?.includes('projects') && <ProjectsView onBack={back} initialTab={moduleTab} />}
+          {module === 'ventas' && enabledModules?.includes('ventas') && <MarketingView onBack={back} initialTab={moduleTab} />}
+          {module === 'contabilidad' && enabledModules?.includes('contabilidad') && <FinanzasView onBack={back} initialTab={moduleTab} />}
+          {module === 'rrhh' && enabledModules?.includes('rrhh') && <RRHHView onBack={back} initialTab={moduleTab} />}
+          {module === 'logistica' && enabledModules?.includes('logistica') && <LogisticaView onBack={back} initialTab={moduleTab} />}
+          {module === 'assistant' && enabledModules?.includes('assistant') && <AssistantView onBack={back} onNavigate={navigate} />}
+          {module === 'admin' && enabledModules?.includes('admin') && <AdminView onBack={back} signOut={signOut} initialTab={moduleTab} />}
         </Suspense>
       </main>
       {profileOpen && (

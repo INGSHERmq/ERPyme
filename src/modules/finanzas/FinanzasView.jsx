@@ -5,9 +5,9 @@ import FacturasVentaView from './FacturasVentaView';
 import AnaliticaProyectoView from './AnaliticaProyectoView';
 import './FinanzasView.css';
 
-const FinanzasView = ({ onBack }) => {
+const FinanzasView = ({ onBack, initialTab }) => {
   const { canAccessFeature } = useAuth();
-  const [tab, setTab] = useState('facturas-compra');
+  const [tab, setTab] = useState(initialTab || 'facturas-compra');
   const tabs = [
     { id: 'facturas-compra', feature: 'contabilidad.purchases', label: 'Facturas compra' },
     { id: 'facturas-venta', feature: 'contabilidad.sales', label: 'Facturas venta' },

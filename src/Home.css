@@ -16,7 +16,15 @@
   margin: 0 auto;
 }
 
+.toolbar-layout {
+  display: flex;
+  align-items: flex-end;
+  gap: 32px;
+  width: 100%;
+}
+
 .search-container {
+  flex: 0 0 320px;
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -60,6 +68,14 @@
   color: var(--muted);
   font-weight: 500;
   white-space: nowrap;
+}
+
+.briefing-container-toolbar {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  padding-bottom: 4px;
 }
 
 /* Grid de módulos */
@@ -257,10 +273,22 @@
     align-items: center;
   }
   
-  .home-toolbar {
-    padding: 32px 16px 0;
+  .toolbar-layout {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 24px;
   }
-  
+
+  .search-container {
+    flex: none;
+    width: 100%;
+  }
+
+  .briefing-container-toolbar {
+    width: 100%;
+    padding-bottom: 0;
+  }
+
   .modules-grid {
     grid-template-columns: 1fr;
     padding: 32px 16px;
