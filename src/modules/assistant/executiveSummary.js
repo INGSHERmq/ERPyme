@@ -124,7 +124,7 @@ const buildProjectRisks = (projects = [], tasks = []) => {
     .slice(0, 4);
 };
 
-export const generateExecutiveBriefing = async (userId) => {
+export const generateExecutiveSummary = async (userId) => {
   if (!userId) throw new Error('Usuario no autenticado');
 
   // Obtenemos el perfil para saber su empresa y filtrar correctamente
@@ -234,7 +234,7 @@ export const generateExecutiveBriefing = async (userId) => {
 
   return {
     fecha: today,
-    summary: `Hola, este es tu briefing ejecutivo de hoy: ${highlights.join(' ')}`,
+    summary: `Hola, este es tu resumen ejecutivo de hoy: ${highlights.join(' ')}`,
     highlights,
     actions,
     dueToday,

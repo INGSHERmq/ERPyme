@@ -10,19 +10,11 @@ const kpis = [
   { value: '100%', label: 'datos operativos centralizados' }
 ];
 
-const modules = [
-  'Proyectos',
-  'Ventas y CRM',
-  'Finanzas',
-  'Logística',
-  'RRHH',
-  'Asistente IA'
-];
-
+/* Removed modules array since we use the value chain now */
 const benefits = [
   {
     title: 'Decisiones antes del problema',
-    copy: 'El briefing ejecutivo detecta cobranzas, riesgos de proyecto y oportunidades prioritarias sin esperar una consulta manual.'
+    copy: 'El resumen ejecutivo detecta cobranzas, riesgos de proyecto y oportunidades prioritarias sin esperar una consulta manual.'
   },
   {
     title: 'Ventas con foco real',
@@ -34,8 +26,48 @@ const benefits = [
   }
 ];
 
+const moduleDetails = {
+  ia: {
+    tag: 'Asistente IA',
+    title: 'Tu copiloto operativo',
+    description: 'Chat con IA (Groq) conectado a tu ERP: genera el resumen ejecutivo del día, detecta facturas por cobrar y crea registros de proveedores, cotizaciones, clientes y tareas por voz de mando.',
+    action: 'Abrir asistente'
+  },
+  contabilidad: {
+    tag: 'Contabilidad',
+    title: 'Control de facturas y márgenes',
+    description: 'Registra facturas de compra y venta, gestiona su estado (pendiente / pagada / anulada) y consulta la analítica de ganancia y pérdida por cada proyecto.',
+    action: 'Ver contabilidad'
+  },
+  rrhh: {
+    tag: 'RRHH',
+    title: 'Personas y seguridad laboral',
+    description: 'Ficha de empleados, gestión de documentos del equipo, asignación de personal a proyectos y registro de accidentes e incidentes SSOMA, todo en un solo lugar.',
+    action: 'Ver módulo RRHH'
+  },
+  logistica: {
+    tag: 'Logística',
+    title: 'Cadena de suministro completa',
+    description: 'Gestiona proveedores, órdenes de compra, materiales y stock con tipos de inventario (consumibles, herramientas, activos, equipos serializados), asignaciones, mantenimiento y kardex de movimientos.',
+    action: 'Ver logística'
+  },
+  proyectos: {
+    tag: 'Proyectos',
+    title: 'Ejecución con visibilidad total',
+    description: 'Organiza actividades y tareas, visualiza el cronograma y el calendario del proyecto, asigna personal y controla las herramientas en uso para cada obra o contrato.',
+    action: 'Ver proyectos'
+  },
+  ventas: {
+    tag: 'Ventas y CRM',
+    title: 'Del cliente al contrato',
+    description: 'Administra tu cartera de clientes y prospectos, emite cotizaciones y usa el scoring de IA para priorizar las oportunidades con mayor probabilidad de conversión.',
+    action: 'Ver ventas y CRM'
+  }
+};
+
 const LandingPage = () => {
   const [showLogin, setShowLogin] = useState(false);
+  const [activeModule, setActiveModule] = useState('ia');
 
   if (showLogin) {
     return (
@@ -85,7 +117,7 @@ const LandingPage = () => {
             <div className="dashboard-mockup">
               <div className="mockup-header">
                 <span></span>
-                <strong>Briefing matutino</strong>
+                <strong>Resumen matutino</strong>
               </div>
               <div className="brief-line active">3 cobranzas vencen hoy</div>
               <div className="brief-line">Proyecto Pagos en riesgo</div>
@@ -129,7 +161,7 @@ const LandingPage = () => {
           <div className="ai-card">
             <span>Hoy, 7:30 a.m.</span>
             <p>Detecté 3 facturas por cobrar que vencen hoy y una cotización comercial con 82% de probabilidad de aceptación.</p>
-            <button type="button" onClick={() => setShowLogin(true)}>Abrir briefing</button>
+            <button type="button" onClick={() => setShowLogin(true)}>Abrir resumen</button>
           </div>
         </section>
 
@@ -138,11 +170,45 @@ const LandingPage = () => {
             <span className="landing-eyebrow">Todo conectado</span>
             <h2>Módulos listos para operar desde el primer día.</h2>
           </div>
-          <div className="module-marquee" aria-label="Módulos de ERPyme">
-            <div className="module-strip">
-              {[...modules, ...modules].map((module, index) => (
-                <span key={`${module}-${index}`}>{module}</span>
-              ))}
+          
+          <div className="vc-interactive-container">
+            <div className="value-chain-shadow">
+              <div className="value-chain-wrapper" aria-label="Cadena de valor de ERPyme">
+                <div className="vc-support">
+                  <span className="vc-label">Áreas de soporte / staff</span>
+                  <button type="button" className={`vc-row ${activeModule === 'ia' ? 'active' : ''}`} onClick={() => setActiveModule('ia')}>
+                    <span>Asistente IA</span>
+                  </button>
+                  <button type="button" className={`vc-row ${activeModule === 'contabilidad' ? 'active' : ''}`} onClick={() => setActiveModule('contabilidad')}>
+                    <span>Contabilidad</span>
+                  </button>
+                  <button type="button" className={`vc-row ${activeModule === 'rrhh' ? 'active' : ''}`} onClick={() => setActiveModule('rrhh')}>
+                    <span>RRHH</span>
+                  </button>
+                </div>
+                <div className="vc-primary">
+                  <span className="vc-label">Áreas operativas / de negocio</span>
+                  <div className="vc-cols">
+                    <button type="button" className={`vc-col ${activeModule === 'logistica' ? 'active' : ''}`} onClick={() => setActiveModule('logistica')}>
+                      <span>Logística</span>
+                    </button>
+                    <button type="button" className={`vc-col ${activeModule === 'proyectos' ? 'active' : ''}`} onClick={() => setActiveModule('proyectos')}>
+                      <span>Proyectos</span>
+                    </button>
+                    <button type="button" className={`vc-col ${activeModule === 'ventas' ? 'active' : ''}`} onClick={() => setActiveModule('ventas')}>
+                      <span>Ventas</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="vc-info-panel">
+              <div className="ai-card vc-detail-card" key={activeModule}>
+                <span>{moduleDetails[activeModule].tag}</span>
+                <h3>{moduleDetails[activeModule].title}</h3>
+                <p>{moduleDetails[activeModule].description}</p>
+                <button type="button" onClick={() => setShowLogin(true)}>{moduleDetails[activeModule].action}</button>
+              </div>
             </div>
           </div>
         </section>

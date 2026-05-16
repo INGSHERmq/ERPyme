@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/auth/useAuth';
 import { assistantConfig, sendAssistantMessage, createErpRecord, getOptions } from './erpAssistant';
-import { generateExecutiveBriefing } from './executiveBriefing';
+import { generateExecutiveSummary } from './executiveSummary';
 import './AssistantView.css';
 
 const INITIAL_MESSAGES = [
@@ -138,10 +138,10 @@ const ChatForm = ({ form, onComplete }) => {
 const AssistantView = ({ onBack, onNavigate }) => {
   const { user, canAccessFeature } = useAuth();
   const [messages, setMessages] = useState(INITIAL_MESSAGES);
-  const [briefing, setBriefing] = useState(null);
+  const [summary, setSummary] = useState(null);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
-  const [briefingLoading, setBriefingLoading] = useState(false);
+  const [summaryLoading, setSummaryLoading] = useState(false);
   const [error, setError] = useState('');
 
   const handleSubmit = async (event) => {
@@ -169,21 +169,21 @@ const AssistantView = ({ onBack, onNavigate }) => {
     }
   };
 
-  const handleBriefing = async () => {
-    if (briefingLoading || !canAccessFeature('assistant.briefing')) return;
+  const handleSummary = async () => {
+    if (summaryLoading || !canAccessFeature('assistant.briefing')) return;
     setError('');
-    setBriefingLoading(true);
+    setSummaryLoading(true);
 
     try {
-      const nextBriefing = await generateExecutiveBriefing(user?.id);
-      setBriefing(nextBriefing);
-      setMessages(prev => [...prev, { role: 'assistant', content: nextBriefing.summary }]);
+      const nextSummary = await generateExecutiveSummary(user?.id);
+      setSummary(nextSummary);
+      setMessages(prev => [...prev, { role: 'assistant', content: nextSummary.summary }]);
     } catch (err) {
-      const message = err.message || 'No se pudo generar el briefing ejecutivo.';
+      const message = err.message || 'No se pudo generar el resumen ejecutivo.';
       setError(message);
       setMessages(prev => [...prev, { role: 'assistant', content: message }]);
     } finally {
-      setBriefingLoading(false);
+      setSummaryLoading(false);
     }
   };
 
