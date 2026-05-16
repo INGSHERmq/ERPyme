@@ -61,7 +61,7 @@
   border: 1px solid var(--border-color); 
   border-radius: var(--radius-md); 
   font-size: 14px; 
-  background: var(--surface-elevated-dark); 
+  background: var(--input-bg); 
   color: var(--text-main); 
   outline: none; 
 }

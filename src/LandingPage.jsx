@@ -18,25 +18,25 @@ const benefits = [
   },
   {
     title: 'Ventas con foco real',
-    copy: 'Scoring de cotizaciones ordena propuestas por probabilidad de aceptación para que tu equipo atienda primero lo que más puede convertirse.'
+    copy: 'La evaluación de cotizaciones ordena las propuestas según su probabilidad de aceptación, permitiendo que tu equipo atienda primero aquellas con mayor potencial de convertirse en ventas.'
   },
   {
     title: 'Operación conectada',
-    copy: 'Clientes, cotizaciones, proyectos, finanzas, inventario y RRHH trabajan sobre la misma fuente de verdad.'
+    copy: 'Clientes, cotizaciones, proyectos, Contabilidad, Logística y RRHH trabajan sobre la misma fuente de verdad.'
   }
 ];
 
 const moduleDetails = {
   ia: {
-    tag: 'Asistente IA',
-    title: 'Tu copiloto operativo',
-    description: 'Chat con IA (Groq) conectado a tu ERP: genera el resumen ejecutivo del día, detecta facturas por cobrar y crea registros de proveedores, cotizaciones, clientes y tareas por voz de mando.',
-    action: 'Abrir asistente'
+    tag: 'Ecosistema de IA',
+    title: 'Inteligencia en tres niveles',
+    description: '1. Machine Learning: Scoring de probabilidad para tus ventas. 2. Resumen Ejecutivo: Análisis proactivo de riesgos y cobranzas. 3. Agente Operativo: Creación de registros (clientes, proveedores, tareas) mediante comandos naturales.',
+    action: 'Explorar IA'
   },
   contabilidad: {
     tag: 'Contabilidad',
     title: 'Control de facturas y márgenes',
-    description: 'Registra facturas de compra y venta, gestiona su estado (pendiente / pagada / anulada) y consulta la analítica de ganancia y pérdida por cada proyecto.',
+    description: 'Registra facturas de compra y venta, gestiona su estado (pendiente / pagada / anulada) y visualiza el análisis de resultados por proyecto.',
     action: 'Ver contabilidad'
   },
   rrhh: {
@@ -60,7 +60,7 @@ const moduleDetails = {
   ventas: {
     tag: 'Ventas y CRM',
     title: 'Del cliente al contrato',
-    description: 'Administra tu cartera de clientes y prospectos, emite cotizaciones y usa el scoring de IA para priorizar las oportunidades con mayor probabilidad de conversión.',
+    description: 'Administra tu cartera de clientes y prospectos, emite cotizaciones y utiliza la evaluación de cotizaciones (IA) para priorizar las oportunidades con mayor potencial de convertirse en ventas.',
     action: 'Ver ventas y CRM'
   }
 };
@@ -73,7 +73,7 @@ const LandingPage = () => {
     return (
       <div className="landing-login-shell">
         <button type="button" className="landing-back" onClick={() => setShowLogin(false)}>
-          Volver a la landing
+          Volver al inicio
         </button>
         <Login />
       </div>
@@ -100,15 +100,14 @@ const LandingPage = () => {
         <section className="landing-hero">
           <div className="hero-copy">
             <span className="landing-eyebrow">ERP con IA para pymes que quieren control real</span>
-            <h1>Tu negocio no necesita más hojas sueltas. Necesita un centro de mando.</h1>
+            <h1>Tu negocio no necesita más hojas sueltas. Necesita un centro de&nbsp;mando.</h1>
             <p>
-              ERPyme une ventas, proyectos, finanzas, logística, RRHH y asistente inteligente para que cada decisión nazca de datos vivos, no de reportes atrasados.
+              ERPyme integra ventas, proyectos, Contabilidad, logística, RRHH y un asistente inteligente, garantizando que cada decisión se fundamente en información actualizada y en tiempo real, en lugar de reportes obsoletos.
             </p>
             <div className="hero-actions">
               <button type="button" className="primary-cta" onClick={() => setShowLogin(true)}>
                 Probar ERPyme
               </button>
-              <a className="secondary-cta" href="#ia">Ver IA agéntica</a>
             </div>
           </div>
 
@@ -137,7 +136,7 @@ const LandingPage = () => {
 
         <section id="ventajas" className="landing-section split-section">
           <div>
-            <span className="landing-eyebrow">Por qué cambia la operación</span>
+            <span className="landing-eyebrow">¿Por qué cambia la operación?</span>
             <h2>De registrar datos a dirigir con señales.</h2>
           </div>
           <div className="benefit-grid">
@@ -152,16 +151,28 @@ const LandingPage = () => {
 
         <section id="ia" className="ai-band">
           <div className="ai-copy">
-            <span className="landing-eyebrow">IA agéntica proactiva</span>
-            <h2>Mientras descansas, ERPyme revisa lo urgente.</h2>
+            <span className="landing-eyebrow">Tres pilares de inteligencia</span>
+            <h2>IA que entiende, predice y opera por ti.</h2>
             <p>
-              El asistente genera un resumen ejecutivo con cobros por vencer, proyectos desviados y oportunidades calientes. También puede preparar acciones como recordatorios o seguimiento comercial.
+              ERPyme no solo guarda datos, los analiza y los pone en marcha mediante tres capas de inteligencia artificial integradas en tu flujo de trabajo diario.
             </p>
           </div>
-          <div className="ai-card">
-            <span>Hoy, 7:30 a.m.</span>
-            <p>Detecté 3 facturas por cobrar que vencen hoy y una cotización comercial con 82% de probabilidad de aceptación.</p>
-            <button type="button" onClick={() => setShowLogin(true)}>Abrir resumen</button>
+          <div className="ai-features-grid">
+            <article className="ai-feature-card">
+              <span className="ai-badge">Machine Learning</span>
+              <h3>Evaluación de ventas</h3>
+              <p>ML avanzado para predecir la probabilidad de cierre de tus cotizaciones.</p>
+            </article>
+            <article className="ai-feature-card">
+              <span className="ai-badge">Proactividad</span>
+              <h3>Resumen Ejecutivo</h3>
+              <p>Análisis matutino de cobranzas, riesgos de proyecto y oportunidades.</p>
+            </article>
+            <article className="ai-feature-card">
+              <span className="ai-badge">Agente Operativo</span>
+              <h3>Acciones Naturales</h3>
+              <p>Crea clientes, tareas y proveedores mediante comandos de voz o chat.</p>
+            </article>
           </div>
         </section>
 
@@ -174,31 +185,43 @@ const LandingPage = () => {
           <div className="vc-interactive-container">
             <div className="value-chain-shadow">
               <div className="value-chain-wrapper" aria-label="Cadena de valor de ERPyme">
-                <div className="vc-support">
-                  <span className="vc-label">Áreas de soporte / staff</span>
-                  <button type="button" className={`vc-row ${activeModule === 'ia' ? 'active' : ''}`} onClick={() => setActiveModule('ia')}>
-                    <span>Asistente IA</span>
-                  </button>
-                  <button type="button" className={`vc-row ${activeModule === 'contabilidad' ? 'active' : ''}`} onClick={() => setActiveModule('contabilidad')}>
-                    <span>Contabilidad</span>
-                  </button>
-                  <button type="button" className={`vc-row ${activeModule === 'rrhh' ? 'active' : ''}`} onClick={() => setActiveModule('rrhh')}>
-                    <span>RRHH</span>
-                  </button>
-                </div>
                 <div className="vc-primary">
                   <span className="vc-label">Áreas operativas / de negocio</span>
                   <div className="vc-cols">
                     <button type="button" className={`vc-col ${activeModule === 'logistica' ? 'active' : ''}`} onClick={() => setActiveModule('logistica')}>
+                      <span className="vc-icon">📦</span>
                       <span>Logística</span>
                     </button>
                     <button type="button" className={`vc-col ${activeModule === 'proyectos' ? 'active' : ''}`} onClick={() => setActiveModule('proyectos')}>
+                      <span className="vc-icon">🏗️</span>
                       <span>Proyectos</span>
                     </button>
                     <button type="button" className={`vc-col ${activeModule === 'ventas' ? 'active' : ''}`} onClick={() => setActiveModule('ventas')}>
+                      <span className="vc-icon">💰</span>
                       <span>Ventas</span>
                     </button>
                   </div>
+                </div>
+                <div className="vc-support">
+                  <span className="vc-label">Áreas de soporte / staff</span>
+                  <button type="button" className={`vc-row ${activeModule === 'ia' ? 'active' : ''}`} onClick={() => setActiveModule('ia')}>
+                    <div className="vc-row-content">
+                      <span className="vc-icon-small">✨</span>
+                      <span>Asistente IA</span>
+                    </div>
+                  </button>
+                  <button type="button" className={`vc-row ${activeModule === 'contabilidad' ? 'active' : ''}`} onClick={() => setActiveModule('contabilidad')}>
+                    <div className="vc-row-content">
+                      <span className="vc-icon-small">📊</span>
+                      <span>Contabilidad</span>
+                    </div>
+                  </button>
+                  <button type="button" className={`vc-row ${activeModule === 'rrhh' ? 'active' : ''}`} onClick={() => setActiveModule('rrhh')}>
+                    <div className="vc-row-content">
+                      <span className="vc-icon-small">👥</span>
+                      <span>RRHH</span>
+                    </div>
+                  </button>
                 </div>
               </div>
             </div>

@@ -108,7 +108,7 @@ const Login = () => {
           <span className="auth-eyebrow">ERP con IA para pymes</span>
           <h1>ERPyme</h1>
           <p>
-            Entra con una cuenta limpia, elige un plan y controla que ve cada persona de tu equipo.
+            Regístrate con una cuenta nueva, elige un plan y gestiona tu negocio con facilidad.
           </p>
           <div className="auth-signal-grid">
             <article>

@@ -2,12 +2,13 @@ import { useState } from 'react';
 import useProjects from "../../hooks/useProjects";
 import ListaProyectos from './Lista/ListaProyectos';
 import ProyectoDetalle from './Detalle/ProyectoDetalle';
+import LoadingScreen from '../../components/LoadingScreen';
 
 const ProjectsView = ({ onBack }) => {
   const { proyectos, loading } = useProjects();
   const [proyectoSeleccionado, setProyectoSeleccionado] = useState(null);
 
-  if (loading) return <div className="loading">Cargando proyectos...</div>;
+  if (loading) return <LoadingScreen message="Cargando proyectos..." />;
 
   return (
     <div className="module-container">
