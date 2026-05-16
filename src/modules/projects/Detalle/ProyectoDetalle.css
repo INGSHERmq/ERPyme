@@ -18,9 +18,9 @@
 }
 
 .btn-volver-lista {
-  background: var(--surface-elevated-dark);
-  border: 1px solid var(--hairline-on-dark);
-  color: var(--on-dark);
+  background: var(--surface-elevated);
+  border: 1px solid var(--border-color);
+  color: var(--on-surface);
   font-weight: 600;
   cursor: pointer;
   margin-bottom: 18px;
@@ -88,7 +88,7 @@
 }
 
 .detalle-tabs button:hover:not(.active) {
-  background: var(--surface-elevated-dark);
+  background: var(--surface-elevated);
   color: var(--on-surface);
 }
 

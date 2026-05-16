@@ -74,7 +74,7 @@
 }
 
 .proyectos-table tbody tr:hover {
-  background: var(--surface-elevated-dark);
+  background: var(--surface-elevated);
 }
 
 .badge {
@@ -89,7 +89,7 @@
 .badge-green { background: rgba(14, 203, 129, 0.1); color: var(--trading-up); }
 .badge-red { background: rgba(246, 70, 93, 0.1); color: var(--trading-down); }
 .badge-yellow { background: rgba(252, 213, 53, 0.1); color: var(--binance-yellow); }
-.badge-gray { background: var(--surface-elevated-dark); color: var(--text-muted); }
+.badge-gray { background: var(--surface-elevated); color: var(--text-muted); }
 
 .btn-ver {
   background: var(--info);

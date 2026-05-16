@@ -1,6 +1,7 @@
 import { Suspense, lazy, useEffect, useState } from 'react';
 import { useAuth } from './context/auth/useAuth';
 import ThemeToggleButton from './components/ThemeToggleButton';
+import LoadingScreen from './components/LoadingScreen';
 import Home from './Home';
 import LandingPage from './LandingPage';
 import { getPlanConfig } from './config/modules';
@@ -41,12 +42,8 @@ function App() {
 
   if (authLoading) {
     return (
-      <div className="app-loading">
-        <div className="loading-logo">E</div>
-        <div className="loading-bar-container">
-          <div className="loading-bar-progress"></div>
-        </div>
-        <p>Cargando ERPyme...</p>
+      <div className="app-loading-full">
+        <LoadingScreen message="Cargando ERPyme..." />
       </div>
     );
   }
@@ -135,7 +132,7 @@ function App() {
       </header>
       
       <main className="app-content">
-        <Suspense fallback={<div className="loading">Cargando área...</div>}>
+        <Suspense fallback={<LoadingScreen message="Cargando módulo..." />}>
           {module === 'home' && (
             <Home
               onNavigate={navigate}
