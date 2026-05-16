@@ -29,7 +29,7 @@ export const APP_FEATURES = [
   { id: 'ventas.clients', moduleId: 'ventas', title: 'Clientes' },
   { id: 'ventas.scoring', moduleId: 'ventas', title: 'Scoring cotizaciones', advancedOnly: true },
   { id: 'assistant.chat', moduleId: 'assistant', title: 'Chat con asistente', advancedOnly: true },
-  { id: 'assistant.briefing', moduleId: 'assistant', title: 'Briefing ejecutivo', advancedOnly: true },
+  { id: 'assistant.briefing', moduleId: 'assistant', title: 'Resumen ejecutivo', advancedOnly: true },
   { id: 'contabilidad.purchases', moduleId: 'contabilidad', title: 'Facturas compra' },
   { id: 'contabilidad.sales', moduleId: 'contabilidad', title: 'Facturas venta' },
   { id: 'contabilidad.analytics', moduleId: 'contabilidad', title: 'Analítica proyecto' },
@@ -83,7 +83,7 @@ export const PLAN_OPTIONS = [
     badge: 'Gratis',
     description: 'Módulos esenciales para empezar a ordenar la operación.',
     users: '1 usuario',
-    includes: ['Proyectos, ventas, finanzas, logística y RRHH', 'Sin asistente IA', 'Sin scoring ni briefing ejecutivo']
+    includes: ['Proyectos, ventas, finanzas, logística y RRHH', 'Sin asistente IA', 'Sin scoring ni resumen ejecutivo']
   },
   {
     id: PLAN_KEYS.INTERMEDIATE,
@@ -91,7 +91,7 @@ export const PLAN_OPTIONS = [
     badge: 'Equipo',
     description: 'Mas capacidad para operar con tu equipo actual.',
     users: '10 usuarios',
-    includes: ['Todos los modulos operativos actuales', 'Sin asistente IA', 'Sin scoring ni briefing ejecutivo']
+    includes: ['Todos los modulos operativos actuales', 'Sin asistente IA', 'Sin scoring ni resumen ejecutivo']
   },
   {
     id: PLAN_KEYS.ADVANCED,
@@ -99,7 +99,7 @@ export const PLAN_OPTIONS = [
     badge: 'IA',
     description: 'IA analítica, consultoría inteligente y agente proactivo.',
     users: 'Usuarios ilimitados',
-    includes: ['Todos los módulos y apartados', 'Habla con tu asistente', 'Scoring cotizaciones y briefing ejecutivo']
+    includes: ['Todos los módulos y apartados', 'Habla con tu asistente', 'Scoring cotizaciones y resumen ejecutivo']
   }
 ];
 

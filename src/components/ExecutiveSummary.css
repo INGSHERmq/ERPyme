@@ -1,4 +1,4 @@
-.briefing-panel-home {
+.summary-panel-home {
   background: var(--surface-bg);
   border: 1px solid var(--hairline);
   border-radius: 16px;
@@ -15,14 +15,14 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
-.briefing-header {
+.summary-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   margin-bottom: 24px;
 }
 
-.briefing-kicker {
+.summary-kicker {
   font-size: 10px;
   font-weight: 800;
   letter-spacing: 0.1em;
@@ -32,27 +32,27 @@
   display: block;
 }
 
-.briefing-panel-home h2 {
+.summary-panel-home h2 {
   font-size: 24px;
   font-weight: 700;
   color: var(--text-main);
   margin: 0;
 }
 
-.briefing-date {
+.summary-date {
   font-size: 14px;
   color: var(--text-muted);
   text-transform: capitalize;
 }
 
-.briefing-grid {
+.summary-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 16px;
   margin-bottom: 24px;
 }
 
-.briefing-card {
+.summary-card {
   background: var(--surface-elevated);
   border: 1px solid var(--hairline);
   border-radius: 12px;
@@ -62,7 +62,7 @@
   transition: transform 0.2s, background 0.2s;
 }
 
-.briefing-card:hover {
+.summary-card:hover {
   transform: translateY(-2px);
   background: var(--surface-soft);
 }
@@ -72,14 +72,14 @@
   flex-direction: column;
 }
 
-.briefing-card strong {
+.summary-card strong {
   font-size: 32px;
   font-weight: 700;
   color: var(--text-main);
   line-height: 1.2;
 }
 
-.briefing-card span {
+.summary-card span {
   font-size: 14px;
   color: var(--text-muted);
   margin-top: 4px;
@@ -98,12 +98,12 @@
 .card-accent.warning { background: #f3ba2f; }
 .card-accent.success { background: var(--trading-up); }
 
-.briefing-footer {
+.summary-footer {
   border-top: 1px solid var(--hairline);
   padding-top: 20px;
 }
 
-.briefing-actions {
+.summary-actions {
   list-style: none;
   padding: 0;
   margin: 0;
@@ -112,14 +112,14 @@
   gap: 12px;
 }
 
-.briefing-actions li {
+.summary-actions li {
   font-size: 14px;
   color: var(--text-main);
   padding-left: 24px;
   position: relative;
 }
 
-.briefing-actions li::before {
+.summary-actions li::before {
   content: '•';
   position: absolute;
   left: 8px;
@@ -127,7 +127,7 @@
   font-weight: bold;
 }
 
-.briefing-skeleton {
+.summary-skeleton {
   background: var(--surface-bg);
   height: 180px;
   border-radius: 16px;
@@ -141,7 +141,7 @@
   border: 1px solid var(--hairline);
 }
 
-.briefing-skeleton.compact {
+.summary-skeleton.compact {
   height: 60px;
   width: 120px;
   margin: 0;
@@ -149,7 +149,7 @@
 }
 
 /* Diseño Compacto para Toolbar */
-.briefing-compact-row {
+.summary-compact-row {
   display: flex;
   gap: 12px;
   overflow-x: auto;
@@ -158,23 +158,23 @@
   -ms-overflow-style: none;
 }
 
-.briefing-compact-row::-webkit-scrollbar {
+.summary-compact-row::-webkit-scrollbar {
   display: none;
 }
 
-.briefing-card.compact {
+.summary-card.compact {
   min-width: 160px;
   padding: 16px 20px;
   background: var(--surface-elevated);
   border: 1px solid var(--hairline);
 }
 
-.briefing-card.compact strong {
+.summary-card.compact strong {
   font-size: 28px;
   color: var(--text-main);
 }
 
-.briefing-card.compact span {
+.summary-card.compact span {
   font-size: 13px;
   color: var(--text-muted);
   margin-top: 2px;

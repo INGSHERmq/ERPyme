@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import useMarketing from '../../hooks/useMarketing';
-import { classifyOpportunity, scoreQuotationAcceptance } from '../assistant/executiveBriefing';
+import { classifyOpportunity, scoreQuotationAcceptance } from '../assistant/executiveSummary';
 import './LeadScoringView.css';
 
 const currencyFormatter = new Intl.NumberFormat('es-PE', {

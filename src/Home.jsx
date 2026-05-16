@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import './Home.css';
 import './styles/theme.css';
 import { ERP_MODULES } from './config/modules';
-import ExecutiveBriefing from './components/ExecutiveBriefing';
+import ExecutiveSummary from './components/ExecutiveSummary';
 
 const Home = ({ onNavigate, enabledModules, profile, canAccessFeature }) => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -24,7 +24,7 @@ const Home = ({ onNavigate, enabledModules, profile, canAccessFeature }) => {
 
   return (
     <div className="home-container">
-      {/* Toolbar de búsqueda y Briefing */}
+      {/* Toolbar de búsqueda y Resumen Ejecutivo */}
       <section className="home-toolbar">
         <div className="toolbar-layout">
           <div className="search-container">
@@ -44,8 +44,8 @@ const Home = ({ onNavigate, enabledModules, profile, canAccessFeature }) => {
           </div>
 
           {canAccessFeature('assistant.briefing') && (
-            <div className="briefing-container-toolbar">
-              <ExecutiveBriefing userId={profile?.id} compact />
+            <div className="summary-container-toolbar">
+              <ExecutiveSummary userId={profile?.id} compact />
             </div>
           )}
         </div>

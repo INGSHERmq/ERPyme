@@ -1,5 +1,5 @@
 import { supabase } from '../../lib/supabase';
-import { generateExecutiveBriefing, scoreOpportunity } from './executiveBriefing';
+import { generateExecutiveSummary, scoreOpportunity } from './executiveSummary';
 
 const DEFAULT_MODEL = import.meta.env.VITE_GROQ_MODEL || 'llama-3.3-70b-versatile';
 const GROQ_CHAT_URL = import.meta.env.VITE_GROQ_URL || '/groq/openai/v1/chat/completions';
@@ -234,7 +234,7 @@ const tools = [
     type: 'function',
     function: {
       name: 'get_executive_briefing',
-      description: 'Genera un briefing ejecutivo proactivo con cobranzas, riesgos de proyectos y oportunidades comerciales priorizadas.',
+      description: 'Genera un resumen ejecutivo proactivo con cobranzas, riesgos de proyectos y oportunidades comerciales priorizadas.',
       parameters: {
         type: 'object',
         properties: {}
@@ -390,9 +390,9 @@ const getErpContext = async ({ module = 'all', limit = 12 }) => {
   return { modules, results };
 };
 
-const getExecutiveBriefing = async () => {
+const getExecutiveSummary = async () => {
   const user = await getCurrentUser();
-  return generateExecutiveBriefing(user.id);
+  return generateExecutiveSummary(user.id);
 };
 
 const isReadRequest = (content) => {
@@ -530,7 +530,7 @@ const executeToolCall = async (toolCall) => {
   const args = typeof rawArgs === 'string' ? JSON.parse(rawArgs || '{}') : rawArgs;
   if (name === 'get_erp_context') return getErpContext(args);
   if (name === 'create_erp_record') return createErpRecord(args);
-  if (name === 'get_executive_briefing') return getExecutiveBriefing();
+  if (name === 'get_executive_briefing') return getExecutiveSummary();
   if (name === 'navigate_to_module') return { status: 'ready_to_navigate', ...args };
   if (name === 'request_form_filling') return { status: 'show_form', ...args, fields: CREATE_SCHEMAS[args.table] };
   throw new Error(`Herramienta no soportada: ${name}`);
