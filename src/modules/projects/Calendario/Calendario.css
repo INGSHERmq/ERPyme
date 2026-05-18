@@ -29,6 +29,7 @@
   cursor: pointer;
   font-size: 13px;
   font-weight: 600;
+  color: var(--color-ink);
 }
 
 .nav-buttons button:hover {
@@ -103,7 +104,7 @@
 }
 
 .calendar-event {
-  background: #fff;
+  background: var(--color-surface-card);
   border-left: 4px solid var(--color-brand-pink);
   padding: 7px 8px;
   border-radius: var(--radius-sm);
@@ -158,6 +159,57 @@
 
 .legend-color.project { background: var(--color-brand-teal); }
 .legend-color.task { background: var(--color-brand-pink); }
+
+html[data-theme="dark"] .calendario-header {
+  background: var(--surface-elevated);
+  border-color: var(--hairline);
+}
+
+html[data-theme="dark"] .calendario-header h3,
+html[data-theme="dark"] .cell-number,
+html[data-theme="dark"] .event-title,
+html[data-theme="dark"] .legend-item {
+  color: var(--body);
+}
+
+html[data-theme="dark"] .nav-buttons button {
+  background: var(--surface-card);
+  border-color: var(--hairline);
+  color: var(--body);
+}
+
+html[data-theme="dark"] .nav-buttons button:hover {
+  background: var(--surface-elevated);
+  color: var(--primary);
+}
+
+html[data-theme="dark"] .calendario-grid,
+html[data-theme="dark"] .proyecto-legend {
+  background: var(--surface-card);
+  border-color: var(--hairline);
+}
+
+html[data-theme="dark"] .calendar-cell {
+  background: var(--canvas);
+  border-color: var(--hairline);
+}
+
+html[data-theme="dark"] .calendar-cell.empty {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+html[data-theme="dark"] .calendar-cell.today {
+  background: rgba(252, 213, 53, 0.1);
+}
+
+html[data-theme="dark"] .calendar-event {
+  background: var(--surface-card);
+  border-color: var(--hairline);
+}
+
+html[data-theme="dark"] .calendar-event.project {
+  background: rgba(45, 189, 182, 0.12);
+}
 
 @media (max-width: 768px) {
   .calendario-header {

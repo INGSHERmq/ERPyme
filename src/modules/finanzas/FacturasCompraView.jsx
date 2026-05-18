@@ -2,20 +2,12 @@ import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../context/auth/useAuth';
 import useProjects from '../../hooks/useProjects';
-
-const getToday = () => new Date().toISOString().split('T')[0];
-const formatDateTime = (value) => {
-  if (!value) return '-';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-  return date.toLocaleString('es-PE', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  });
-};
+import {
+  datetimeLocalToAppIso,
+  formatDateTimeInAppTimeZone,
+  getTodayInAppTimeZone,
+  isoToDateTimeLocalInAppTimeZone
+} from '../../lib/dates';
 
 const FacturasCompraView = () => {
   const { user, membership, profile } = useAuth();
@@ -30,7 +22,7 @@ const FacturasCompraView = () => {
     orden_compra_id: '',
     proveedor_id: '',
     proyecto_id: '',
-    fecha_emision: getToday(),
+    fecha_emision: getTodayInAppTimeZone(),
     fecha_vencimiento: '',
     total: '0'
   });
@@ -116,14 +108,14 @@ const FacturasCompraView = () => {
       proyecto_id: formData.proyecto_id ? Number(formData.proyecto_id) : null,
       empresa_id: membership?.empresa_id || profile?.empresa_actual_id,
       fecha_emision: formData.fecha_emision,
-      fecha_vencimiento: formData.fecha_vencimiento || null,
+      fecha_vencimiento: datetimeLocalToAppIso(formData.fecha_vencimiento),
       total: Number(formData.total || 0)
     }]);
     if (error) {
       alert(error.message || 'No se pudo registrar');
       return;
     }
-    setFormData({ numero: '', orden_compra_id: '', proveedor_id: '', proyecto_id: '', fecha_emision: getToday(), fecha_vencimiento: '', total: '0' });
+    setFormData({ numero: '', orden_compra_id: '', proveedor_id: '', proyecto_id: '', fecha_emision: getTodayInAppTimeZone(), fecha_vencimiento: '', total: '0' });
     setShowForm(false);
     await fetchData();
   };
@@ -153,7 +145,9 @@ const FacturasCompraView = () => {
                 orden_compra_id: ordenId,
                 proveedor_id: oc?.proveedor_id ? String(oc.proveedor_id) : '',
                 proyecto_id: oc?.proyecto_id ? String(oc.proyecto_id) : p.proyecto_id,
-                fecha_vencimiento: oc?.fecha_vencimiento || p.fecha_vencimiento
+                fecha_vencimiento: oc?.fecha_vencimiento
+                  ? isoToDateTimeLocalInAppTimeZone(oc.fecha_vencimiento)
+                  : p.fecha_vencimiento
               }));
             }}>
               <option value="">Seleccionar orden</option>
@@ -216,7 +210,7 @@ const FacturasCompraView = () => {
                 <td>{ordenes.find((oc) => oc.id === row.orden_compra_id)?.estado || '-'}</td>
                 <td>{row.estado === 'registrada' ? 'en proceso' : row.estado}</td>
                 <td>{row.fecha_emision}</td>
-                <td>{formatDateTime(row.fecha_vencimiento)}</td>
+                <td>{formatDateTimeInAppTimeZone(row.fecha_vencimiento)}</td>
                 <td>S/ {Number(row.total || 0).toLocaleString()}</td>
                 <td>
                   {row.estado === 'pagada' ? (

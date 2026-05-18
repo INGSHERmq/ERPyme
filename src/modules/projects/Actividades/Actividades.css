@@ -126,6 +126,29 @@
   line-height: 1.45;
 }
 
+.asignado {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 10px 0 12px;
+  color: var(--color-ink);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.avatar-small {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+  background: var(--color-primary);
+  color: var(--on-primary);
+  font-size: 12px;
+  line-height: 1;
+}
+
 .tarea-card .card-footer {
   display: flex;
   flex-wrap: wrap;

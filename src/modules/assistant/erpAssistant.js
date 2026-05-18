@@ -2,7 +2,6 @@ import { supabase } from '../../lib/supabase';
 import { generateExecutiveSummary, scoreOpportunity } from './executiveSummary';
 
 const DEFAULT_MODEL = import.meta.env.VITE_GROQ_MODEL || 'llama-3.3-70b-versatile';
-const GROQ_CHAT_URL = import.meta.env.VITE_GROQ_URL || '/groq/openai/v1/chat/completions';
 
 const MODULE_TABLES = {
   marketing: ['clientes', 'cotizaciones'],
@@ -537,24 +536,22 @@ const executeToolCall = async (toolCall) => {
 };
 
 const callGroq = async (messages) => {
-  const response = await fetch(GROQ_CHAT_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
+  const { data, error } = await supabase.functions.invoke('groq-chat', {
+    body: {
       model: DEFAULT_MODEL,
       messages,
       tools,
       tool_choice: 'auto',
       temperature: 0.2
-    })
+    }
   });
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`Groq no respondio correctamente: ${errorText || response.status}`);
+  if (error) {
+    console.error('Error invocando la función groq-chat de Supabase:', error);
+    throw new Error(`Error en el asistente (Edge Function): ${error.message || JSON.stringify(error)}`);
   }
 
-  return response.json();
+  return data;
 };
 
 export const sendAssistantMessage = async (history, userContent) => {

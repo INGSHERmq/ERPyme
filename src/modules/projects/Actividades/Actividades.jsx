@@ -9,6 +9,7 @@ import {
 } from '@dnd-kit/core';
 import useRRHH from '../../../hooks/useRRHH';
 import useTareas from '../../../hooks/useTareas';
+import { formatDateOnlyInAppTimeZone } from '../../../lib/dates';
 import TareaModal from '../TareaModal/TareaModal';
 import './Actividades.css';
 
@@ -65,10 +66,10 @@ const TareaCard = ({ tarea, onEdit, onDelete }) => {
 
       <div className="card-footer">
         {tarea.fecha_inicio && (
-          <span className="fecha">Inicio: {new Date(tarea.fecha_inicio).toLocaleDateString('es-ES')}</span>
+          <span className="fecha">Inicio: {formatDateOnlyInAppTimeZone(tarea.fecha_inicio)}</span>
         )}
         {tarea.fecha_fin && (
-          <span className="fecha">Fin: {new Date(tarea.fecha_fin).toLocaleDateString('es-ES')}</span>
+          <span className="fecha">Fin: {formatDateOnlyInAppTimeZone(tarea.fecha_fin)}</span>
         )}
         {tarea.duracion_horas !== null && tarea.duracion_horas !== undefined && tarea.duracion_horas !== '' && (
           <span className="fecha">Duración: {Number(tarea.duracion_horas).toLocaleString('es-PE')} h</span>
@@ -255,7 +256,7 @@ const Actividades = ({ proyectoId }) => {
                     <td><span className={`badge badge-${t.estado === 'En Progreso' ? 'blue' : t.estado === 'Completado' ? 'green' : 'gray'}`}>{t.estado}</span></td>
                     <td><span className={`badge badge-${t.prioridad === 'Alta' ? 'red' : t.prioridad === 'Media' ? 'yellow' : 'green'}`}>{t.prioridad}</span></td>
                     <td>{t.empleado_nombre || 'Sin asignar'}</td>
-                    <td>{t.fecha_fin ? new Date(t.fecha_fin).toLocaleDateString('es-ES') : '-'}</td>
+                    <td>{t.fecha_fin ? formatDateOnlyInAppTimeZone(t.fecha_fin) : '-'}</td>
                     <td>{t.duracion_horas ? `${Number(t.duracion_horas).toLocaleString('es-PE')} h` : '-'}</td>
                     <td>
                       <button type="button" className="btn-action" onClick={() => openModal(t)}>Editar</button>

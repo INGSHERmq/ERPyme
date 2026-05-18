@@ -52,7 +52,11 @@ const EmpleadosView = () => {
       refetch();
     } catch (error) {
       console.error('Error al guardar empleado:', error);
-      alert('❌ Error al registrar el empleado');
+      if (error?.code === '23505') {
+        alert('❌ Error: El correo electrónico ya está registrado para otro empleado.');
+      } else {
+        alert(`❌ Error al registrar el empleado: ${error?.message || 'Error desconocido'}`);
+      }
     }
   };
 

@@ -106,7 +106,7 @@ function App() {
       <header className="header">
         <div className="header-left">
           <div className="header-logo" onClick={() => setModule('home')}>
-            <span className="logo-text">ERPyme</span>
+            <span className="logo-text"><span>ERP</span>yme</span>
           </div>
           <div className="header-divider"></div>
           <div className="header-stats">

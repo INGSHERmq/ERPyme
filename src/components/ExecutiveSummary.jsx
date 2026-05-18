@@ -2,12 +2,6 @@ import { useState, useEffect } from 'react';
 import { generateExecutiveSummary } from '../modules/assistant/executiveSummary';
 import './ExecutiveSummary.css';
 
-const currencyFormatter = new Intl.NumberFormat('es-PE', {
-  style: 'currency',
-  currency: 'PEN',
-  maximumFractionDigits: 0
-});
-
 const ExecutiveSummary = ({ userId, compact = false }) => {
   const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -29,6 +23,18 @@ const ExecutiveSummary = ({ userId, compact = false }) => {
     };
 
     fetchSummary();
+    const handleFocus = () => fetchSummary();
+    const handleVisibilityChange = () => {
+      if (!document.hidden) fetchSummary();
+    };
+
+    window.addEventListener('focus', handleFocus);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, [userId]);
 
   if (loading) return <div className={`summary-skeleton ${compact ? 'compact' : ''}`}>{compact ? '...' : 'Analizando datos...'}</div>;

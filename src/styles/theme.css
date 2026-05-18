@@ -263,8 +263,12 @@ body {
 
 .logo-text {
   font-size: 20px;
-  font-weight: 700;
-  color: var(--body);
+  font-weight: 800;
+  color: #ffffff;
+}
+
+.logo-text span {
+  color: var(--primary);
 }
 
 .header-divider {

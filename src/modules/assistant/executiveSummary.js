@@ -1,4 +1,10 @@
 import { supabase } from '../../lib/supabase';
+import {
+  getStartOfTodayInAppTimeZone,
+  getTodayInAppTimeZone,
+  parseDateInAppTimeZone,
+  toAppDateKey
+} from '../../lib/dates';
 
 const currencyFormatter = new Intl.NumberFormat('es-PE', {
   style: 'currency',
@@ -6,22 +12,24 @@ const currencyFormatter = new Intl.NumberFormat('es-PE', {
   maximumFractionDigits: 0
 });
 
-const todayISO = () => new Date().toISOString().split('T')[0];
-
 const daysBetween = (dateValue, reference = new Date()) => {
   if (!dateValue) return null;
-  const date = String(dateValue).includes('T') ? new Date(dateValue) : new Date(`${dateValue}T00:00:00`);
-  const ref = new Date(reference.toISOString().split('T')[0]);
+  const date = parseDateInAppTimeZone(dateValue);
+  const ref = reference ? parseDateInAppTimeZone(toAppDateKey(reference)) : getStartOfTodayInAppTimeZone();
+  if (!date || !ref) return null;
   return Math.round((date - ref) / 86400000);
 };
 
 const hoursBetween = (dateValue, reference = new Date()) => {
   if (!dateValue) return null;
-  const date = String(dateValue).includes('T') ? new Date(dateValue) : new Date(`${dateValue}T23:59:59`);
+  const date = parseDateInAppTimeZone(dateValue, true);
+  if (!date) return null;
   return Math.round((date - reference) / 3600000);
 };
 
 const numberValue = (value) => Number(value || 0);
+const isPendingReceivable = (item) => (item.estado || '').toLowerCase() === 'pendiente';
+const isUnpaidPurchaseInvoice = (item) => !['pagada', 'anulada', 'cancelada'].includes((item.estado || '').toLowerCase());
 
 export const scoreOpportunity = (opportunity = {}, lead = {}) => {
   const amount = numberValue(opportunity.monto_estimado);
@@ -173,10 +181,26 @@ export const generateExecutiveSummary = async (userId) => {
   const firstError = [cobrosRes, projectsRes, tasksRes, quotesRes, clientesRes, purchaseInvoicesRes].find(result => result.error);
   if (firstError?.error) throw firstError.error;
 
-  const today = todayISO();
+  const today = getTodayInAppTimeZone();
   const cobros = cobrosRes.data || [];
-  const dueToday = cobros.filter(item => item.estado === 'Pendiente' && item.fecha_vencimiento === today);
-  const overdue = cobros.filter(item => item.estado === 'Pendiente' && daysBetween(item.fecha_vencimiento) < 0);
+  const purchaseInvoices = purchaseInvoicesRes.data || [];
+  const purchaseInvoicesWithDue = purchaseInvoices.map(item => ({
+    ...item,
+    monto: item.total,
+    concepto: `Factura de compra ${item.numero || ''}`.trim(),
+    tipo: 'compra',
+    fecha_vencimiento: item.fecha_vencimiento || item.ordenes_compra?.fecha_vencimiento
+  }));
+  const receivablesDueToday = cobros.filter(item => isPendingReceivable(item) && toAppDateKey(item.fecha_vencimiento) === today);
+  const purchasesDueToday = purchaseInvoicesWithDue.filter(item => (
+    isUnpaidPurchaseInvoice(item) && toAppDateKey(item.fecha_vencimiento) === today
+  ));
+  const dueToday = [...receivablesDueToday, ...purchasesDueToday];
+  const receivablesOverdue = cobros.filter(item => isPendingReceivable(item) && daysBetween(item.fecha_vencimiento) < 0);
+  const purchasesOverdue = purchaseInvoicesWithDue.filter(item => (
+    isUnpaidPurchaseInvoice(item) && daysBetween(item.fecha_vencimiento) < 0
+  ));
+  const overdue = [...receivablesOverdue, ...purchasesOverdue];
   const projectRisks = buildProjectRisks(projectsRes.data || [], tasksRes.data || []);
   const clientesById = Object.fromEntries((clientesRes.data || []).map(cliente => [cliente.id, cliente]));
   const leads = clientesRes.data || [];
@@ -196,18 +220,16 @@ export const generateExecutiveSummary = async (userId) => {
 
   const totalDueToday = dueToday.reduce((sum, item) => sum + numberValue(item.monto), 0);
   const totalOverdue = overdue.reduce((sum, item) => sum + numberValue(item.monto), 0);
-  const purchaseInvoices = purchaseInvoicesRes.data || [];
-  const purchaseDueSoon = purchaseInvoices.filter(item => {
-    const dueDate = item.fecha_vencimiento || item.ordenes_compra?.fecha_vencimiento;
-    const hours = hoursBetween(dueDate);
-    return item.estado === 'registrada' && hours !== null && hours >= 0 && hours <= 168;
+  const purchaseDueSoon = purchaseInvoicesWithDue.filter(item => {
+    const hours = hoursBetween(item.fecha_vencimiento);
+    return isUnpaidPurchaseInvoice(item) && hours !== null && hours >= 0 && hours <= 168;
   });
   const highlights = [];
   const actions = [];
 
   if (dueToday.length) {
-    highlights.push(`${dueToday.length} cuenta${dueToday.length === 1 ? '' : 's'} por cobrar vencen hoy por ${currencyFormatter.format(totalDueToday)}.`);
-    actions.push('Enviar recordatorios de pago a los clientes que vencen hoy.');
+    highlights.push(`${dueToday.length} factura${dueToday.length === 1 ? '' : 's'} vencen hoy por ${currencyFormatter.format(totalDueToday)}.`);
+    actions.push('Revisar las facturas pendientes que vencen hoy.');
   }
   if (overdue.length) {
     highlights.push(`${overdue.length} cobranza${overdue.length === 1 ? '' : 's'} ya vencida${overdue.length === 1 ? '' : 's'} suman ${currencyFormatter.format(totalOverdue)}.`);
