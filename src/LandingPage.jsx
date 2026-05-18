@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import Login from './components/Login/Login';
+import { useAuth } from './context/auth/useAuth';
 import heroImage from './assets/hero.png';
 import './LandingPage.css';
 
@@ -66,8 +67,50 @@ const moduleDetails = {
 };
 
 const LandingPage = () => {
+  const { startDemoAccount, loading } = useAuth();
   const [showLogin, setShowLogin] = useState(false);
+  const [showDemo, setShowDemo] = useState(false);
+  const [authMode, setAuthMode] = useState('login');
   const [activeModule, setActiveModule] = useState('ia');
+  const [demoData, setDemoData] = useState({ email: '', telefono: '' });
+  const [demoError, setDemoError] = useState('');
+  const [demoSubmitting, setDemoSubmitting] = useState(false);
+
+  const openAccess = () => {
+    setAuthMode('login');
+    setShowDemo(false);
+    setShowLogin(true);
+  };
+
+  const openDemo = () => {
+    setShowLogin(false);
+    setShowDemo(true);
+    setDemoError('');
+  };
+
+  const handleDemoChange = (event) => {
+    const { name, value } = event.target;
+    setDemoData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleDemoSubmit = async (event) => {
+    event.preventDefault();
+    setDemoError('');
+
+    try {
+      setDemoSubmitting(true);
+      await startDemoAccount(demoData);
+    } catch (error) {
+      const message = String(error?.message || '').toLowerCase();
+      setDemoError(
+        message.includes('already') || message.includes('registered') || message.includes('exists')
+          ? 'Ese correo ya esta registrado. Usa otro correo para la demo o ingresa con tu cuenta.'
+          : error.message || 'No se pudo iniciar la demo.'
+      );
+    } finally {
+      setDemoSubmitting(false);
+    }
+  };
 
   if (showLogin) {
     return (
@@ -75,7 +118,54 @@ const LandingPage = () => {
         <button type="button" className="landing-back" onClick={() => setShowLogin(false)}>
           Volver al inicio
         </button>
-        <Login />
+        <Login initialMode={authMode} />
+      </div>
+    );
+  }
+
+  if (showDemo) {
+    const isBusy = loading || demoSubmitting;
+
+    return (
+      <div className="landing-login-shell demo-access-shell">
+        <button type="button" className="landing-back" onClick={() => setShowDemo(false)} disabled={isBusy}>
+          Volver al inicio
+        </button>
+        <section className="demo-access-card">
+          <span className="landing-eyebrow">Demo gratuita</span>
+          <h1>Entra a ERPyme en segundos.</h1>
+          <p>Solo necesitamos tu correo y numero para activar una empresa demo con todos los modulos por 14 dias.</p>
+          <form className="demo-access-form" onSubmit={handleDemoSubmit}>
+            {demoError && <div className="demo-access-error">{demoError}</div>}
+            <label>
+              Correo
+              <input
+                name="email"
+                type="email"
+                value={demoData.email}
+                onChange={handleDemoChange}
+                placeholder="tu@email.com"
+                required
+                disabled={isBusy}
+              />
+            </label>
+            <label>
+              Numero
+              <input
+                name="telefono"
+                type="tel"
+                value={demoData.telefono}
+                onChange={handleDemoChange}
+                placeholder="+51 999 999 999"
+                required
+                disabled={isBusy}
+              />
+            </label>
+            <button type="submit" className="primary-cta" disabled={isBusy}>
+              {isBusy ? 'Abriendo demo...' : 'Entrar a la demo'}
+            </button>
+          </form>
+        </section>
       </div>
     );
   }
@@ -91,7 +181,7 @@ const LandingPage = () => {
           <a href="#ia">IA ejecutiva</a>
           <a href="#modulos">Módulos</a>
         </nav>
-        <button type="button" className="landing-login-button" onClick={() => setShowLogin(true)}>
+        <button type="button" className="landing-login-button" onClick={openAccess}>
           Ingresar
         </button>
       </header>
@@ -105,7 +195,7 @@ const LandingPage = () => {
               ERPyme integra ventas, proyectos, Contabilidad, logística, RRHH y un asistente inteligente, garantizando que cada decisión se fundamente en información actualizada y en tiempo real, en lugar de reportes obsoletos.
             </p>
             <div className="hero-actions">
-              <button type="button" className="primary-cta" onClick={() => setShowLogin(true)}>
+              <button type="button" className="primary-cta" onClick={openDemo}>
                 Probar ERPyme
               </button>
             </div>
@@ -230,7 +320,7 @@ const LandingPage = () => {
                 <span>{moduleDetails[activeModule].tag}</span>
                 <h3>{moduleDetails[activeModule].title}</h3>
                 <p>{moduleDetails[activeModule].description}</p>
-                <button type="button" onClick={() => setShowLogin(true)}>{moduleDetails[activeModule].action}</button>
+                <button type="button" onClick={openDemo}>{moduleDetails[activeModule].action}</button>
               </div>
             </div>
           </div>
@@ -238,7 +328,7 @@ const LandingPage = () => {
 
         <section className="landing-final">
           <h2>Convierte tu ERP en un consultor activo para tu negocio.</h2>
-          <button type="button" className="primary-cta" onClick={() => setShowLogin(true)}>
+          <button type="button" className="primary-cta" onClick={openAccess}>
             Entrar a ERPyme
           </button>
         </section>

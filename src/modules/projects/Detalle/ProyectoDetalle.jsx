@@ -6,6 +6,7 @@ import Cronograma from '../Cronograma/Cronograma';
 import Calendario from '../Calendario/Calendario';
 import Personal from '../Personal/Personal';
 import Herramientas from '../Herramientas/Herramientas';
+import SubscriptionLock from '../../../components/SubscriptionLock';
 import './ProyectoDetalle.css';
 
 const ProyectoDetalle = ({ proyecto, onBack }) => {
@@ -18,10 +19,15 @@ const ProyectoDetalle = ({ proyecto, onBack }) => {
     { id: 'calendario', feature: 'projects.calendar', label: 'Calendario' },
     { id: 'personal', feature: 'projects.people', label: 'Personal' },
     { id: 'herramientas', feature: 'projects.tools', label: 'Herramientas' }
-  ].filter((item) => canAccessFeature(item.feature));
+  ].map((item) => ({ ...item, locked: !canAccessFeature(item.feature) }));
   const activeTab = tabs.some((item) => item.id === tab) ? tab : tabs[0]?.id;
+  const activeTabConfig = tabs.find((item) => item.id === activeTab);
 
   const renderContent = () => {
+    if (activeTabConfig?.locked) {
+      return <SubscriptionLock title={`${activeTabConfig.label} esta bloqueado`} />;
+    }
+
     switch (activeTab) {
       case 'resumen': return <Resumen proyecto={proyecto} />;
       case 'actividades': return <Actividades proyectoId={proyecto.id} />;
@@ -45,12 +51,19 @@ const ProyectoDetalle = ({ proyecto, onBack }) => {
 
       <nav className="detalle-tabs">
         {tabs.map((item) => (
-          <button key={item.id} className={activeTab === item.id ? 'active' : ''} onClick={() => setTab(item.id)}>{item.label}</button>
+          <button
+            key={item.id}
+            className={`${activeTab === item.id ? 'active' : ''} ${item.locked ? 'locked' : ''}`}
+            aria-disabled={item.locked}
+            onClick={() => setTab(item.id)}
+          >
+            {item.label}
+          </button>
         ))}
       </nav>
 
       <main className="detalle-content">
-        {tabs.length ? renderContent() : <div className="empty-state">No tienes apartados habilitados en proyectos.</div>}
+        {renderContent()}
       </main>
     </div>
   );

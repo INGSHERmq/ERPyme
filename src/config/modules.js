@@ -13,7 +13,8 @@ export const ERP_MODULE_KEYS = ERP_MODULES.map((module) => module.id);
 export const PLAN_KEYS = {
   BASIC: 'basic_free',
   INTERMEDIATE: 'intermediate',
-  ADVANCED: 'advanced'
+  ADVANCED: 'advanced',
+  DEMO: 'demo_trial'
 };
 
 export const APP_FEATURES = [
@@ -50,6 +51,15 @@ export const APP_FEATURES = [
 export const APP_FEATURE_KEYS = APP_FEATURES.map((feature) => feature.id);
 
 export const PLAN_CONFIG = {
+  [PLAN_KEYS.DEMO]: {
+    id: PLAN_KEYS.DEMO,
+    name: 'Demo gratuita',
+    shortName: 'Demo',
+    userLimit: 3,
+    modules: ERP_MODULE_KEYS.filter((key) => key !== 'assistant'),
+    features: APP_FEATURE_KEYS.filter((key) => !['ventas.scoring', 'assistant.chat', 'assistant.briefing'].includes(key)),
+    trialDays: 14
+  },
   [PLAN_KEYS.BASIC]: {
     id: PLAN_KEYS.BASIC,
     name: 'Plan Básico Gratuito',
@@ -77,6 +87,14 @@ export const PLAN_CONFIG = {
 };
 
 export const PLAN_OPTIONS = [
+  {
+    id: PLAN_KEYS.DEMO,
+    title: 'Demo gratuita',
+    badge: '14 dias',
+    description: 'Prueba operativa del ERP con vista completa de los apartados avanzados bloqueados.',
+    users: '3 usuarios durante la demo',
+    includes: ['Modulos operativos para probar el flujo', 'Apartados avanzados visibles como bloqueados', 'Vence automaticamente a los 14 dias']
+  },
   {
     id: PLAN_KEYS.BASIC,
     title: 'Plan Básico Gratuito',

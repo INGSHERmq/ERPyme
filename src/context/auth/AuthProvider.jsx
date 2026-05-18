@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { supabase, getCurrentUserProfile, clearStoredAuth } from '../../lib/supabase';
 import { AuthContext } from './context';
 import { APP_FEATURE_KEYS, ERP_MODULE_KEYS, PLAN_KEYS, getPlanConfig } from '../../config/modules';
+import { getTrialStatus } from '../../lib/trial';
 
 const AUTH_TIMEOUT_MS = 8000;
 
@@ -32,6 +33,13 @@ const withTimeout = (promise, ms = AUTH_TIMEOUT_MS) => {
 const toFullName = (data) => (
   data.nombre_completo || data.nombre || `${data.nombres || ''} ${data.apellidos || ''}`.trim() || data.email
 );
+
+const createDemoPassword = () => {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return `Demo-${crypto.randomUUID()}-Erpyme1`;
+  }
+  return `Demo-${Date.now()}-${Math.random().toString(36).slice(2)}-Erpyme1`;
+};
 
 const isSchemaCacheColumnError = (error, columnName) => {
   const message = String(error?.message || '').toLowerCase();
@@ -137,6 +145,7 @@ export default function AuthProvider({ children }) {
 
   const loadModulesForUser = useCallback(async (currentUser, currentMembership, currentCompany) => {
     if (!currentUser?.id || !currentMembership?.empresa_id) return [];
+    if (getTrialStatus(currentCompany).isExpired) return [];
 
     const planModules = getPlanConfig(currentCompany?.plan || currentCompany?.plan_key).modules;
     if (ADMIN_ROLES.includes(currentMembership.rol)) return planModules;
@@ -160,6 +169,7 @@ export default function AuthProvider({ children }) {
 
   const loadFeaturesForUser = useCallback(async (currentUser, currentMembership, currentCompany) => {
     if (!currentUser?.id || !currentMembership?.empresa_id) return [];
+    if (getTrialStatus(currentCompany).isExpired) return [];
 
     const planFeatures = getPlanConfig(currentCompany?.plan || currentCompany?.plan_key).features;
     if (ADMIN_ROLES.includes(currentMembership.rol)) return planFeatures;
@@ -323,6 +333,7 @@ export default function AuthProvider({ children }) {
             documento: payload.dni_ruc,
             dni_ruc: payload.dni_ruc,
             direccion: payload.direccion,
+            telefono: payload.telefono,
             rol: 'super_admin',
             plan: payload.plan,
             empresa: payload.empresa
@@ -357,6 +368,7 @@ export default function AuthProvider({ children }) {
       documento: payload.dni_ruc,
       empresa: payload.empresa,
       direccion: payload.direccion,
+      telefono: payload.telefono,
       email: payload.email,
       plan: payload.plan,
       enabled_modules: plan.modules,
@@ -395,6 +407,26 @@ export default function AuthProvider({ children }) {
 
     await checkSession({ refresh: true, silent: true });
     return createdUser;
+  };
+
+  const startDemoAccount = async ({ email, telefono }) => {
+    const normalizedEmail = email.trim().toLowerCase();
+    const phone = telefono.trim();
+    const password = createDemoPassword();
+    const demoName = `Demo ${normalizedEmail.split('@')[0] || 'ERPyme'}`;
+    const demoPayload = {
+      nombre: demoName,
+      dni_ruc: `DEMO-${Date.now()}`,
+      empresa: `Demo ERPyme - ${normalizedEmail}`,
+      direccion: 'Demo virtual',
+      email: normalizedEmail,
+      telefono: phone,
+      password,
+      confirmPassword: password,
+      plan: PLAN_KEYS.DEMO
+    };
+
+    return registerCompanyAccount(demoPayload);
   };
 
   const signOut = async () => {
@@ -653,6 +685,7 @@ export default function AuthProvider({ children }) {
   const appRole = membership?.rol || profile?.rol || 'user';
   const canAccessAdminPanel = ADMIN_ROLES.includes(appRole);
   const canCreateAdmins = ['super_admin', 'owner'].includes(appRole);
+  const trialStatus = getTrialStatus(company);
 
   const value = {
     user,
@@ -662,6 +695,7 @@ export default function AuthProvider({ children }) {
     signIn,
     signUp,
     registerCompanyAccount,
+    startDemoAccount,
     signOut,
     updateProfile,
     refreshAccessData,
@@ -675,6 +709,7 @@ export default function AuthProvider({ children }) {
     appRole,
     enabledModules,
     enabledFeatures,
+    trialStatus,
     canAccessFeature: (featureKey) => enabledFeatures.includes(featureKey),
     canAccessAdminPanel,
     canCreateAdmins,

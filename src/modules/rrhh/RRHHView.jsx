@@ -5,6 +5,7 @@ import DocumentosView from './DocumentosView';
 import EmpleadosView from './EmpleadosView';
 import AsignacionesView from './AsignacionesView';
 import SSOMAView from './SSOMAView';
+import SubscriptionLock from '../../components/SubscriptionLock';
 import './RRHHView.css';
 
 const RRHHView = ({ onBack, initialTab }) => {
@@ -16,10 +17,15 @@ const RRHHView = ({ onBack, initialTab }) => {
     { id: 'empleados', feature: 'rrhh.employees', label: 'Empleados' },
     { id: 'asignaciones', feature: 'rrhh.assignments', label: 'Personal en proyectos' },
     { id: 'accidentes', feature: 'rrhh.accidents', label: 'Registro de accidentes' }
-  ].filter((item) => canAccessFeature(item.feature));
+  ].map((item) => ({ ...item, locked: !canAccessFeature(item.feature) }));
   const activeTab = tabs.some((item) => item.id === tab) ? tab : tabs[0]?.id;
+  const activeTabConfig = tabs.find((item) => item.id === activeTab);
 
   const renderTab = () => {
+    if (activeTabConfig?.locked) {
+      return <SubscriptionLock title={`${activeTabConfig.label} esta bloqueado`} />;
+    }
+
     switch (activeTab) {
       case 'dashboard': return <DashboardRRHH />;
       case 'documentos': return <DocumentosView />;
@@ -39,11 +45,18 @@ const RRHHView = ({ onBack, initialTab }) => {
       </section>
       <nav className="tabs-nav">
         {tabs.map((item) => (
-          <button key={item.id} className={activeTab === item.id ? 'active' : ''} onClick={() => setTab(item.id)}>{item.label}</button>
+          <button
+            key={item.id}
+            className={`${activeTab === item.id ? 'active' : ''} ${item.locked ? 'locked' : ''}`}
+            aria-disabled={item.locked}
+            onClick={() => setTab(item.id)}
+          >
+            {item.label}
+          </button>
         ))}
       </nav>
       <main className="content-area">
-        {tabs.length ? renderTab() : <div className="empty-state">No tienes apartados habilitados en RRHH.</div>}
+        {renderTab()}
       </main>
     </div>
   );
