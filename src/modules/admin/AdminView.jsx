@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../../context/auth/useAuth';
 import { APP_FEATURES, ERP_MODULES, getPlanConfig } from '../../config/modules';
+import { formatTrialDate, getTrialStatus } from '../../lib/trial';
 import './AdminView.css';
 
 const COMPANY_OWNER_ROLES = ['owner', 'super_admin'];
@@ -19,7 +20,7 @@ const EMPTY_FORM = {
   rol: 'user'
 };
 
-const AdminView = ({ onBack, signOut }) => {
+const AdminView = ({ onBack }) => {
   const {
     appRole,
     canCreateAdmins,
@@ -33,6 +34,8 @@ const AdminView = ({ onBack, signOut }) => {
   } = useAuth();
 
   const plan = getPlanConfig(company?.plan || company?.plan_key);
+  const trialStatus = getTrialStatus(company);
+  const trialEndsLabel = formatTrialDate(trialStatus.endsAt);
   const planModules = useMemo(() => ERP_MODULES.filter((module) => plan.modules.includes(module.id)), [plan.modules]);
   const planFeatures = useMemo(() => APP_FEATURES.filter((feature) => plan.features.includes(feature.id)), [plan.features]);
 
@@ -241,12 +244,14 @@ const AdminView = ({ onBack, signOut }) => {
           <h1>Usuarios, permisos y plan</h1>
           <p>
             Rol actual: <strong>{appRole}</strong>. Plan activo: <strong>{plan.name}</strong>.
+            {trialStatus.isTrial && !trialStatus.isExpired && ` Demo vigente hasta ${trialEndsLabel}.`}
           </p>
         </div>
         <div className="admin-plan-strip">
           <article><span>Empresa</span><strong>{company?.nombre || 'Empresa'}</strong></article>
           <article><span>Usuarios empleados</span><strong>{userLimitLabel}</strong></article>
           <article><span>Modulos del plan</span><strong>{plan.modules.length}</strong></article>
+          {trialStatus.isTrial && <article><span>Dias demo</span><strong>{trialStatus.daysLeft}</strong></article>}
         </div>
       </header>
 

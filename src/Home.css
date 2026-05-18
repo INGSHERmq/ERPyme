@@ -110,6 +110,16 @@
   box-shadow: 0 8px 24px rgba(252, 213, 53, 0.1);
 }
 
+.module-card.locked {
+  opacity: 0.74;
+  border-style: dashed;
+}
+
+.module-card.locked:hover {
+  opacity: 1;
+  transform: translateY(-2px);
+}
+
 .card-top {
   display: flex;
   justify-content: space-between;
@@ -152,6 +162,11 @@
   color: var(--primary);
 }
 
+.status-badge.locked {
+  background-color: rgba(112, 122, 138, 0.18);
+  color: var(--muted-strong);
+}
+
 .module-title {
   font-size: 20px;
   font-weight: 600;
@@ -164,6 +179,21 @@
   color: var(--muted);
   line-height: 1.5;
   flex: 1;
+}
+
+.module-lock-copy {
+  border: 1px solid rgba(252, 213, 53, 0.24);
+  border-radius: 6px;
+  background: rgba(252, 213, 53, 0.08);
+  color: var(--primary-text);
+  padding: 10px 12px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.home-lock-panel {
+  width: min(1280px, calc(100% - 48px));
+  margin: 24px auto 0;
 }
 
 .card-footer {

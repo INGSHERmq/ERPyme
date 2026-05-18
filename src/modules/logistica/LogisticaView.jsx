@@ -4,6 +4,7 @@ import SimpleCrudLogisticaView from './SimpleCrudLogisticaView';
 import OrdenesCompraView from './OrdenesCompraView';
 import MaterialesView from './MaterialesView';
 import AsignacionesNombresView from './AsignacionesNombresView';
+import SubscriptionLock from '../../components/SubscriptionLock';
 import './LogisticaView.css';
 
 const LogisticaView = ({ onBack, initialTab }) => {
@@ -17,10 +18,15 @@ const LogisticaView = ({ onBack, initialTab }) => {
     { id: 'asignaciones', feature: 'logistica.assignments', label: 'Asignaciones' },
     { id: 'mantenimiento', feature: 'logistica.maintenance', label: 'Mantenimiento' },
     { id: 'kardex', feature: 'logistica.kardex', label: 'Kardex' }
-  ].filter((item) => canAccessFeature(item.feature));
+  ].map((item) => ({ ...item, locked: !canAccessFeature(item.feature) }));
   const activeTab = tabs.some((item) => item.id === tab) ? tab : tabs[0]?.id;
+  const activeTabConfig = tabs.find((item) => item.id === activeTab);
 
   const renderTab = () => {
+    if (activeTabConfig?.locked) {
+      return <SubscriptionLock title={`${activeTabConfig.label} esta bloqueado`} />;
+    }
+
     switch (activeTab) {
       case 'proveedores':
         return <SimpleCrudLogisticaView title="Proveedores" table="proveedores" fields={[
@@ -75,11 +81,18 @@ const LogisticaView = ({ onBack, initialTab }) => {
       </section>
       <nav className="tabs-nav">
         {tabs.map((item) => (
-          <button key={item.id} className={activeTab === item.id ? 'active' : ''} onClick={() => setTab(item.id)}>{item.label}</button>
+          <button
+            key={item.id}
+            className={`${activeTab === item.id ? 'active' : ''} ${item.locked ? 'locked' : ''}`}
+            aria-disabled={item.locked}
+            onClick={() => setTab(item.id)}
+          >
+            {item.label}
+          </button>
         ))}
       </nav>
       <main className="content-area">
-        {tabs.length ? renderTab() : <div className="empty-state">No tienes apartados habilitados en logística.</div>}
+        {renderTab()}
       </main>
     </div>
   );

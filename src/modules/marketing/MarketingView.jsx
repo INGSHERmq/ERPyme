@@ -5,6 +5,7 @@ import ClientesView from './ClientesView';
 import CotizacionesView from './CotizacionesView';
 import CRMView from './CRMView';
 import LeadScoringView from './LeadScoringView';
+import SubscriptionLock from '../../components/SubscriptionLock';
 import './MarketingView.css';
 
 const MarketingView = ({ onBack, initialTab }) => {
@@ -16,10 +17,15 @@ const MarketingView = ({ onBack, initialTab }) => {
     { id: 'cotizaciones', feature: 'ventas.quotes', label: 'Cotizaciones' },
     { id: 'clientes', feature: 'ventas.clients', label: 'Tabla de clientes' },
     { id: 'scoring', feature: 'ventas.scoring', label: 'Scoring cotizaciones' }
-  ].filter((item) => canAccessFeature(item.feature));
+  ].map((item) => ({ ...item, locked: !canAccessFeature(item.feature) }));
   const activeTab = tabs.some((item) => item.id === tab) ? tab : tabs[0]?.id;
+  const activeTabConfig = tabs.find((item) => item.id === activeTab);
 
   const renderTab = () => {
+    if (activeTabConfig?.locked) {
+      return <SubscriptionLock title={`${activeTabConfig.label} esta bloqueado`} />;
+    }
+
     switch (activeTab) {
       case 'dashboard': return <DashboardMarketing />;
       case 'clientes': return <ClientesView />;
@@ -42,14 +48,21 @@ const MarketingView = ({ onBack, initialTab }) => {
 
       <nav className="tabs-nav" role="tablist">
         {tabs.map((item) => (
-          <button key={item.id} role="tab" aria-selected={activeTab === item.id} className={activeTab === item.id ? 'active' : ''} onClick={() => setTab(item.id)}>
+          <button
+            key={item.id}
+            role="tab"
+            aria-selected={activeTab === item.id}
+            aria-disabled={item.locked}
+            className={`${activeTab === item.id ? 'active' : ''} ${item.locked ? 'locked' : ''}`}
+            onClick={() => setTab(item.id)}
+          >
             {item.label}
           </button>
         ))}
       </nav>
 
       <main className="content-area" role="tabpanel">
-        {tabs.length ? renderTab() : <div className="empty-state">No tienes apartados habilitados en ventas.</div>}
+        {renderTab()}
       </main>
     </div>
   );

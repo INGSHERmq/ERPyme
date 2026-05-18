@@ -11,12 +11,12 @@ const EMPTY_REGISTER = {
   email: '',
   password: '',
   confirmPassword: '',
-  plan: PLAN_KEYS.BASIC
+  plan: PLAN_KEYS.DEMO
 };
 
-const Login = () => {
+const Login = ({ initialMode = 'login' }) => {
   const { signIn, registerCompanyAccount, loading } = useAuth();
-  const [mode, setMode] = useState('login');
+  const [mode, setMode] = useState(initialMode);
   const [registerStep, setRegisterStep] = useState('data');
   const [loginData, setLoginData] = useState({ email: '', password: '' });
   const [registerData, setRegisterData] = useState(EMPTY_REGISTER);
@@ -108,7 +108,7 @@ const Login = () => {
           <span className="auth-eyebrow">ERP con IA para pymes</span>
           <h1>ERPyme</h1>
           <p>
-            Regístrate con una cuenta nueva, elige un plan y gestiona tu negocio con facilidad.
+            Regístrate con una cuenta nueva, prueba la demo gratuita y gestiona tu negocio con facilidad.
           </p>
           <div className="auth-signal-grid">
             <article>
@@ -116,8 +116,8 @@ const Login = () => {
               <span>áreas conectadas</span>
             </article>
             <article>
-              <strong>3</strong>
-              <span>planes escalables</span>
+              <strong>14</strong>
+              <span>dias de demo</span>
             </article>
             <article>
               <strong>IA</strong>
@@ -198,11 +198,11 @@ const Login = () => {
             <>
               <div className="login-header">
                 <span className="auth-step">{registerStep === 'data' ? 'Paso 1 de 2' : 'Paso 2 de 2'}</span>
-                <h2>{registerStep === 'data' ? 'Crea tu empresa' : 'Elige el plan'}</h2>
+                <h2>{registerStep === 'data' ? 'Crea tu empresa' : 'Elige la demo o un plan'}</h2>
                 <p>
                   {registerStep === 'data'
                     ? 'Sin verificación de email por ahora. El primer usuario será super admin.'
-                    : 'El ERP se abrirá con las capacidades del plan seleccionado.'}
+                    : 'La demo se abre con todos los modulos por 14 dias; tambien puedes elegir un plan fijo.'}
                 </p>
               </div>
 

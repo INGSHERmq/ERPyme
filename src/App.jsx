@@ -5,6 +5,7 @@ import LoadingScreen from './components/LoadingScreen';
 import Home from './Home';
 import LandingPage from './LandingPage';
 import { getPlanConfig } from './config/modules';
+import { formatTrialDate } from './lib/trial';
 import './styles/theme.css';
 
 const ProjectsView = lazy(() => import('./modules/projects/ProjectsView'));
@@ -25,7 +26,8 @@ function App() {
     canAccessAdminPanel,
     updateProfile,
     company,
-    canAccessFeature
+    canAccessFeature,
+    trialStatus
   } = useAuth();
   const [module, setModule] = useState('home');
   const [moduleTab, setModuleTab] = useState(null);
@@ -37,7 +39,9 @@ function App() {
 
   useEffect(() => {
     if (module === 'home') return;
-    if (!enabledModules?.includes(module)) setModule('home');
+    if (!enabledModules?.includes(module)) {
+      queueMicrotask(() => setModule('home'));
+    }
   }, [enabledModules, module, profile?.id]);
 
   if (authLoading) {
@@ -51,6 +55,7 @@ function App() {
   if (!isAuthenticated) return <LandingPage />;
 
   const back = () => setModule('home');
+  const trialEndsLabel = formatTrialDate(trialStatus?.endsAt);
 
   const navigate = (nextModule, tab = null) => {
     if (nextModule !== 'home' && !enabledModules?.includes(nextModule)) {
@@ -120,7 +125,11 @@ function App() {
           <div className="header-user">
             <div className="user-identity">
               <span className="user-name">{profile?.nombre_completo || 'Usuario'}</span>
-              <span className="user-plan">{company?.plan ? planLabel : 'plan activo'}</span>
+              <span className="user-plan">
+                {trialStatus?.isTrial
+                  ? `Demo: ${trialStatus.daysLeft} dia(s)`
+                  : company?.plan ? planLabel : 'plan activo'}
+              </span>
             </div>
             <div className="user-actions">
               <button className="logout-link" onClick={openProfile}>Mi perfil</button>
@@ -130,6 +139,31 @@ function App() {
           <ThemeToggleButton />
         </div>
       </header>
+
+      {trialStatus?.isTrial && !trialStatus.isExpired && (
+        <section className="trial-banner" role="status">
+          <div>
+            <strong>Demo gratuita activa</strong>
+            <span>Te quedan {trialStatus.daysLeft} dia(s). Vence el {trialEndsLabel}.</span>
+          </div>
+          <button type="button" onClick={() => navigate('admin')}>Ver plan</button>
+        </section>
+      )}
+
+      {trialStatus?.isExpired ? (
+        <main className="app-content trial-expired-shell">
+          <section className="trial-expired-card">
+            <span>Demo vencida</span>
+            <h1>Tu periodo de prueba termino.</h1>
+            <p>
+              La empresa {company?.nombre || 'registrada'} ya no tiene acceso operativo. Para reactivarla, cambia el plan desde Supabase o habilita una pasarela de pago para convertir la demo en un plan activo.
+            </p>
+            <div className="trial-expired-actions">
+              <button type="button" onClick={signOut}>Cerrar sesion</button>
+            </div>
+          </section>
+        </main>
+      ) : (
       
       <main className="app-content">
         <Suspense fallback={<LoadingScreen message="Cargando módulo..." />}>
@@ -148,9 +182,10 @@ function App() {
           {module === 'rrhh' && enabledModules?.includes('rrhh') && <RRHHView onBack={back} initialTab={moduleTab} />}
           {module === 'logistica' && enabledModules?.includes('logistica') && <LogisticaView onBack={back} initialTab={moduleTab} />}
           {module === 'assistant' && enabledModules?.includes('assistant') && <AssistantView onBack={back} onNavigate={navigate} />}
-          {module === 'admin' && enabledModules?.includes('admin') && <AdminView onBack={back} signOut={signOut} initialTab={moduleTab} />}
+          {module === 'admin' && enabledModules?.includes('admin') && <AdminView onBack={back} initialTab={moduleTab} />}
         </Suspense>
       </main>
+      )}
       {profileOpen && (
         <div className="profile-modal-backdrop" role="presentation" onClick={() => setProfileOpen(false)}>
           <section className="profile-modal" role="dialog" aria-modal="true" onClick={(event) => event.stopPropagation()}>

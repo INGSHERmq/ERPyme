@@ -5,7 +5,8 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const VALID_PLANS = new Set(['basic_free', 'intermediate', 'advanced']);
+const VALID_PLANS = new Set(['basic_free', 'intermediate', 'advanced', 'demo_trial']);
+const TRIAL_DURATION_DAYS = 14;
 
 type CompleteCompanyBody = {
   nombre_completo?: string;
@@ -13,6 +14,7 @@ type CompleteCompanyBody = {
   documento?: string;
   empresa?: string;
   direccion?: string;
+  telefono?: string;
   email?: string;
   plan?: string;
   enabled_modules?: string[];
@@ -61,7 +63,12 @@ Deno.serve(async (req) => {
     const nombreCompleto = nombrePersona || (rawNombreCompleto && rawNombreCompleto !== email ? rawNombreCompleto : '') || email;
     const documento = body.documento || metadata.documento || metadata.dni_ruc || null;
     const direccion = body.direccion || metadata.direccion || null;
+    const telefono = body.telefono || metadata.telefono || null;
     const empresaNombre = body.empresa?.trim() || 'Mi empresa';
+    const trialStartedAt = plan === 'demo_trial' ? new Date() : null;
+    const trialEndsAt = trialStartedAt
+      ? new Date(trialStartedAt.getTime() + TRIAL_DURATION_DAYS * 24 * 60 * 60 * 1000)
+      : null;
 
     const { data: existingMembership, error: membershipError } = await adminClient
       .from('empresa_usuarios')
@@ -85,8 +92,12 @@ Deno.serve(async (req) => {
           ruc: documento,
           razon_social: empresaNombre,
           direccion,
+          telefono,
           email,
           plan,
+          estado: 'Activa',
+          trial_started_at: trialStartedAt?.toISOString() || null,
+          trial_ends_at: trialEndsAt?.toISOString() || null,
           updated_at: new Date().toISOString(),
         })
         .eq('id', empresaId);
@@ -110,9 +121,12 @@ Deno.serve(async (req) => {
           ruc: documento,
           razon_social: empresaNombre,
           direccion,
+          telefono,
           email,
           created_by: user.id,
           plan,
+          trial_started_at: trialStartedAt?.toISOString() || null,
+          trial_ends_at: trialEndsAt?.toISOString() || null,
         })
         .select('id')
         .single();
@@ -143,6 +157,7 @@ Deno.serve(async (req) => {
         nombre_completo: nombreCompleto,
         nombres: nombrePersona || nombreCompleto,
         documento_identidad: documento,
+        telefono,
         direccion,
         rol: 'super_admin',
         empresa_actual_id: empresaId,
