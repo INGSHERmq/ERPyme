@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../context/auth/useAuth';
 import useProjects from '../../hooks/useProjects';
+import { useNotification } from '../../context/NotificationContext';
 import {
   datetimeLocalToAppIso,
   formatDateTimeInAppTimeZone,
@@ -12,6 +13,7 @@ import {
 const FacturasCompraView = () => {
   const { user, membership, profile } = useAuth();
   const { proyectos } = useProjects();
+  const { showConfirm } = useNotification();
   const [ordenes, setOrdenes] = useState([]);
   const [proveedores, setProveedores] = useState([]);
   const [rows, setRows] = useState([]);
@@ -76,7 +78,8 @@ const FacturasCompraView = () => {
   };
 
   const handleCancelar = async (row) => {
-    if (!window.confirm('¿Anular esta factura? La orden de compra también se marcará como anulada.')) return;
+    const confirmed = await showConfirm('¿Anular esta factura? La orden de compra también se marcará como anulada.', 'Confirmar Anulación');
+    if (!confirmed) return;
     
     setPayingId(row.id);
     const { error: facturaError } = await supabase

@@ -55,6 +55,15 @@ const Resumen = ({ proyecto }) => {
     };
   }, [tareas, today]);
 
+  const delayedTareas = useMemo(() => {
+    return tareas.filter(tarea => {
+      if (tarea.estado === 'Completado') return false;
+      if (!tarea.fecha_fin) return false;
+      const finStr = tarea.fecha_fin.slice(0, 10);
+      return finStr < today;
+    });
+  }, [tareas, today]);
+
   const chartData = [
     { name: 'Pendiente', value: stats.pendientes },
     { name: 'En Progreso', value: stats.enProgreso },
@@ -130,9 +139,42 @@ const Resumen = ({ proyecto }) => {
             {` ${equipo.length}`} persona{equipo.length === 1 ? '' : 's'} asignada{equipo.length === 1 ? '' : 's'}
             y {herramientas.length} herramienta{herramientas.length === 1 ? '' : 's'} vinculada{herramientas.length === 1 ? '' : 's'}.
           </p>
-          <p>
+          <p style={{ marginBottom: delayedTareas.length > 0 ? '16px' : '0' }}>
             Para hoy hay {stats.programadasHoy} actividad{stats.programadasHoy === 1 ? '' : 'es'} dentro del calendario del proyecto.
           </p>
+
+          {delayedTareas.length > 0 && (
+            <div className="resumen-ai-alerta">
+              <div className="alerta-header">
+                <span className="alerta-pulsing-dot" />
+                <h5>⚠️ Análisis de Riesgo & Sugerencia IA</h5>
+              </div>
+              <div className="alerta-body">
+                <p style={{ fontSize: '13px', margin: '0 0 12px 0', opacity: 0.85 }}>
+                  Se ha detectado <strong>{delayedTareas.length}</strong> actividad{delayedTareas.length > 1 ? 'es' : ''} fuera de plazo en este proyecto. Esto eleva el riesgo del cronograma general.
+                </p>
+                <div className="alertas-tareas-list">
+                  {delayedTareas.map(t => {
+                    const diffTime = Math.abs(new Date(today) - new Date(t.fecha_fin.slice(0, 10)));
+                    const daysOverdue = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    return (
+                      <div key={t.id} className="alerta-tarea-item">
+                        <span className="alerta-tarea-titulo">🔥 {t.titulo}</span>
+                        <span className="alerta-tarea-detalle">
+                          Asignado a: <strong>{t.empleado_nombre || 'Sin asignar'}</strong> | Retraso: {daysOverdue} día{daysOverdue > 1 ? 's' : ''} ({t.duracion_horas || '0'}h estimadas).
+                        </span>
+                        <div className="alerta-ai-recomendacion">
+                          <strong>Recomendación IA:</strong> {t.prioridad === 'Alta' 
+                            ? 'Esta tarea es de prioridad alta. Se sugiere reasignar recursos inmediatamente o dividir su alcance para evitar demoras en entregas críticas.'
+                            : `Se recomienda contactar a ${t.empleado_nombre || 'el responsable'} para asistirle en desbloquear la actividad.`}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

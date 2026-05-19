@@ -43,7 +43,7 @@ const Home = ({ onNavigate, enabledModules, profile, canAccessFeature }) => {
 
           {canAccessFeature('assistant.briefing') && (
             <div className="summary-container-toolbar">
-              <ExecutiveSummary userId={profile?.id} compact />
+              <ExecutiveSummary userId={profile?.id} compact onNavigate={onNavigate} />
             </div>
           )}
         </div>

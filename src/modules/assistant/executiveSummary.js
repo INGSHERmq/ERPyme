@@ -97,6 +97,8 @@ export const scoreQuotationAcceptance = (quotation = {}, customer = {}, lead = {
 };
 
 const buildProjectRisks = (projects = [], tasks = []) => {
+  const today = getTodayInAppTimeZone();
+
   const taskGroups = tasks.reduce((acc, task) => {
     const key = task.proyecto_id;
     if (!key) return acc;
@@ -114,9 +116,18 @@ const buildProjectRisks = (projects = [], tasks = []) => {
       const progress = Number.isFinite(declaredProgress) && declaredProgress > 0 ? declaredProgress : taskProgress;
       const daysToEnd = daysBetween(project.fin || project.fecha_fin || project.fecha_fin_plan);
       const activeTasks = projectTasks.filter(task => task.estado !== 'Completado').length;
+      
+      // Tareas retrasadas: no completadas y fecha_fin < hoy
+      const delayedTasks = projectTasks.filter(task => {
+        if (task.estado === 'Completado') return false;
+        if (!task.fecha_fin) return false;
+        return task.fecha_fin.slice(0, 10) < today;
+      });
+
       const isRisky = (progress !== null && progress < 60 && daysToEnd !== null && daysToEnd <= 14)
         || activeTasks >= 5
-        || project.prioridad === 'Alta';
+        || project.prioridad === 'Alta'
+        || delayedTasks.length > 0;
 
       return {
         id: project.id,
@@ -124,11 +135,25 @@ const buildProjectRisks = (projects = [], tasks = []) => {
         progreso: progress ?? 0,
         dias: daysToEnd,
         tareasPendientes: activeTasks,
+        delayedTasks: delayedTasks.map(t => ({
+          id: t.id,
+          titulo: t.titulo,
+          estado: t.estado,
+          prioridad: t.prioridad,
+          fecha_fin: t.fecha_fin,
+          duracion_horas: t.duracion_horas,
+          empleado_nombre: t.empleado_nombre
+        })),
         riesgo: isRisky
       };
     })
     .filter(project => project.riesgo)
-    .sort((a, b) => (a.dias ?? 999) - (b.dias ?? 999))
+    .sort((a, b) => {
+      const aHasDelayed = a.delayedTasks.length > 0 ? 1 : 0;
+      const bHasDelayed = b.delayedTasks.length > 0 ? 1 : 0;
+      if (aHasDelayed !== bHasDelayed) return bHasDelayed - aHasDelayed;
+      return (a.dias ?? 999) - (b.dias ?? 999);
+    })
     .slice(0, 4);
 };
 
@@ -160,8 +185,8 @@ export const generateExecutiveSummary = async (userId) => {
       .eq('user_id', userId)
       .order('created_at', { ascending: false }),
     supabase
-      .from('tareas')
-      .select('id,proyecto_id,titulo,estado,prioridad,fecha_fin')
+      .from('v_tareas_completas')
+      .select('id,proyecto_id,titulo,estado,prioridad,fecha_inicio,fecha_fin,duracion_horas,empleado_nombre')
       .eq('user_id', userId),
     supabase
       .from('v_cotizaciones_completas')
@@ -236,9 +261,22 @@ export const generateExecutiveSummary = async (userId) => {
     actions.push('Priorizar seguimiento de cobranzas vencidas antes de nuevas ventas.');
   }
   if (projectRisks.length) {
-    const project = projectRisks[0];
-    highlights.push(`El proyecto "${project.nombre}" muestra riesgo: ${project.progreso}% de avance y ${project.tareasPendientes} tarea${project.tareasPendientes === 1 ? '' : 's'} pendiente${project.tareasPendientes === 1 ? '' : 's'}.`);
-    actions.push(`Revisar alcance y carga del proyecto "${project.nombre}".`);
+    projectRisks.forEach((project, index) => {
+      if (index > 1) return; // Máximo 2 alertas de proyecto
+      if (project.delayedTasks && project.delayedTasks.length > 0) {
+        const primaryDelayed = project.delayedTasks[0];
+        const daysOverdue = Math.ceil((new Date(today) - new Date(primaryDelayed.fecha_fin.slice(0, 10))) / (1000 * 60 * 60 * 24));
+        highlights.push(
+          `Riesgo en "${project.nombre}": la tarea "${primaryDelayed.titulo}" de ${primaryDelayed.empleado_nombre || 'sin asignar'} está retrasada ${daysOverdue} día${daysOverdue > 1 ? 's' : ''}.`
+        );
+        actions.push(
+          `IA: Asistir a ${primaryDelayed.empleado_nombre || 'el responsable'} para desbloquear "${primaryDelayed.titulo}" en el proyecto "${project.nombre}".`
+        );
+      } else {
+        highlights.push(`El proyecto "${project.nombre}" muestra riesgo: ${project.progreso}% de avance y ${project.tareasPendientes} tarea${project.tareasPendientes === 1 ? '' : 's'} pendiente${project.tareasPendientes === 1 ? '' : 's'}.`);
+        actions.push(`Revisar alcance y carga del proyecto "${project.nombre}".`);
+      }
+    });
   }
   if (topOpportunities[0]) {
     highlights.push(`La cotizacion con mejor probabilidad es "${topOpportunities[0].titulo}" con ${topOpportunities[0].probabilidad}% de aceptacion.`);
@@ -263,6 +301,11 @@ export const generateExecutiveSummary = async (userId) => {
     overdue,
     projectRisks,
     topOpportunities,
-    purchaseDueSoon
+    purchaseDueSoon,
+    quotesMeta: {
+      total: quotes.length,
+      activeCount: quotes.filter(item => !['aprobada', 'aceptada', 'rechazada', 'vencida'].includes((item.estado || '').toLowerCase())).length,
+      wonCount: quotes.filter(item => ['aprobada', 'aceptada'].includes((item.estado || '').toLowerCase())).length
+    }
   };
 };

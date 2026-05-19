@@ -115,3 +115,92 @@ html[data-theme="dark"] .chart-container .recharts-wrapper text {
     min-height: 250px;
   }
 }
+
+/* Estilos premium para alertas de IA de Riesgos */
+.resumen-ai-alerta {
+  margin-top: 16px;
+  background: rgba(246, 70, 93, 0.08);
+  border: 1px solid rgba(246, 70, 93, 0.28);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  text-align: left;
+}
+
+.alerta-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.alerta-header h5 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: #ff4d6a;
+}
+
+.alerta-pulsing-dot {
+  width: 8px;
+  height: 8px;
+  background-color: #ff4d6a;
+  border-radius: 50%;
+  box-shadow: 0 0 0 0 rgba(246, 70, 93, 0.7);
+  animation: pulse-dot 1.6s infinite;
+}
+
+@keyframes pulse-dot {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(246, 70, 93, 0.7);
+  }
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 8px rgba(246, 70, 93, 0);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(246, 70, 93, 0);
+  }
+}
+
+.alertas-tareas-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.alerta-tarea-item {
+  background: rgba(0, 0, 0, 0.2);
+  border-left: 3px solid #ff4d6a;
+  padding: 12px;
+  border-radius: var(--radius-xs);
+  font-size: 13px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.alerta-tarea-titulo {
+  font-weight: 700;
+  color: var(--color-ink);
+}
+
+.alerta-tarea-detalle {
+  color: var(--color-muted);
+  font-size: 12px;
+}
+
+.alerta-ai-recomendacion {
+  font-size: 12px;
+  color: #fcd535;
+  background: rgba(252, 213, 53, 0.05);
+  border-radius: 4px;
+  padding: 8px 10px;
+  border: 1px dashed rgba(252, 213, 53, 0.2);
+  line-height: 1.4;
+  margin-top: 4px;
+}
+

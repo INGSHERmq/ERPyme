@@ -11,7 +11,20 @@ const INITIAL_MESSAGES = [
   }
 ];
 
-const ChatForm = ({ form, onComplete }) => {
+const TABLE_NAV_MAP = {
+  clientes: { module: 'ventas', tab: 'clientes', label: 'Clientes' },
+  proveedores: { module: 'logistica', tab: 'proveedores', label: 'Proveedores' },
+  productos: { module: 'logistica', tab: 'inventario', label: 'Inventario de Productos' },
+  cotizaciones: { module: 'ventas', tab: 'cotizaciones', label: 'Cotizaciones' },
+  tareas: { module: 'projects', tab: 'actividades', label: 'Tablero Scrum / Tareas' },
+  compras: { module: 'logistica', tab: 'facturas', label: 'Compras / Facturas' },
+  facturas_compra: { module: 'logistica', tab: 'facturas', label: 'Compras / Facturas' },
+  facturas: { module: 'ventas', tab: 'facturas', label: 'Facturas de Venta' },
+  ingresos: { module: 'contabilidad', tab: 'ingresos', label: 'Ingresos contables' },
+  egresos: { module: 'contabilidad', tab: 'egresos', label: 'Egresos contables' }
+};
+
+const ChatForm = ({ form, onComplete, userId }) => {
   const [formData, setFormData] = useState(form.initialData || {});
   const [options, setOptions] = useState({});
   const [saving, setSaving] = useState(false);
@@ -32,27 +45,62 @@ const ChatForm = ({ form, onComplete }) => {
         else if (field === 'empleado_id') table = 'empleados';
         
         if (table) {
-          const list = await getOptions(table, user?.id);
+          const list = await getOptions(table, userId);
           newOptions[field] = list;
         }
       }
       setOptions(newOptions);
     };
     fetchAllOptions();
-  }, [form.schema.fields]);
+  }, [form.schema.fields, userId]);
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
+    let { name, value } = e.target;
+    
+    if (name === 'tipo_identificacion' || name === 'tipoIdentificacion') {
+      const newType = value;
+      const maxLength = newType === 'RUC' ? 11 : 8;
+      setFormData(prev => {
+        const prevDniRuc = prev['dni_ruc'] || prev['dniRuc'] || '';
+        const cleanedDniRuc = prevDniRuc.replace(/\D/g, '').slice(0, maxLength);
+        const updated = { ...prev, [name]: value };
+        if (prev['dni_ruc'] !== undefined) updated['dni_ruc'] = cleanedDniRuc;
+        if (prev['dniRuc'] !== undefined) updated['dniRuc'] = cleanedDniRuc;
+        return updated;
+      });
+      return;
+    }
+
+    if (name === 'dni_ruc' || name === 'dniRuc') {
+      value = value.replace(/\D/g, ''); // dígitos únicamente
+      const type = formData['tipo_identificacion'] || formData['tipoIdentificacion'] || 'DNI';
+      const maxLength = type === 'RUC' ? 11 : 8;
+      value = value.slice(0, maxLength);
+    }
+    
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Validar longitud exacta para DNI (8) y RUC (11)
+    const dniRucKey = formData['dni_ruc'] !== undefined ? 'dni_ruc' : formData['dniRuc'] !== undefined ? 'dniRuc' : null;
+    if (dniRucKey) {
+      const type = formData['tipo_identificacion'] || formData['tipoIdentificacion'] || 'DNI';
+      const val = formData[dniRucKey] || '';
+      const expectedLength = type === 'RUC' ? 11 : 8;
+      if (val.length !== expectedLength) {
+        alert(`Error de validación: El ${type} debe tener exactamente ${expectedLength} dígitos.`);
+        return;
+      }
+    }
+
     setSaving(true);
     try {
       await createErpRecord({ table: form.table, data: formData });
       setDone(true);
-      onComplete(`He creado el registro en ${form.table} correctamente.`);
+      onComplete(`He creado el registro en ${form.table} correctamente.`, form.table);
     } catch (err) {
       alert('Error al guardar: ' + err.message);
     } finally {
@@ -85,6 +133,22 @@ const ChatForm = ({ form, onComplete }) => {
                   <option value="DNI">DNI</option>
                   <option value="RUC">RUC</option>
                 </select>
+              ) : field === 'dni_ruc' || field === 'dniRuc' ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', width: '100%' }}>
+                  <input 
+                    type="text"
+                    inputMode="numeric"
+                    name={field} 
+                    value={formData[field] || ''} 
+                    onChange={handleChange}
+                    required={form.schema.required.includes(field)}
+                    placeholder={
+                      (formData['tipo_identificacion'] || formData['tipoIdentificacion'] || 'DNI') === 'RUC'
+                        ? '11 dígitos (RUC)'
+                        : '8 dígitos (DNI)'
+                    }
+                  />
+                </div>
               ) : field === 'estado' ? (
                 <select name={field} value={formData[field] || ''} onChange={handleChange}>
                   <option value="Activo">Activo</option>
@@ -236,7 +300,18 @@ const AssistantView = ({ onBack, onNavigate }) => {
                 {message.form && (
                   <ChatForm 
                     form={message.form} 
-                    onComplete={(msg) => setMessages(prev => [...prev, { role: 'assistant', content: msg }])} 
+                    userId={user?.id}
+                    onComplete={(msg, table) => {
+                      const nav = TABLE_NAV_MAP[table];
+                      setMessages(prev => [
+                        ...prev, 
+                        { 
+                          role: 'assistant', 
+                          content: msg,
+                          navigation: nav ? { module: nav.module, tab: nav.tab, label: `👉 Ir a la tabla de ${nav.label}` } : null
+                        }
+                      ]);
+                    }} 
                   />
                 )}
               </div>
