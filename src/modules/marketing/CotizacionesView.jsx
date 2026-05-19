@@ -2,6 +2,7 @@ import { useState } from 'react';
 import useMarketing from '../../hooks/useMarketing';
 import { useAuth } from '../../context/auth/useAuth';
 import { uploadPrivateFile } from '../../lib/storage';
+import { useNotification } from '../../context/NotificationContext';
 import './CotizacionesView.css';
 
 const initialForm = () => ({
@@ -20,6 +21,7 @@ const initialForm = () => ({
 const CotizacionesView = () => {
   const { user } = useAuth();
   const { clientes, cotizaciones, addCotizacion, convertirCotizacion, refetch, loading } = useMarketing();
+  const { showConfirm } = useNotification();
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState(initialForm);
   const [adjuntos, setAdjuntos] = useState([]);
@@ -78,7 +80,8 @@ const CotizacionesView = () => {
   };
 
   const handleConvertir = async (cotizacion) => {
-    if (!window.confirm('Aprobar cotizacion y generar proyecto + factura de venta borrador automaticamente?')) return;
+    const confirmed = await showConfirm('¿Aprobar cotización y generar proyecto + factura de venta borrador automáticamente?', 'Confirmar Aprobación');
+    if (!confirmed) return;
 
     try {
       await convertirCotizacion(cotizacion.id);

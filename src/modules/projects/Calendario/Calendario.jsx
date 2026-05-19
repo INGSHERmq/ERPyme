@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import useProjects from '../../../hooks/useProjects';
 import useTareas from '../../../hooks/useTareas';
+import { formatDateOnlyInAppTimeZone, getTodayInAppTimeZone, parseDateInAppTimeZone, toAppDateKey } from '../../../lib/dates';
 import './Calendario.css';
 
 const DAY_NAMES = ['Dom', 'Lun', 'Mar', 'Mie', 'Jue', 'Vie', 'Sab'];
@@ -11,8 +12,8 @@ const MONTH_NAMES = [
 
 const parseDate = (dateStr) => {
   if (!dateStr) return null;
-  const date = new Date(dateStr);
-  if (Number.isNaN(date.getTime())) return null;
+  const date = dateStr instanceof Date ? new Date(dateStr) : parseDateInAppTimeZone(dateStr);
+  if (!date || Number.isNaN(date.getTime())) return null;
   date.setHours(0, 0, 0, 0);
   return date;
 };
@@ -108,7 +109,7 @@ const Calendario = ({ proyectoId }) => {
 
   const handlePrevMonth = () => setViewDate(new Date(currentYear, currentMonth - 1, 1));
   const handleNextMonth = () => setViewDate(new Date(currentYear, currentMonth + 1, 1));
-  const handleToday = () => setViewDate(new Date());
+  const handleToday = () => setViewDate(parseDateInAppTimeZone(getTodayInAppTimeZone()));
 
   if (tareasLoading) return <div className="loading">Cargando calendario...</div>;
   if (!proyecto) return <div className="empty-state">No hay calendario para este proyecto</div>;
@@ -131,7 +132,7 @@ const Calendario = ({ proyectoId }) => {
 
         {calendarData.map((date, index) => {
           const dayEvents = getEventsForDay(date);
-          const isToday = date && new Date().toDateString() === date.toDateString();
+          const isToday = date && toAppDateKey(date) === getTodayInAppTimeZone();
 
           return (
             <div
@@ -163,7 +164,7 @@ const Calendario = ({ proyectoId }) => {
       <div className="proyecto-legend">
         <div className="legend-item">
           <span className="legend-color project"></span>
-          <span>{proyecto.nombre} ({proyecto.inicio || proyecto.fecha_inicio || proyecto.fecha_inicio_plan || '-'} - {proyecto.fin || proyecto.fecha_fin || proyecto.fecha_fin_plan || '-'})</span>
+          <span>{proyecto.nombre} ({formatDateOnlyInAppTimeZone(proyecto.inicio || proyecto.fecha_inicio || proyecto.fecha_inicio_plan)} - {formatDateOnlyInAppTimeZone(proyecto.fin || proyecto.fecha_fin || proyecto.fecha_fin_plan)})</span>
         </div>
         <div className="legend-item">
           <span className="legend-color task"></span>

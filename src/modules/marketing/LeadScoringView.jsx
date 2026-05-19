@@ -146,7 +146,7 @@ const LeadScoringView = () => {
                   <th>Monto</th>
                   <th>Estado</th>
                   <th>Probabilidad de aceptacion</th>
-                  <th>Senales</th>
+                  <th>Señales</th>
                 </tr>
               </thead>
               <tbody>

@@ -2,20 +2,11 @@ import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../context/auth/useAuth';
 import useProjects from '../../hooks/useProjects';
-
-const getToday = () => new Date().toISOString().split('T')[0];
-const formatDateTime = (value) => {
-  if (!value) return '-';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-  return date.toLocaleString('es-PE', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  });
-};
+import {
+  datetimeLocalToAppIso,
+  formatDateTimeInAppTimeZone,
+  getTodayInAppTimeZone
+} from '../../lib/dates';
 
 const OrdenesCompraView = () => {
   const { user, membership, profile } = useAuth();
@@ -31,7 +22,7 @@ const OrdenesCompraView = () => {
     nombre_compra: '',
     proveedor_id: '',
     proyecto_id: '',
-    fecha: getToday(),
+    fecha: getTodayInAppTimeZone(),
     fecha_vencimiento: '',
     cantidad: '1',
     costo_unitario: '0'
@@ -97,7 +88,7 @@ const OrdenesCompraView = () => {
       proveedor_id: Number(formData.proveedor_id),
       proyecto_id: formData.proyecto_id ? Number(formData.proyecto_id) : null,
       fecha: formData.fecha,
-      fecha_vencimiento: formData.fecha_vencimiento || null,
+      fecha_vencimiento: datetimeLocalToAppIso(formData.fecha_vencimiento),
       subtotal: total,
       total
     }]).select().single();
@@ -121,7 +112,7 @@ const OrdenesCompraView = () => {
       alert(materialError.message || 'Se creó la orden, pero falló el registro del material');
     }
 
-    setFormData({ numero: '', nombre_compra: '', proveedor_id: '', proyecto_id: '', fecha: getToday(), fecha_vencimiento: '', cantidad: '1', costo_unitario: '0' });
+    setFormData({ numero: '', nombre_compra: '', proveedor_id: '', proyecto_id: '', fecha: getTodayInAppTimeZone(), fecha_vencimiento: '', cantidad: '1', costo_unitario: '0' });
     setShowForm(false);
     await fetchData();
   };
@@ -149,7 +140,7 @@ const OrdenesCompraView = () => {
       proveedor_id: orden.proveedor_id || null,
       proyecto_id: orden.proyecto_id || null,
       numero: numeroFactura,
-      fecha_emision: orden.fecha || getToday(),
+      fecha_emision: orden.fecha || getTodayInAppTimeZone(),
       fecha_vencimiento: orden.fecha_vencimiento || null,
       total,
       estado: 'registrada'
@@ -247,7 +238,7 @@ const OrdenesCompraView = () => {
                 <td>{proveedores.find((p) => p.id === orden.proveedor_id)?.nombre || '-'}</td>
                 <td>{proyectos.find((p) => Number(p.id) === Number(orden.proyecto_id))?.nombre_mostrar || proyectos.find((p) => Number(p.id) === Number(orden.proyecto_id))?.nombre || '-'}</td>
                 <td>{orden.fecha}</td>
-                <td>{formatDateTime(orden.fecha_vencimiento)}</td>
+                <td>{formatDateTimeInAppTimeZone(orden.fecha_vencimiento)}</td>
                 <td>{materialesPorOrden[orden.id]?.cantidad ?? '-'}</td>
                 <td>S/ {Number(materialesPorOrden[orden.id]?.costo_unitario || 0).toLocaleString()}</td>
                 <td>

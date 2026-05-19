@@ -2,11 +2,47 @@ import { useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../context/auth/useAuth';
 import useLogistica from '../../hooks/useLogistica';
+import { useNotification } from '../../context/NotificationContext';
 import './MantenimientoView.css';
 
 const MantenimientoView = () => {
   const { activos, mantenimientos, programarMantenimiento, loading, refetch } = useLogistica();
   const { user } = useAuth();
+  const { showConfirm } = useNotification();
+  
+  const [showForm, setShowForm] = useState(false);
+  const [formData, setFormData] = useState({
+    activo_id: '',
+    tipo: 'Preventivo',
+    descripcion: '',
+    costo: '',
+    tecnico: '',
+    estado: 'Pendiente',
+    fecha: new Date().toISOString().split('T')[0]
+  });
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      await programarMantenimiento({
+        ...formData,
+        costo: Number(formData.costo),
+        activo_id: Number(formData.activo_id)
+      });
+      setShowForm(false);
+      setFormData({
+        activo_id: '',
+        tipo: 'Preventivo',
+        descripcion: '',
+        costo: '',
+        tecnico: '',
+        estado: 'Pendiente',
+        fecha: new Date().toISOString().split('T')[0]
+      });
+      refetch();
+      alert('✅ Mantenimiento programado correctamente');
+    } catch (error) {
+      console.error('Error al programar:', error);
   
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
@@ -49,7 +85,8 @@ const MantenimientoView = () => {
 
   // ✅ Función para completar mantenimiento y crear egreso (USANDO SUPABASE)
   const handleCompletar = async (mantenimiento) => {
-    if (!window.confirm('¿Completar mantenimiento y registrar egreso?')) return;
+    const confirmed = await showConfirm('¿Completar mantenimiento y registrar egreso?', 'Confirmar Cierre');
+    if (!confirmed) return;
 
     try {
       console.log('Completando mantenimiento:', mantenimiento);

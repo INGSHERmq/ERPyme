@@ -1,0 +1,231 @@
+/* ==========================================
+   Premium Toast & Notification System CSS
+   Inspired by Binance (DESIGN.md)
+   ========================================== */
+
+/* --- Toast Container --- */
+.toast-container {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  max-width: 380px;
+  pointer-events: none; /* Prevents blocking clicks on elements behind */
+}
+
+/* --- Individual Toast Card --- */
+.toast-card {
+  pointer-events: auto; /* Re-enable clicks for toast elements */
+  background-color: var(--surface-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: toastSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes toastSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(100px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+/* --- Toast Semantic Types (Border Left & Soft Bg) --- */
+.toast-success {
+  border-left: 4px solid var(--trading-up);
+  background-image: linear-gradient(to right, rgba(14, 203, 129, 0.05), transparent);
+}
+
+.toast-error {
+  border-left: 4px solid var(--trading-down);
+  background-image: linear-gradient(to right, rgba(246, 70, 93, 0.05), transparent);
+}
+
+.toast-info {
+  border-left: 4px solid var(--binance-yellow);
+  background-image: linear-gradient(to right, rgba(252, 213, 53, 0.03), transparent);
+}
+
+/* --- Toast Elements --- */
+.toast-icon-wrapper {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  width: 24px;
+  height: 24px;
+}
+
+.toast-message {
+  font-family: var(--font-main);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--text-main);
+  padding-right: 18px;
+  word-break: break-word;
+}
+
+.toast-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 18px;
+  font-weight: 400;
+  cursor: pointer;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  transition: all 0.2s;
+  line-height: 1;
+  padding: 0;
+}
+
+.toast-close:hover {
+  color: var(--text-main);
+  background-color: var(--border-color);
+}
+
+/* --- Custom Confirmation Modal --- */
+.confirm-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 9998;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-md);
+  animation: modalFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.confirm-modal {
+  background-color: var(--surface-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-xl);
+  padding: 24px;
+  width: 100%;
+  max-width: 440px;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.4);
+  animation: modalScaleIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes modalFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes modalScaleIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.confirm-modal-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.confirm-modal-warning-icon {
+  font-size: 24px;
+}
+
+.confirm-modal h4 {
+  margin: 0;
+  font-family: var(--font-main);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--on-surface);
+}
+
+.confirm-modal-message {
+  margin: 0 0 24px 0;
+  font-family: var(--font-main);
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+.confirm-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+/* --- Confirm Action Buttons --- */
+.confirm-btn {
+  font-family: var(--font-main);
+  font-size: 13px;
+  font-weight: 700;
+  padding: 10px 20px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+  min-height: 38px;
+}
+
+.confirm-btn-cancel {
+  background-color: transparent;
+  color: var(--text-main);
+  border: 1px solid var(--border-color);
+}
+
+.confirm-btn-cancel:hover {
+  background-color: var(--surface-elevated-dark);
+  border-color: var(--text-muted);
+}
+
+.confirm-btn-confirm {
+  background-color: var(--binance-yellow);
+  color: var(--on-primary);
+}
+
+.confirm-btn-confirm:hover {
+  background-color: var(--binance-yellow-active);
+}
+
+/* Adaptability for smaller screens */
+@media (max-width: 480px) {
+  .toast-container {
+    top: 12px;
+    right: 12px;
+    left: 12px;
+    max-width: calc(100% - 24px);
+  }
+
+  .confirm-modal {
+    padding: 20px;
+  }
+}

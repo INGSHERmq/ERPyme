@@ -1,12 +1,12 @@
 import { useMemo, useState } from 'react';
 import useProjects from '../../../hooks/useProjects';
 import useTareas from '../../../hooks/useTareas';
+import { formatDateOnlyInAppTimeZone, parseDateInAppTimeZone } from '../../../lib/dates';
 import './Cronograma.css';
 
 const parseDate = (dateStr) => {
   if (!dateStr) return null;
-  const date = new Date(dateStr);
-  return Number.isNaN(date.getTime()) ? null : date;
+  return parseDateInAppTimeZone(dateStr);
 };
 
 const startOfDay = (date) => {
@@ -180,8 +180,8 @@ const Cronograma = ({ proyectoId }) => {
       <div className="proyecto-info-bar">
         <div className="info-item"><strong>Proyecto:</strong> {proyecto.nombre}</div>
         <div className="info-item"><strong>Tareas con fecha:</strong> {items.length - 1}</div>
-        <div className="info-item"><strong>Inicio:</strong> {proyecto.inicio || proyecto.fecha_inicio || proyecto.fecha_inicio_plan || '-'}</div>
-        <div className="info-item"><strong>Fin:</strong> {proyecto.fin || proyecto.fecha_fin || proyecto.fecha_fin_plan || '-'}</div>
+        <div className="info-item"><strong>Inicio:</strong> {formatDateOnlyInAppTimeZone(proyecto.inicio || proyecto.fecha_inicio || proyecto.fecha_inicio_plan)}</div>
+        <div className="info-item"><strong>Fin:</strong> {formatDateOnlyInAppTimeZone(proyecto.fin || proyecto.fecha_fin || proyecto.fecha_fin_plan)}</div>
       </div>
     </div>
   );

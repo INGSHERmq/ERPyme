@@ -35,11 +35,12 @@
   cursor: pointer;
   font-size: 13px;
   font-weight: 600;
+  color: var(--color-ink);
 }
 
 .zoom-controls button.active {
   background: var(--color-primary);
-  color: white;
+  color: var(--on-primary);
   border-color: var(--color-primary);
 }
 
@@ -201,6 +202,48 @@
   color: var(--color-ink);
   display: block;
   margin-bottom: 4px;
+}
+
+html[data-theme="dark"] .cronograma-header,
+html[data-theme="dark"] .sidebar-header {
+  background: var(--surface-elevated);
+  border-color: var(--hairline);
+}
+
+html[data-theme="dark"] .cronograma-header h3,
+html[data-theme="dark"] .sidebar-header,
+html[data-theme="dark"] .sidebar-row strong,
+html[data-theme="dark"] .day-num,
+html[data-theme="dark"] .info-item strong {
+  color: var(--body);
+}
+
+html[data-theme="dark"] .zoom-controls button {
+  background: var(--surface-card);
+  border-color: var(--hairline);
+  color: var(--body);
+}
+
+html[data-theme="dark"] .zoom-controls button.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: var(--on-primary);
+}
+
+html[data-theme="dark"] .gantt-wrapper,
+html[data-theme="dark"] .proyecto-info-bar {
+  background: var(--surface-card);
+  border-color: var(--hairline);
+}
+
+html[data-theme="dark"] .gantt-sidebar,
+html[data-theme="dark"] .timeline-header,
+html[data-theme="dark"] .day-cell {
+  background: var(--canvas);
+}
+
+html[data-theme="dark"] .grid-line {
+  border-right-color: rgba(255, 255, 255, 0.08);
 }
 
 @media (max-width: 768px) {
