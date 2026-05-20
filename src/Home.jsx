@@ -112,7 +112,7 @@ const Home = ({ onNavigate, enabledModules, profile, canAccessFeature }) => {
       </main>
 
       <footer className="home-footer">
-        <p>© 2024 ERPyme - Sistema de gestion empresarial</p>
+        <p>© 2026 ERPyme - Sistema de gestion empresarial</p>
       </footer>
     </div>
   );
