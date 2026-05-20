@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../context/auth/useAuth';
 import { assistantConfig, sendAssistantMessage, createErpRecord, getOptions } from './erpAssistant';
 import { generateExecutiveSummary } from './executiveSummary';
@@ -8,6 +8,29 @@ const INITIAL_MESSAGES = [
   {
     role: 'assistant',
     content: 'Hola, soy tu asistente ERPyme. Puedo consultar datos del ERP y crear registros como proveedores, clientes, cotizaciones, productos, compras, facturas, ingresos, egresos y tareas.'
+  }
+];
+
+const ASSISTANT_SHORTCUTS = [
+  {
+    label: 'Consultar módulos',
+    prompt: '¿Qué módulos tengo habilitados en mi plan actual y qué puedo realizar en cada uno?'
+  },
+  {
+    label: 'Crear proveedores',
+    prompt: 'Quiero registrar un nuevo proveedor llamado Distribuidora Aceros Lima S.A.C. con RUC 20556677889 y correo contacto@aceroslima.pe'
+  },
+  {
+    label: 'Crear cotizaciones',
+    prompt: 'Crea una cotización en borrador para el cliente Juan Pérez por un servicio de consultoría de 5 horas a S/ 150 cada hora.'
+  },
+  {
+    label: 'Scoring de cotizaciones',
+    prompt: 'Analiza mis cotizaciones pendientes y genera un scoring de prioridad comercial.'
+  },
+  {
+    label: 'Crear tareas y documentos base',
+    prompt: 'Crea una tarea llamada "Revisión de base de datos" con prioridad Alta y fecha de vencimiento para este viernes.'
   }
 ];
 
@@ -208,6 +231,15 @@ const AssistantView = ({ onBack, onNavigate }) => {
   const [summaryLoading, setSummaryLoading] = useState(false);
   const [error, setError] = useState('');
 
+  const inputRef = useRef(null);
+
+  const handleShortcutClick = (promptText) => {
+    setInput(promptText);
+    if (inputRef.current) {
+      inputRef.current.focus();
+    }
+  };
+
   const handleSubmit = async (event) => {
     event.preventDefault();
     const text = input.trim();
@@ -264,11 +296,18 @@ const AssistantView = ({ onBack, onNavigate }) => {
           <strong>{assistantConfig.model}</strong>
         </div>
         <div className="assistant-capabilities">
-          <span>Consultar módulos</span>
-          <span>Crear proveedores</span>
-          <span>Crear cotizaciones</span>
-          <span>Scoring de cotizaciones</span>
-          <span>Crear tareas y documentos base</span>
+          {ASSISTANT_SHORTCUTS.map((shortcut, idx) => (
+            <button
+              key={idx}
+              type="button"
+              className="btn-shortcut"
+              onClick={() => handleShortcutClick(shortcut.prompt)}
+              title={`Insertar prompt: "${shortcut.prompt}"`}
+            >
+              <span className="shortcut-icon">⚡</span>
+              <span className="shortcut-label">{shortcut.label}</span>
+            </button>
+          ))}
         </div>
       </aside>
 
@@ -276,7 +315,10 @@ const AssistantView = ({ onBack, onNavigate }) => {
         <div className="chat-header">
           <div>
             <strong>Asistente ERPyme</strong>
-            <span>{loading ? 'Procesando solicitud...' : 'Groq API'}</span>
+            <span className="api-status">
+              <span className="status-dot pulsing"></span>
+              {loading ? 'Procesando solicitud...' : 'Conectado a Groq API'}
+            </span>
           </div>
         </div>
 
@@ -328,6 +370,7 @@ const AssistantView = ({ onBack, onNavigate }) => {
 
         <form className="chat-input" onSubmit={handleSubmit}>
           <input
+            ref={inputRef}
             value={input}
             onChange={(event) => setInput(event.target.value)}
             placeholder="Ej: agrega un proveedor llamado Aceros Lima con RUC..."

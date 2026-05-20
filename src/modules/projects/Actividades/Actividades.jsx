@@ -52,7 +52,7 @@ const TareaCard = ({ tarea, onEdit, onDelete }) => {
       {...attributes}
     >
       <div className="card-header">
-        <div className="header-badges" style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+        <div className="header-badges" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
           <span className={`badge ${prioridadColors[tarea.prioridad] || 'badge-gray'}`}>
             {tarea.prioridad}
           </span>
@@ -175,6 +175,7 @@ const Actividades = ({ proyectoId }) => {
   const handleCreateTarea = async (tareaData) => {
     try {
       await createTarea(tareaData);
+      setModalShow(false);
       await refetch();
       alert('Tarea creada correctamente');
     } catch (error) {
@@ -187,6 +188,7 @@ const Actividades = ({ proyectoId }) => {
     try {
       await updateTarea(tareaEditando.id, tareaData);
       setTareaEditando(null);
+      setModalShow(false);
       await refetch();
       alert('Tarea actualizada correctamente');
     } catch (error) {
