@@ -184,10 +184,7 @@ const FIELD_ALIASES = {
   tipoIdentificacion: 'tipo_identificacion',
   dniRuc: 'dni_ruc',
   precioUnitario: 'precio_unitario',
-  costoUnitario: 'costo_unitario',
-  nombreCompra: 'nombre_compra',
-  fechaVencimiento: 'fecha_vencimiento',
-  cotizacionId: 'cotizacion_id'
+  costoUnitario: 'costo_unitario'
 };
 
 const tools = [
@@ -548,7 +545,22 @@ const callGroq = async (messages) => {
 
   if (error) {
     console.error('Error invocando la función groq-chat de Supabase:', error);
-    throw new Error(`Error en el asistente (Edge Function): ${error.message || JSON.stringify(error)}`);
+    let details = error.message || 'No se pudo invocar la Edge Function.';
+
+    if (error.context instanceof Response) {
+      try {
+        const payload = await error.context.clone().json();
+        details = payload.error || payload.message || JSON.stringify(payload);
+      } catch {
+        try {
+          details = await error.context.clone().text();
+        } catch {
+          details = error.message || details;
+        }
+      }
+    }
+
+    throw new Error(`Error en el asistente (Edge Function): ${details}`);
   }
 
   return data;

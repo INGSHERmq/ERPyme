@@ -1,26 +1,130 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import useRRHH from '../../hooks/useRRHH';
 import { supabase } from '../../lib/supabase';
 import { uploadPrivateFile } from '../../lib/storage';
 import { useAuth } from '../../context/auth/useAuth';
 import './EmpleadosView.css';
 
+const EMPTY_FORM = {
+  linked_user_id: '',
+  nombre: '',
+  apellidos: '',
+  fecha_nacimiento: '',
+  documento_identidad: '',
+  direccion: '',
+  email: '',
+  telefono: '',
+  cargo: '',
+  departamento: 'Tecnologia',
+  salario: '',
+  estado: 'Activo',
+  estado_laboral: 'Activo',
+  tipo_contrato: 'Indefinido',
+  puede_subir_documentos: false
+};
+
 const EmpleadosView = () => {
-  const { user } = useAuth();
+  const { user, company, profile, listManagedUsers } = useAuth();
   const { empleados, addEmpleado, loading, refetch } = useRRHH();
   const [showForm, setShowForm] = useState(false);
   const [solicitudEmpleadoId, setSolicitudEmpleadoId] = useState(null);
   const [fechaLimite, setFechaLimite] = useState('');
-  const [formData, setFormData] = useState({
-    nombre: '', email: '', telefono: '', cargo: '',
-    departamento: 'Tecnología', salario: '', estado: 'Activo', estado_laboral: 'Activo', tipo_contrato: 'Indefinido', puede_subir_documentos: false
-  });
+  const [managedUsers, setManagedUsers] = useState([]);
+  const [usersLoading, setUsersLoading] = useState(false);
+  const [formData, setFormData] = useState(EMPTY_FORM);
   const [archivosIniciales, setArchivosIniciales] = useState([]);
+  const [documentosPorEmpleado, setDocumentosPorEmpleado] = useState({});
+  const [solicitudesPorEmpleado, setSolicitudesPorEmpleado] = useState({});
+  const empresaId = company?.id || profile?.empresa_actual_id || null;
+
+  const linkedUsersById = useMemo(() => (
+    new Map(managedUsers.map((entry) => [entry.user_id, entry]))
+  ), [managedUsers]);
+
+  useEffect(() => {
+    if (!showForm) return;
+
+    let isMounted = true;
+    queueMicrotask(() => {
+      if (!isMounted) return;
+      setUsersLoading(true);
+      Promise.resolve(listManagedUsers())
+        .then((data) => {
+          if (isMounted) setManagedUsers(data || []);
+        })
+        .catch((error) => {
+          console.error('Error cargando usuarios para empleados:', error);
+          if (isMounted) setManagedUsers([]);
+        })
+        .finally(() => {
+          if (isMounted) setUsersLoading(false);
+        });
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [listManagedUsers, showForm]);
+
+  const cargarEstadoDocumentos = async () => {
+    if (!empresaId || !empleados.length) {
+      setDocumentosPorEmpleado({});
+      setSolicitudesPorEmpleado({});
+      return;
+    }
+
+    const empleadoIds = empleados.map((empleado) => empleado.id);
+    const [documentosRes, solicitudesRes] = await Promise.all([
+      supabase
+        .from('rrhh_documentos')
+        .select('id, empleado_id, nombre, storage_path, created_at')
+        .eq('empresa_id', empresaId)
+        .in('empleado_id', empleadoIds)
+        .order('created_at', { ascending: false }),
+      supabase
+        .from('rrhh_solicitudes_documentos')
+        .select('id, empleado_id, estado, fecha_limite, created_at')
+        .eq('empresa_id', empresaId)
+        .in('empleado_id', empleadoIds)
+        .order('created_at', { ascending: false })
+    ]);
+
+    if (!documentosRes.error) {
+      const agrupados = (documentosRes.data || []).reduce((acc, documento) => {
+        const key = documento.empleado_id;
+        acc[key] = acc[key] || [];
+        acc[key].push(documento);
+        return acc;
+      }, {});
+      setDocumentosPorEmpleado(agrupados);
+    }
+
+    if (!solicitudesRes.error) {
+      const agrupadas = (solicitudesRes.data || []).reduce((acc, solicitud) => {
+        if (!acc[solicitud.empleado_id]) acc[solicitud.empleado_id] = solicitud;
+        return acc;
+      }, {});
+      setSolicitudesPorEmpleado(agrupadas);
+    }
+  };
+
+  useEffect(() => {
+    queueMicrotask(() => {
+      void cargarEstadoDocumentos();
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [empresaId, empleados]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const nuevoEmpleado = await addEmpleado({ ...formData, salario: Number(formData.salario) });
+      const empleadoPayload = {
+        ...formData,
+        linked_user_id: formData.linked_user_id || null,
+        fecha_nacimiento: formData.fecha_nacimiento || null,
+        salario: Number(formData.salario)
+      };
+      const nuevoEmpleado = await addEmpleado(empleadoPayload);
 
       if (formData.puede_subir_documentos && archivosIniciales.length > 0) {
         for (const file of archivosIniciales) {
@@ -31,7 +135,9 @@ const EmpleadosView = () => {
           });
 
           const { error: documentoError } = await supabase.from('rrhh_documentos').insert([{
+            empresa_id: empresaId,
             empleado_id: nuevoEmpleado.id,
+            user_id: user?.id,
             nombre: file.name,
             tipo: file.type || 'archivo',
             storage_path: upload.publicUrl,
@@ -44,30 +150,49 @@ const EmpleadosView = () => {
       }
 
       setShowForm(false);
-      setFormData({ 
-        nombre: '', email: '', telefono: '', cargo: '', 
-        departamento: 'Tecnología', salario: '', estado: 'Activo', estado_laboral: 'Activo', tipo_contrato: 'Indefinido', puede_subir_documentos: false
-      });
+      setFormData(EMPTY_FORM);
       setArchivosIniciales([]);
       refetch();
+      await cargarEstadoDocumentos();
     } catch (error) {
       console.error('Error al guardar empleado:', error);
       if (error?.code === '23505') {
-        alert('❌ Error: El correo electrónico ya está registrado para otro empleado.');
+        alert('Error: el correo o usuario ya esta vinculado a otro empleado.');
       } else {
-        alert(`❌ Error al registrar el empleado: ${error?.message || 'Error desconocido'}`);
+        alert(`Error al registrar el empleado: ${error?.message || 'Error desconocido'}`);
       }
     }
   };
 
-  const handleChange = (e) => setFormData(p => ({ ...p, [e.target.name]: e.target.value }));
+  const handleChange = (e) => setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+
+  const handleLinkedUserChange = (event) => {
+    const linkedUserId = event.target.value;
+    const selectedUser = linkedUsersById.get(linkedUserId);
+    const selectedProfile = selectedUser?.profile || {};
+    const fullName = selectedProfile.nombre_completo || [selectedProfile.nombres, selectedProfile.apellidos].filter(Boolean).join(' ');
+
+    setFormData((prev) => ({
+      ...prev,
+      linked_user_id: linkedUserId,
+      nombre: selectedUser ? (selectedProfile.nombres || fullName || prev.nombre) : prev.nombre,
+      apellidos: selectedUser ? (selectedProfile.apellidos || prev.apellidos) : prev.apellidos,
+      fecha_nacimiento: selectedUser ? (selectedProfile.fecha_nacimiento || prev.fecha_nacimiento) : prev.fecha_nacimiento,
+      documento_identidad: selectedUser ? (selectedProfile.documento_identidad || prev.documento_identidad) : prev.documento_identidad,
+      direccion: selectedUser ? (selectedProfile.direccion || prev.direccion) : prev.direccion,
+      telefono: selectedUser ? (selectedProfile.telefono || prev.telefono) : prev.telefono,
+      email: selectedUser ? (selectedProfile.email || prev.email) : prev.email,
+      cargo: selectedUser ? (selectedProfile.cargo || prev.cargo) : prev.cargo,
+      departamento: selectedUser ? (selectedProfile.departamento || prev.departamento) : prev.departamento
+    }));
+  };
 
   if (loading) return <div className="loading">Cargando empleados...</div>;
 
   return (
     <div className="rrhh-view">
       <div className="view-header">
-        <h2>👥 Gestión de Empleados</h2>
+        <h2>Gestion de Empleados</h2>
         <button className="btn-primary" onClick={() => setShowForm(!showForm)}>
           {showForm ? 'Cancelar' : '+ Nuevo Empleado'}
         </button>
@@ -75,17 +200,44 @@ const EmpleadosView = () => {
 
       {showForm && (
         <form onSubmit={handleSubmit} className="simple-form">
+          <div className="form-field form-field-wide">
+            <label htmlFor="emp-linked-user">Usuario vinculado (opcional)</label>
+            <select id="emp-linked-user" name="linked_user_id" value={formData.linked_user_id} onChange={handleLinkedUserChange} disabled={usersLoading}>
+              <option value="">{usersLoading ? 'Cargando usuarios...' : 'Sin usuario vinculado'}</option>
+              {managedUsers.map((entry) => (
+                <option key={entry.user_id} value={entry.user_id}>
+                  {entry.profile?.email || entry.profile?.nombre_completo || entry.user_id}
+                </option>
+              ))}
+            </select>
+          </div>
           <div className="form-field">
-            <label htmlFor="emp-nombre">Nombre completo *</label>
-            <input id="emp-nombre" name="nombre" placeholder="Nombre completo *" required value={formData.nombre} onChange={handleChange} />
+            <label htmlFor="emp-nombre">Nombres *</label>
+            <input id="emp-nombre" name="nombre" placeholder="Nombres *" required value={formData.nombre} onChange={handleChange} />
+          </div>
+          <div className="form-field">
+            <label htmlFor="emp-apellidos">Apellidos</label>
+            <input id="emp-apellidos" name="apellidos" placeholder="Apellidos" value={formData.apellidos} onChange={handleChange} />
+          </div>
+          <div className="form-field">
+            <label htmlFor="emp-fecha-nacimiento">Fecha de nacimiento</label>
+            <input id="emp-fecha-nacimiento" name="fecha_nacimiento" type="date" value={formData.fecha_nacimiento} onChange={handleChange} />
+          </div>
+          <div className="form-field">
+            <label htmlFor="emp-documento">DNI / documento</label>
+            <input id="emp-documento" name="documento_identidad" placeholder="DNI / documento" value={formData.documento_identidad} onChange={handleChange} />
           </div>
           <div className="form-field">
             <label htmlFor="emp-email">Email corporativo *</label>
             <input id="emp-email" name="email" type="email" placeholder="Email corporativo *" required value={formData.email} onChange={handleChange} />
           </div>
           <div className="form-field">
-            <label htmlFor="emp-telefono">Teléfono</label>
-            <input id="emp-telefono" name="telefono" placeholder="Teléfono" value={formData.telefono} onChange={handleChange} />
+            <label htmlFor="emp-telefono">Telefono</label>
+            <input id="emp-telefono" name="telefono" placeholder="Telefono" value={formData.telefono} onChange={handleChange} />
+          </div>
+          <div className="form-field form-field-wide">
+            <label htmlFor="emp-direccion">Direccion</label>
+            <input id="emp-direccion" name="direccion" placeholder="Direccion" value={formData.direccion} onChange={handleChange} />
           </div>
           <div className="form-field">
             <label htmlFor="emp-cargo">Cargo *</label>
@@ -94,7 +246,7 @@ const EmpleadosView = () => {
           <div className="form-field">
             <label htmlFor="emp-departamento">Departamento</label>
             <select id="emp-departamento" name="departamento" value={formData.departamento} onChange={handleChange}>
-              <option>Tecnología</option><option>Diseño</option><option>Gestión</option><option>Seguridad</option><option>Ventas</option>
+              <option>Tecnologia</option><option>Diseno</option><option>Gestion</option><option>Seguridad</option><option>Ventas</option>
             </select>
           </div>
           <div className="form-field">
@@ -115,7 +267,7 @@ const EmpleadosView = () => {
               onChange={(event) => setFormData((prev) => ({ ...prev, puede_subir_documentos: event.target.value === 'si' }))}
             >
               <option value="no">No</option>
-              <option value="si">Sí</option>
+              <option value="si">Si</option>
             </select>
           </div>
           {formData.puede_subir_documentos && (
@@ -140,6 +292,7 @@ const EmpleadosView = () => {
             e.preventDefault();
             if (!fechaLimite) return;
             const { error } = await supabase.from('rrhh_solicitudes_documentos').insert([{
+              empresa_id: empresaId,
               empleado_id: solicitudEmpleadoId,
               fecha_limite: fechaLimite,
               user_id: user?.id
@@ -148,14 +301,15 @@ const EmpleadosView = () => {
               alert(error.message || 'No se pudo crear la solicitud');
               return;
             }
-            alert('Solicitud creada. Se alertará por vencimiento.');
+            alert('Solicitud creada. El empleado vera la alerta al iniciar sesion.');
             setSolicitudEmpleadoId(null);
             setFechaLimite('');
+            await cargarEstadoDocumentos();
           }}
         >
-          <label>Fecha máxima para entregar documentos</label>
+          <label>Fecha maxima para entregar documentos</label>
           <input type="date" required value={fechaLimite} onChange={(event) => setFechaLimite(event.target.value)} />
-          <button type="submit" className="btn-primary">Guardar fecha límite</button>
+          <button type="submit" className="btn-primary">Guardar fecha limite</button>
           <button type="button" className="btn-primary" onClick={() => { setSolicitudEmpleadoId(null); setFechaLimite(''); }}>Cancelar</button>
         </form>
       )}
@@ -170,27 +324,45 @@ const EmpleadosView = () => {
               <th>Salario</th>
               <th>Proyectos Asignados</th>
               <th>Estado laboral</th>
+              <th>Usuario</th>
               <th>Documentos</th>
             </tr>
           </thead>
           <tbody>
-            {empleados.map(e => (
-              <tr key={e.id}>
-                <td className="cell-bold">{e.nombre}</td>
-                <td>{e.cargo || '—'}</td>
-                <td>{e.departamento || '—'}</td>
-                <td>${e.salario?.toLocaleString() || 0}</td>
-                <td><span className="badge badge-blue">{e.proyectos_asignados || 0}</span></td>
-                <td><span className={`badge ${e.estado_laboral === 'Activo' ? 'badge-green' : 'badge-gray'}`}>{e.estado_laboral || e.estado}</span></td>
-                <td>
-                  {e.puede_subir_documentos ? (
-                    <button type="button" className="btn-action" onClick={() => setSolicitudEmpleadoId(e.id)}>
-                      Solicitar documentos
-                    </button>
-                  ) : 'No habilitado'}
-                </td>
-              </tr>
-            ))}
+            {empleados.map((empleado) => {
+              const documentosEmpleado = documentosPorEmpleado[empleado.id] || [];
+              const ultimaSolicitud = solicitudesPorEmpleado[empleado.id];
+              const ultimoDocumento = documentosEmpleado[0];
+
+              return (
+                <tr key={empleado.id}>
+                  <td className="cell-bold">{[empleado.nombre, empleado.apellidos].filter(Boolean).join(' ')}</td>
+                  <td>{empleado.cargo || '-'}</td>
+                  <td>{empleado.departamento || '-'}</td>
+                  <td>${empleado.salario?.toLocaleString() || 0}</td>
+                  <td><span className="badge badge-blue">{empleado.proyectos_asignados || 0}</span></td>
+                  <td><span className={`badge ${empleado.estado_laboral === 'Activo' ? 'badge-green' : 'badge-gray'}`}>{empleado.estado_laboral || empleado.estado}</span></td>
+                  <td>{empleado.linked_user_id ? 'Vinculado' : 'Sin acceso'}</td>
+                  <td>
+                    {documentosEmpleado.length > 0 ? (
+                      <div className="document-status">
+                        <span className="badge badge-green">Entregado ({documentosEmpleado.length})</span>
+                        {ultimoDocumento?.storage_path && (
+                          <a href={ultimoDocumento.storage_path} target="_blank" rel="noreferrer">Ver</a>
+                        )}
+                      </div>
+                    ) : empleado.puede_subir_documentos && empleado.linked_user_id ? (
+                      <div className="document-status">
+                        {ultimaSolicitud && <span className="badge badge-yellow">{ultimaSolicitud.estado}</span>}
+                        <button type="button" className="btn-action" onClick={() => setSolicitudEmpleadoId(empleado.id)}>
+                          Solicitar documentos
+                        </button>
+                      </div>
+                    ) : empleado.puede_subir_documentos ? 'Sin usuario vinculado' : 'No habilitado'}
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
