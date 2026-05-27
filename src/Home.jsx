@@ -1,53 +1,30 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import './Home.css';
 import './styles/theme.css';
 import { ERP_MODULES } from './config/modules';
-import ExecutiveSummary from './components/ExecutiveSummary';
+import { useModuleFilter } from './hooks/useModuleFilter';
+import SearchSection from './components/SearchSection';
+import ModuleCard from './components/ModuleCard';
 import SubscriptionLock from './components/SubscriptionLock';
 
-const Home = ({ onNavigate, enabledModules, profile, canAccessFeature }) => {
+const Home = ({ onNavigate, enabledModules = [], profile = {}, canAccessFeature = () => false }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [lockedModule, setLockedModule] = useState(null);
 
-  const visibleModules = useMemo(() => ERP_MODULES, []);
-
-  const filteredModules = useMemo(() => {
-    const query = searchTerm.trim().toLowerCase();
-    if (!query) return visibleModules;
-
-    return visibleModules.filter((mod) => {
-      const searchableText = `${mod.title} ${mod.desc} ${mod.status}`.toLowerCase();
-      return searchableText.includes(query);
-    });
-  }, [visibleModules, searchTerm]);
+  const visibleModules = ERP_MODULES;
+  const filteredModules = useModuleFilter(visibleModules, searchTerm);
 
   return (
     <div className="home-container">
-      <section className="home-toolbar">
-        <div className="toolbar-layout">
-          <div className="search-container">
-            <span className="search-label">BUSCAR MODULO</span>
-            <div className="search-input-wrapper">
-              <input
-                type="search"
-                className="text-input module-search-input"
-                value={searchTerm}
-                onChange={(event) => setSearchTerm(event.target.value)}
-                placeholder="Buscar por nombre..."
-              />
-              <span className="module-count">
-                {filteredModules.length} de {visibleModules.length}
-              </span>
-            </div>
-          </div>
-
-          {canAccessFeature('assistant.briefing') && (
-            <div className="summary-container-toolbar">
-              <ExecutiveSummary userId={profile?.id} compact onNavigate={onNavigate} />
-            </div>
-          )}
-        </div>
-      </section>
+      <SearchSection
+        searchTerm={searchTerm}
+        setSearchTerm={setSearchTerm}
+        visibleModules={visibleModules}
+        filteredModules={filteredModules}
+        canAccessFeature={canAccessFeature}
+        profile={profile}
+        onNavigate={onNavigate}
+      />
 
       {lockedModule && (
         <div className="home-lock-panel">
@@ -63,10 +40,10 @@ const Home = ({ onNavigate, enabledModules, profile, canAccessFeature }) => {
           const isLocked = !enabledModules?.includes(mod.id);
 
           return (
-            <button
+            <ModuleCard
               key={mod.id}
-              type="button"
-              className={`module-card ${isLocked ? 'locked' : ''}`}
+              mod={mod}
+              isLocked={isLocked}
               onClick={() => {
                 if (isLocked) {
                   setLockedModule(mod);
@@ -75,31 +52,7 @@ const Home = ({ onNavigate, enabledModules, profile, canAccessFeature }) => {
                 setLockedModule(null);
                 onNavigate(mod.id);
               }}
-              aria-disabled={isLocked}
-              aria-label={isLocked ? `${mod.title} bloqueado` : `Abrir ${mod.title}`}
-            >
-              <div className="card-top">
-                <span
-                  className="module-icon"
-                  style={{
-                    backgroundColor: `${mod.color}18`,
-                    color: mod.color,
-                    border: `2px solid ${mod.color}33`
-                  }}
-                >
-                  {mod.title.charAt(0)}
-                </span>
-                <span className={`status-badge ${isLocked ? 'locked' : mod.status === 'Activo' ? 'active' : 'new'}`}>
-                  {isLocked ? 'Bloqueado' : mod.status}
-                </span>
-              </div>
-              <span className="module-title">{mod.title}</span>
-              <span className="module-desc">{mod.desc}</span>
-              {isLocked && <span className="module-lock-copy">Mejora tu suscripcion para activar este modulo.</span>}
-              <div className="card-footer">
-                <span className="module-action">{isLocked ? 'Ver requisito' : 'Abrir ->'}</span>
-              </div>
-            </button>
+            />
           );
         })}
         {filteredModules.length === 0 && (

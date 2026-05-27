@@ -4,7 +4,7 @@ import { useAuth } from '../../context/auth/useAuth';
 import { uploadPrivateFile } from '../../lib/storage';
 
 const DocumentosView = () => {
-  const { user } = useAuth();
+  const { user, company, profile } = useAuth();
   const [documentos, setDocumentos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -19,15 +19,23 @@ const DocumentosView = () => {
   const fetchData = async () => {
     if (!user?.id) return;
     setLoading(true);
-    const { data } = await supabase.from('rrhh_documentos').select('*').eq('user_id', user.id).order('created_at', { ascending: false });
+    const empresaId = company?.id || profile?.empresa_actual_id;
+    const ownerFilter = empresaId ? `empresa_id.eq.${empresaId},user_id.eq.${user.id}` : `user_id.eq.${user.id}`;
+    const { data } = await supabase
+      .from('rrhh_documentos')
+      .select('*, empleados(nombre, apellidos)')
+      .or(ownerFilter)
+      .order('created_at', { ascending: false });
     setDocumentos(data || []);
     setLoading(false);
   };
 
   useEffect(() => {
-    fetchData();
+    queueMicrotask(() => {
+      void fetchData();
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.id]);
+  }, [company?.id, profile?.empresa_actual_id, user?.id]);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -46,6 +54,8 @@ const DocumentosView = () => {
 
       const { error } = await supabase.from('rrhh_documentos').insert([{
         empleado_id: null,
+        empresa_id: company?.id || profile?.empresa_actual_id,
+        user_id: user?.id,
         nombre: formData.nombre,
         tipo: formData.tipo,
         fecha_vencimiento: formData.fecha_vencimiento || null,
@@ -123,6 +133,7 @@ const DocumentosView = () => {
           <thead>
             <tr>
               <th>Nombre</th>
+              <th>Empleado</th>
               <th>Tipo</th>
               <th>Vence</th>
               <th>Archivo</th>
@@ -132,6 +143,7 @@ const DocumentosView = () => {
             {documentos.map((doc) => (
               <tr key={doc.id}>
                 <td className="cell-bold">{doc.nombre}</td>
+                <td>{[doc.empleados?.nombre, doc.empleados?.apellidos].filter(Boolean).join(' ') || '-'}</td>
                 <td>{doc.tipo}</td>
                 <td>{doc.fecha_vencimiento || '-'}</td>
                 <td>{doc.storage_path ? <a href={doc.storage_path} target="_blank" rel="noreferrer">Ver</a> : '-'}</td>

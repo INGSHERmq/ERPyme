@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/auth/useAuth';
 
 const useRRHH = () => {
-  const { user } = useAuth();
+  const { user, company, profile } = useAuth();
   const [empleados, setEmpleados] = useState([]);
   const [asistencias, setAsistencias] = useState([]);
   const [asignaciones, setAsignaciones] = useState([]);
@@ -26,11 +26,13 @@ const useRRHH = () => {
     try {
       setLoading(true);
       setError(null);
+      const empresaId = company?.id || profile?.empresa_actual_id;
+      const ownerFilter = empresaId ? `empresa_id.eq.${empresaId},user_id.eq.${user.id}` : `user_id.eq.${user.id}`;
       const [empRes, asistRes, asigRes, incRes] = await Promise.all([
-        supabase.from('v_empleados_stats').select('*').eq('user_id', user.id).order('nombre'),
-        supabase.from('asistencias').select('*').eq('user_id', user.id).order('fecha', { ascending: false }).limit(50),
-        supabase.from('asignaciones_proyecto').select('*').eq('user_id', user.id).eq('estado', 'Activo'),
-        supabase.from('registro_accidentes').select('*').eq('user_id', user.id).order('fecha', { ascending: false }).limit(20)
+        supabase.from('v_empleados_stats').select('*').or(ownerFilter).order('nombre'),
+        supabase.from('asistencias').select('*').or(ownerFilter).order('fecha', { ascending: false }).limit(50),
+        supabase.from('asignaciones_proyecto').select('*').or(ownerFilter).eq('estado', 'Activo'),
+        supabase.from('registro_accidentes').select('*').or(ownerFilter).order('fecha', { ascending: false }).limit(20)
       ]);
       
       if (empRes.error) throw empRes.error;
@@ -76,7 +78,7 @@ const useRRHH = () => {
     } finally {
       setLoading(false);
     }
-  }, [user]);
+  }, [company, profile, user]);
 
   useEffect(() => {
     (async () => { await fetchData(); })();
@@ -87,7 +89,13 @@ const useRRHH = () => {
     
     const { data: nuevo, error } = await supabase
       .from('empleados')
-      .insert([{ ...data, user_id: user.id, fecha_ingreso: data.fecha_ingreso || new Date().toISOString().split('T')[0], estado: data.estado || 'Activo' }])
+      .insert([{
+        ...data,
+        user_id: user.id,
+        empresa_id: company?.id || profile?.empresa_actual_id || null,
+        fecha_ingreso: data.fecha_ingreso || new Date().toISOString().split('T')[0],
+        estado: data.estado || 'Activo'
+      }])
       .select()
       .single();
     if (error) throw error;
@@ -100,7 +108,7 @@ const useRRHH = () => {
     
     const { data: nueva, error } = await supabase
       .from('asistencias')
-      .insert([{ ...data, user_id: user.id, fecha: data.fecha || new Date().toISOString().split('T')[0] }])
+      .insert([{ ...data, user_id: user.id, empresa_id: company?.id || profile?.empresa_actual_id || null, fecha: data.fecha || new Date().toISOString().split('T')[0] }])
       .select()
       .single();
     if (error) throw error;
@@ -149,6 +157,7 @@ const useRRHH = () => {
             empleado_id: data.empleado_id,
             proyecto_id: data.proyecto_id,
             user_id: user.id,
+            empresa_id: company?.id || profile?.empresa_actual_id || null,
             rol: data.rol,
             fecha_inicio: data.fecha_inicio,
             fecha_fin: data.fecha_fin,
@@ -175,7 +184,14 @@ const useRRHH = () => {
     
     const { data: nuevo, error } = await supabase
       .from('registro_accidentes')
-      .insert([{ ...data, user_id: user.id, fecha: data.fecha || new Date().toISOString().split('T')[0], fecha_reporte: data.fecha_reporte || new Date().toISOString().split('T')[0], estado: data.estado || 'Abierto' }])
+      .insert([{
+        ...data,
+        user_id: user.id,
+        empresa_id: company?.id || profile?.empresa_actual_id || null,
+        fecha: data.fecha || new Date().toISOString().split('T')[0],
+        fecha_reporte: data.fecha_reporte || new Date().toISOString().split('T')[0],
+        estado: data.estado || 'Abierto'
+      }])
       .select()
       .single();
     if (error) throw error;

@@ -7,7 +7,6 @@ const corsHeaders = {
 };
 
 Deno.serve(async (req) => {
-  // Handle CORS preflight request
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
@@ -18,14 +17,23 @@ Deno.serve(async (req) => {
     const groqApiKey = Deno.env.get('GROQ_API_KEY');
 
     if (!supabaseUrl || !serviceRoleKey) {
-      throw new Error('Faltan variables de entorno de Supabase (SUPABASE_URL o SUPABASE_SERVICE_ROLE_KEY)');
+      return new Response(JSON.stringify({
+        error: 'Faltan variables de entorno de Supabase (SUPABASE_URL o SUPABASE_SERVICE_ROLE_KEY).'
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 500
+      });
     }
 
     if (!groqApiKey) {
-      throw new Error('Falta la variable de entorno GROQ_API_KEY en Supabase. Asegúrate de configurarla ejecutando "supabase secrets set GROQ_API_KEY=..."');
+      return new Response(JSON.stringify({
+        error: 'Falta GROQ_API_KEY en los secrets de Supabase. Configurala con: supabase secrets set GROQ_API_KEY=...'
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 500
+      });
     }
 
-    // Authenticate user session
     const authHeader = req.headers.get('Authorization') || '';
     const supabase = createClient(supabaseUrl, serviceRoleKey, {
       global: { headers: { Authorization: authHeader } }
@@ -33,16 +41,13 @@ Deno.serve(async (req) => {
 
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
-      return new Response(JSON.stringify({ error: 'No autorizado. Debes iniciar sesión en la plataforma.' }), {
+      return new Response(JSON.stringify({ error: 'No autorizado. Debes iniciar sesion en la plataforma.' }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 401
       });
     }
 
-    // Get the request body
     const body = await req.json();
-
-    // Call the official Groq completions API
     const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -54,9 +59,9 @@ Deno.serve(async (req) => {
 
     if (!groqResponse.ok) {
       const errorText = await groqResponse.text();
-      return new Response(JSON.stringify({ error: `Groq API Error: ${errorText}` }), {
+      return new Response(JSON.stringify({ error: `Groq API Error (${groqResponse.status}): ${errorText}` }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: groqResponse.status
+        status: 502
       });
     }
 

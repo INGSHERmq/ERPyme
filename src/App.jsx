@@ -2,6 +2,7 @@ import { Suspense, lazy, useEffect, useState } from 'react';
 import { useAuth } from './context/auth/useAuth';
 import ThemeToggleButton from './components/ThemeToggleButton';
 import LoadingScreen from './components/LoadingScreen';
+import RRHHDocumentPrompt from './components/RRHHDocumentPrompt';
 import Home from './Home';
 import LandingPage from './LandingPage';
 import { getPlanConfig } from './config/modules';
@@ -214,6 +215,7 @@ function App() {
           </section>
         </div>
       )}
+      <RRHHDocumentPrompt />
     </>
   );
 

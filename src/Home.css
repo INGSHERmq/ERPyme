@@ -349,3 +349,6 @@
     padding: 20px;
   }
 }
+
+/* Importar estilos del componente ModuleCard */
+@import './components/ModuleCard.css';
