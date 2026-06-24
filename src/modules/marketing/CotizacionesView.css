@@ -115,6 +115,12 @@
   border-color: var(--trading-up);
 }
 
+.btn-danger {
+  background: var(--kpi-red-bg);
+  color: var(--kpi-red-text);
+  border-color: var(--danger);
+}
+
 .badge {
   display: inline-block;
   padding: 4px 10px;

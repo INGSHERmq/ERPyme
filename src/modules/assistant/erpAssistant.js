@@ -1,7 +1,7 @@
 import { supabase } from '../../lib/supabase';
 import { generateExecutiveSummary, scoreOpportunity } from './executiveSummary';
 
-const DEFAULT_MODEL = import.meta.env.VITE_GROQ_MODEL || 'llama-3.3-70b-versatile';
+const DEFAULT_MODEL = import.meta.env.VITE_GROQ_MODEL || 'llama3-70b-8192';
 
 const MODULE_TABLES = {
   marketing: ['clientes', 'cotizaciones'],
@@ -188,23 +188,25 @@ const FIELD_ALIASES = {
 };
 
 const tools = [
-  {
-    type: 'function',
-    function: {
-      name: 'get_erp_context',
-      description: 'Lee datos actuales de uno o varios modulos del ERP. Usalo antes de responder sobre informacion existente.',
-      parameters: {
-        type: 'object',
-        properties: {
-          module: {
-            type: 'string',
-            description: 'Modulo a consultar. Valores: marketing, proyectos, finanzas, rrhh, logistica, compras, facturacion, caja, ventas, sistema o all.'
-          },
-          limit: { type: 'number', description: 'Cantidad maxima de registros por tabla, hasta 50.' }
+    {
+      type: 'function',
+      function: {
+        name: 'get_erp_context',
+        description: 'Lee datos actuales de uno o varios modulos del ERP. Usalo antes de responder sobre informacion existente.',
+        parameters: {
+          type: 'object',
+          required: ['module'],
+          properties: {
+            module: {
+              type: 'string',
+              enum: ['marketing', 'proyectos', 'finanzas', 'rrhh', 'logistica', 'compras', 'facturacion', 'caja', 'ventas', 'sistema', 'all'],
+              description: 'Modulo a consultar.'
+            },
+            limit: { type: 'number', description: 'Cantidad maxima de registros por tabla, hasta 50.', minimum: 1, maximum: 50 }
+          }
         }
       }
-    }
-  },
+    },
   {
     type: 'function',
     function: {
@@ -305,6 +307,18 @@ Reglas:
 - Si el usuario te pide "ir a" o "donde esta", USA la herramienta de navegacion ademas de tu respuesta de texto.
 - SEGURIDAD: Solo puedes ver y reportar datos del usuario actual (user_id). Nunca respondas con informacion que no este explícitamente en el contexto devuelto por tus herramientas para el ID de usuario activo.
 - PRIVACIDAD: Si el usuario pregunta por datos de terceros o de "otros usuarios", responde cortesmente que solo tienes acceso a su propia informacion empresarial.
+
+FORMATO DE RESPUESTA - Sigue estas reglas estrictamente:
+- NO uses markdown (##, ###, **, etc). El chat solo muestra texto plano.
+- Separa cada seccion con UNA linea en blanco.
+- Usa GUIONES (- ) para listas, no numeros ni asteriscos.
+- Los titulos de seccion escribelos en MAYUSCULA sin simbolos.
+- Cuando menciones modulos, usa iconos: 📊 Marketing, 📋 Proyectos, 💰 Finanzas, 👥 RRHH, 📦 Logistica, 🛒 Compras, 🧾 Facturacion, 💵 Caja, 📈 Ventas, ⚙️ Sistema.
+- Maximo 5 lineas por parrafo. Si necesitas mas, separa en parrafos.
+- No mezcles modulos diferentes en un mismo parrafo.
+- Datos numericos: "- Nombre: 5 registros" en lugar de texto corrido.
+- IMPORTANTE: usa \n (saltos de linea reales) entre secciones, no solo espacios.
+- NO agregues secciones de "Acciones sugeridas" ni recomendaciones genericas. Responde solo con la informacion solicitada.
 
 Mapeo de Navegacion (Usa estos valores exactos en 'navigate_to_module'):
 - Ventas > Clientes (antes leads): modulo='ventas', pestaña='crm'
@@ -547,7 +561,7 @@ const callGroq = async (messages) => {
     console.error('Error invocando la función groq-chat de Supabase:', error);
     let details = error.message || 'No se pudo invocar la Edge Function.';
 
-    if (error.context instanceof Response) {
+    if (error.context && typeof error.context.json === 'function') {
       try {
         const payload = await error.context.clone().json();
         details = payload.error || payload.message || JSON.stringify(payload);
@@ -558,6 +572,32 @@ const callGroq = async (messages) => {
           details = error.message || details;
         }
       }
+    } else if (error.context && typeof error.context === 'object') {
+      try {
+        details = JSON.stringify(error.context);
+      } catch {
+        details = error.message || details;
+      }
+    }
+
+    const fnMatch = details.match(/function=(\w+)\{([^}]+)\}/);
+    if (fnMatch) {
+      const name = fnMatch[1];
+      const rawArgs = '{' + fnMatch[2].replace(/\\(.)/g, '$1') + '}';
+      const args = JSON.parse(rawArgs);
+      return {
+        choices: [{
+          message: {
+            role: 'assistant',
+            content: null,
+            tool_calls: [{
+              id: `call_fallback_${Date.now()}`,
+              type: 'function',
+              function: { name, arguments: JSON.stringify(args) }
+            }]
+          }
+        }]
+      };
     }
 
     throw new Error(`Error en el asistente (Edge Function): ${details}`);

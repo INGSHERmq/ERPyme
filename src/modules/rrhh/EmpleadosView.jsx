@@ -17,6 +17,7 @@ const EMPTY_FORM = {
   cargo: '',
   departamento: 'Tecnologia',
   salario: '',
+  salario_periodo: 'mensual',
   estado: 'Activo',
   estado_laboral: 'Activo',
   tipo_contrato: 'Indefinido',
@@ -25,8 +26,9 @@ const EMPTY_FORM = {
 
 const EmpleadosView = () => {
   const { user, company, profile, listManagedUsers } = useAuth();
-  const { empleados, addEmpleado, loading, refetch } = useRRHH();
+  const { empleados, addEmpleado, updateEmpleado, desactivarEmpleado, loading, refetch } = useRRHH();
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState(null);
   const [solicitudEmpleadoId, setSolicitudEmpleadoId] = useState(null);
   const [fechaLimite, setFechaLimite] = useState('');
   const [managedUsers, setManagedUsers] = useState([]);
@@ -122,9 +124,11 @@ const EmpleadosView = () => {
         ...formData,
         linked_user_id: formData.linked_user_id || null,
         fecha_nacimiento: formData.fecha_nacimiento || null,
-        salario: Number(formData.salario)
+        salario: Number(formData.salario || 0)
       };
-      const nuevoEmpleado = await addEmpleado(empleadoPayload);
+      const nuevoEmpleado = editingId
+        ? await updateEmpleado(editingId, empleadoPayload)
+        : await addEmpleado(empleadoPayload);
 
       if (formData.puede_subir_documentos && archivosIniciales.length > 0) {
         for (const file of archivosIniciales) {
@@ -150,6 +154,7 @@ const EmpleadosView = () => {
       }
 
       setShowForm(false);
+      setEditingId(null);
       setFormData(EMPTY_FORM);
       setArchivosIniciales([]);
       refetch();
@@ -165,6 +170,38 @@ const EmpleadosView = () => {
   };
 
   const handleChange = (e) => setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+
+  const handleEdit = (empleado) => {
+    setEditingId(empleado.id);
+    setShowForm(true);
+    setFormData({
+      linked_user_id: empleado.linked_user_id || '',
+      nombre: empleado.nombre || '',
+      apellidos: empleado.apellidos || '',
+      fecha_nacimiento: empleado.fecha_nacimiento || '',
+      documento_identidad: empleado.documento_identidad || '',
+      direccion: empleado.direccion || '',
+      email: empleado.email || '',
+      telefono: empleado.telefono || '',
+      cargo: empleado.cargo || '',
+      departamento: empleado.departamento || 'Tecnologia',
+      salario: empleado.salario ? String(empleado.salario) : '',
+      salario_periodo: empleado.salario_periodo || 'mensual',
+      estado: empleado.estado || 'Activo',
+      estado_laboral: empleado.estado_laboral || 'Activo',
+      tipo_contrato: empleado.tipo_contrato || 'Indefinido',
+      puede_subir_documentos: Boolean(empleado.puede_subir_documentos)
+    });
+  };
+
+  const handleDesactivar = async (empleado) => {
+    try {
+      await desactivarEmpleado(empleado.id);
+      await refetch();
+    } catch (error) {
+      alert(error.message || 'No se pudo desactivar el empleado');
+    }
+  };
 
   const handleLinkedUserChange = (event) => {
     const linkedUserId = event.target.value;
@@ -193,7 +230,13 @@ const EmpleadosView = () => {
     <div className="rrhh-view">
       <div className="view-header">
         <h2>Gestion de Empleados</h2>
-        <button className="btn-primary" onClick={() => setShowForm(!showForm)}>
+        <button className="btn-primary" onClick={() => {
+          if (showForm) {
+            setEditingId(null);
+            setFormData(EMPTY_FORM);
+          }
+          setShowForm(!showForm);
+        }}>
           {showForm ? 'Cancelar' : '+ Nuevo Empleado'}
         </button>
       </div>
@@ -250,8 +293,25 @@ const EmpleadosView = () => {
             </select>
           </div>
           <div className="form-field">
-            <label htmlFor="emp-salario">Salario mensual ($)</label>
-            <input id="emp-salario" name="salario" type="number" placeholder="Salario mensual ($)" required value={formData.salario} onChange={handleChange} />
+            <label htmlFor="emp-salario-periodo">Modalidad de pago</label>
+            <select id="emp-salario-periodo" name="salario_periodo" value={formData.salario_periodo} onChange={handleChange}>
+              <option value="mensual">Mensual</option>
+              <option value="diario">Por dia</option>
+              <option value="hora">Por hora</option>
+              <option value="proyecto">Por proyecto</option>
+            </select>
+          </div>
+          <div className="form-field">
+            <label htmlFor="emp-salario">Monto de pago</label>
+            <input id="emp-salario" name="salario" type="number" min="0" step="0.01" placeholder="Monto segun modalidad" required value={formData.salario} onChange={handleChange} />
+          </div>
+          <div className="form-field">
+            <label htmlFor="emp-tipo-contrato">Tipo de contrato</label>
+            <select id="emp-tipo-contrato" name="tipo_contrato" value={formData.tipo_contrato} onChange={handleChange}>
+              <option>Indefinido</option>
+              <option>Temporal</option>
+              <option>Por Proyecto</option>
+            </select>
           </div>
           <div className="form-field">
             <label htmlFor="emp-estado-laboral">Estado laboral</label>
@@ -281,7 +341,7 @@ const EmpleadosView = () => {
               />
             </div>
           )}
-          <button type="submit" className="btn-primary">Registrar</button>
+          <button type="submit" className="btn-primary">{editingId ? 'Actualizar' : 'Registrar'}</button>
         </form>
       )}
 
@@ -322,10 +382,12 @@ const EmpleadosView = () => {
               <th>Cargo</th>
               <th>Departamento</th>
               <th>Salario</th>
+              <th>Modalidad</th>
               <th>Proyectos Asignados</th>
               <th>Estado laboral</th>
               <th>Usuario</th>
               <th>Documentos</th>
+              <th>Acciones</th>
             </tr>
           </thead>
           <tbody>
@@ -340,6 +402,7 @@ const EmpleadosView = () => {
                   <td>{empleado.cargo || '-'}</td>
                   <td>{empleado.departamento || '-'}</td>
                   <td>${empleado.salario?.toLocaleString() || 0}</td>
+                  <td>{empleado.salario_periodo || 'mensual'}</td>
                   <td><span className="badge badge-blue">{empleado.proyectos_asignados || 0}</span></td>
                   <td><span className={`badge ${empleado.estado_laboral === 'Activo' ? 'badge-green' : 'badge-gray'}`}>{empleado.estado_laboral || empleado.estado}</span></td>
                   <td>{empleado.linked_user_id ? 'Vinculado' : 'Sin acceso'}</td>
@@ -359,6 +422,14 @@ const EmpleadosView = () => {
                         </button>
                       </div>
                     ) : empleado.puede_subir_documentos ? 'Sin usuario vinculado' : 'No habilitado'}
+                  </td>
+                  <td>
+                    <div className="document-status">
+                      <button type="button" className="btn-action" onClick={() => handleEdit(empleado)}>Editar</button>
+                      {empleado.estado_laboral !== 'Inactivo' && (
+                        <button type="button" className="btn-action" onClick={() => handleDesactivar(empleado)}>Desactivar</button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               );

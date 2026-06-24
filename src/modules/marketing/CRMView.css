@@ -74,6 +74,23 @@
   grid-column: 1 / -1;
 }
 
+.crm-form .btn-secondary {
+  background: var(--surface-elevated);
+  color: var(--text-main);
+  border: 1px solid var(--border-color);
+}
+
+.cell-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.badge-teal {
+  background: var(--kpi-green-bg);
+  color: var(--kpi-green-text);
+}
+
 @media (max-width: 720px) {
   .crm-form {
     grid-template-columns: 1fr;

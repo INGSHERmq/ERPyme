@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { supabase } from '../../../lib/supabase';
+import { useAuth } from '../../../context/auth/useAuth';
 import './ListaProyectos.css';
 
 const parseDate = (str) => {
@@ -40,12 +41,16 @@ const getProjectDates = (proyecto, quotes) => {
   const cotizacionId = proyecto.cotizacion_id || Number(proyecto.nombre?.match(/Proyecto cotizacion #(\d+)/)?.[1]);
   const quote = cotizacionId && quotes ? quotes.find(q => Number(q.id) === Number(cotizacionId)) : null;
 
-  if (quote && quote.fecha) {
-    startStr = quote.fecha;
-    const start = parseDate(quote.fecha);
-    const days = Number.parseInt(String(quote.validez || '').match(/\d+/)?.[0] || '30', 10);
-    const end = addProjectDuration(start, days);
-    endStr = toDateString(end);
+  if (quote && (quote.fecha_inicio || quote.fecha)) {
+    startStr = quote.fecha_inicio || quote.fecha;
+    const start = parseDate(startStr);
+    if (quote.fecha_fin) {
+      endStr = quote.fecha_fin;
+    } else {
+      const days = Number.parseInt(String(quote.validez || '').match(/\d+/)?.[0] || '30', 10);
+      const end = addProjectDuration(start, days);
+      endStr = toDateString(end);
+    }
   }
 
   if (!endStr) {
@@ -64,6 +69,7 @@ const getProjectDates = (proyecto, quotes) => {
 };
 
 const ListaProyectos = ({ proyectos, onSelect }) => {
+  const { user } = useAuth();
   const [search, setSearch] = useState('');
   const [filterEstado, setFilterEstado] = useState('Todos');
   const [quotes, setQuotes] = useState([]);
@@ -73,7 +79,8 @@ const ListaProyectos = ({ proyectos, onSelect }) => {
       try {
         const { data, error } = await supabase
           .from('cotizaciones')
-          .select('id, fecha, validez');
+          .select('id, fecha, fecha_inicio, fecha_fin, validez')
+          .eq('user_id', user?.id);
         if (!error && data) {
           setQuotes(data);
         }
@@ -82,7 +89,7 @@ const ListaProyectos = ({ proyectos, onSelect }) => {
       }
     };
     fetchQuotes();
-  }, []);
+  }, [user?.id]);
 
   const filteredProjects = useMemo(() => {
     return proyectos.filter(p => {
@@ -128,11 +135,11 @@ const ListaProyectos = ({ proyectos, onSelect }) => {
           </thead>
           <tbody>
             {filteredProjects.length > 0 ? (
-              filteredProjects.map(p => {
+              filteredProjects.map((p, index) => {
                 const dates = getProjectDates(p, quotes);
                 return (
                   <tr key={p.id}>
-                    <td className="text-muted">#{p.id}</td>
+                    <td className="text-muted">#{index + 1}</td>
                     <td className="cell-bold">{p.nombre}</td>
                     <td>{p.cliente_nombre || '—'}</td>
                     <td>

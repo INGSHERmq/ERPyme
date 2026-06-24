@@ -327,7 +327,7 @@ const AssistantView = ({ onBack, onNavigate }) => {
           {messages.map((message, index) => (
             <article key={`${message.role}-${index}`} className={`chat-message ${message.role}`}>
               <div className="message-bubble">
-                <p>{message.content}</p>
+                <div className="message-content">{message.content}</div>
                 {message.navigation && (
                   <div className="message-actions">
                     <button 

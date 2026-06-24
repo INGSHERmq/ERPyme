@@ -5,7 +5,7 @@ import { useAuth } from '../../context/auth/useAuth';
 const getToday = () => new Date().toISOString().split('T')[0];
 
 const FacturasVentaView = () => {
-  const { user } = useAuth();
+  const { user, membership, profile } = useAuth();
   const [cotizaciones, setCotizaciones] = useState([]);
   const [clientes, setClientes] = useState([]);
   const [rows, setRows] = useState([]);
@@ -24,7 +24,7 @@ const FacturasVentaView = () => {
     const [cotiRes, cliRes, facRes] = await Promise.all([
       supabase.from('cotizaciones').select('id,titulo,cliente_id,monto').eq('user_id', user.id).order('created_at', { ascending: false }),
       supabase.from('clientes').select('id,nombre').eq('user_id', user.id).order('nombre'),
-      supabase.from('facturas_venta').select('*').order('created_at', { ascending: false })
+      supabase.from('facturas_venta').select('*').eq('empresa_id', membership?.empresa_id || profile?.empresa_actual_id).order('created_at', { ascending: false })
     ]);
     setCotizaciones(cotiRes.data || []);
     setClientes(cliRes.data || []);
@@ -75,6 +75,7 @@ const FacturasVentaView = () => {
   const handleSubmit = async (event) => {
     event.preventDefault();
     const { error } = await supabase.from('facturas_venta').insert([{
+      empresa_id: membership?.empresa_id || profile?.empresa_actual_id,
       numero: formData.numero,
       cotizacion_id: formData.cotizacion_id ? Number(formData.cotizacion_id) : null,
       cliente_id: formData.cliente_id ? Number(formData.cliente_id) : null,

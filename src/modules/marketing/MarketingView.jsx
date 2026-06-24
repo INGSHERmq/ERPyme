@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from '../../context/auth/useAuth';
 import DashboardMarketing from './DashboardMarketing';
-import ClientesView from './ClientesView';
 import CotizacionesView from './CotizacionesView';
 import CRMView from './CRMView';
 import LeadScoringView from './LeadScoringView';
@@ -15,7 +14,6 @@ const MarketingView = ({ onBack, initialTab }) => {
     { id: 'dashboard', feature: 'ventas.summary', label: 'Resumen' },
     { id: 'crm', feature: 'ventas.leads', label: 'Clientes' },
     { id: 'cotizaciones', feature: 'ventas.quotes', label: 'Cotizaciones' },
-    { id: 'clientes', feature: 'ventas.clients', label: 'Tabla de clientes' },
     { id: 'scoring', feature: 'ventas.scoring', label: 'Scoring cotizaciones' }
   ].map((item) => ({ ...item, locked: !canAccessFeature(item.feature) }));
   const activeTab = tabs.some((item) => item.id === tab) ? tab : tabs[0]?.id;
@@ -28,7 +26,6 @@ const MarketingView = ({ onBack, initialTab }) => {
 
     switch (activeTab) {
       case 'dashboard': return <DashboardMarketing />;
-      case 'clientes': return <ClientesView />;
       case 'cotizaciones': return <CotizacionesView />;
       case 'crm': return <CRMView />;
       case 'scoring': return <LeadScoringView />;

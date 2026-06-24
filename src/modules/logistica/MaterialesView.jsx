@@ -14,15 +14,24 @@ const MaterialesView = () => {
   const fetchData = async () => {
     if (!user?.id) return;
     setLoading(true);
-    const [{ data }, ordenesRes] = await Promise.all([
-      supabase
+    const empresaId = membership?.empresa_id || profile?.empresa_actual_id;
+    const materialesQuery = supabase
       .from('logistica_materiales')
       .select('*')
-      .order('created_at', { ascending: false }),
-      supabase.from('ordenes_compra').select('id,numero,proyecto_id').eq('user_id', user.id)
+      .neq('estado', 'anulado')
+      .order('created_at', { ascending: false });
+    const ordenesQuery = supabase
+      .from('ordenes_compra')
+      .select('id,numero,proyecto_id,estado');
+
+    const [{ data }, ordenesRes] = await Promise.all([
+      empresaId ? materialesQuery.eq('empresa_id', empresaId) : materialesQuery,
+      empresaId ? ordenesQuery.eq('empresa_id', empresaId) : ordenesQuery.eq('user_id', user.id)
     ]);
-    setRows(data || []);
-    setOrdenes(ordenesRes.data || []);
+    const ordenesActivas = (ordenesRes.data || []).filter((orden) => !['Anulado', 'Cancelada'].includes(orden.estado));
+    const ordenesActivasIds = new Set(ordenesActivas.map((orden) => Number(orden.id)));
+    setRows((data || []).filter((row) => ordenesActivasIds.has(Number(row.orden_compra_id))));
+    setOrdenes(ordenesActivas);
     setLoading(false);
   };
 
