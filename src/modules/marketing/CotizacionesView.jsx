@@ -192,7 +192,6 @@ const CotizacionesView = () => {
             <input name="fecha_fin" type="date" value={formData.fecha_fin} onChange={handleChange} />
           </div>
           <textarea name="descripcion" placeholder="Descripcion" value={formData.descripcion} onChange={handleChange} />
-          <input name="validez" placeholder="Validez comercial (ej: 30 dias)" value={formData.validez} onChange={handleChange} />
           <div className="file-input-wrapper">
             <input
               type="file"

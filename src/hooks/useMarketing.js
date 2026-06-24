@@ -251,6 +251,20 @@ const useMarketing = () => {
 
     let proyectoId = cotizacionActualizada.proyecto_id || null;
     if (!proyectoId) {
+      const { data: proyectoExistente, error: proyectoExistenteError } = await supabase
+        .from('proyectos')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('cotizacion_id', cotizacionActualizada.id)
+        .order('created_at', { ascending: true })
+        .limit(1)
+        .maybeSingle();
+
+      if (proyectoExistenteError) throw proyectoExistenteError;
+      proyectoId = proyectoExistente?.id || null;
+    }
+
+    if (!proyectoId) {
       const { data: proyecto, error: proyectoError } = await supabase
         .from('proyectos')
         .insert([{
@@ -270,8 +284,27 @@ const useMarketing = () => {
         .select()
         .single();
 
-      if (proyectoError) throw proyectoError;
-      proyectoId = proyecto.id;
+      if (proyectoError) {
+        if (proyectoError.code !== '23505') throw proyectoError;
+
+        const { data: proyectoCreado, error: proyectoCreadoError } = await supabase
+          .from('proyectos')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('cotizacion_id', cotizacionActualizada.id)
+          .order('created_at', { ascending: true })
+          .limit(1)
+          .maybeSingle();
+
+        if (proyectoCreadoError) throw proyectoCreadoError;
+        if (!proyectoCreado?.id) throw proyectoError;
+        proyectoId = proyectoCreado.id;
+      } else {
+        proyectoId = proyecto.id;
+      }
+    }
+
+    if (proyectoId) {
       await supabase
         .from('cotizaciones')
         .update({ proyecto_id: proyectoId })

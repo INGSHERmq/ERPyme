@@ -2,6 +2,34 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/auth/useAuth';
 
+const dedupeProjectsByQuote = (projects) => {
+  const byQuoteId = new Map();
+  const deduped = [];
+
+  projects.forEach((project) => {
+    const quoteId = project.cotizacion_id || Number(project.nombre?.match(/Proyecto cotizacion #(\d+)/)?.[1]);
+    if (!quoteId) {
+      deduped.push(project);
+      return;
+    }
+
+    const key = Number(quoteId);
+    const existing = byQuoteId.get(key);
+    if (!existing) {
+      byQuoteId.set(key, { index: deduped.length, project });
+      deduped.push(project);
+      return;
+    }
+
+    if (!existing.project.cotizacion_id && project.cotizacion_id) {
+      byQuoteId.set(key, { index: existing.index, project });
+      deduped[existing.index] = project;
+    }
+  });
+
+  return deduped;
+};
+
 const useProjects = () => {
   const { user } = useAuth();
   const [proyectos, setProyectos] = useState([]);
@@ -25,7 +53,7 @@ const useProjects = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setProyectos(data || []);
+      setProyectos(dedupeProjectsByQuote(data || []));
     } catch (err) {
       console.error('Error al cargar proyectos:', err);
       setError(err.message);

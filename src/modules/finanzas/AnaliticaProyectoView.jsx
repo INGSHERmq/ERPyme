@@ -11,7 +11,7 @@ const AnaliticaProyectoView = () => {
   const buildRowsFromTables = async () => {
     const empresaId = membership?.empresa_id || profile?.empresa_actual_id;
     const [projectsRes, ingresosRes, egresosRes, ordenesRes, inventarioRes, mantenimientoObjetosRes, mantenimientosRes] = await Promise.all([
-      supabase.from('v_proyectos_completos').select('id,nombre,nombre_mostrar').eq('user_id', user.id),
+      supabase.from('v_proyectos_completos').select('id,nombre').eq('user_id', user.id),
       supabase.from('ingresos').select('proyecto_id,monto,estado').eq('user_id', user.id),
       supabase.from('egresos').select('proyecto_id,monto').eq('user_id', user.id),
       empresaId
@@ -57,7 +57,7 @@ const AnaliticaProyectoView = () => {
 
       return {
         proyecto_id: proyecto.id,
-        proyecto_nombre: proyecto.nombre_mostrar || proyecto.nombre,
+        proyecto_nombre: proyecto.nombre,
         ingresos_cobrados: ingresosCobrados,
         egresos,
         utilidad: ingresosCobrados - egresos
