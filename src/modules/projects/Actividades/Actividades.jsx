@@ -58,7 +58,7 @@ const TareaCard = ({ tarea, onEdit, onDelete }) => {
           </span>
           {isAtrasada && (
             <span className="badge badge-delayed">
-              ⚠️ Retrasada: {retrasoDays}d
+              Retrasada: {retrasoDays}d
             </span>
           )}
         </div>
@@ -83,7 +83,7 @@ const TareaCard = ({ tarea, onEdit, onDelete }) => {
 
       {isAtrasada && (
         <div className="ai-recommendation-badge">
-          <span>🧠 Sugerencia IA: Reasignar apoyo o contactar a {tarea.empleado_nombre || 'el responsable'} para asistirle con esta tarea.</span>
+          <span>Sugerencia IA: Reasignar apoyo o contactar a {tarea.empleado_nombre || 'el responsable'} para asistirle con esta tarea.</span>
         </div>
       )}
 

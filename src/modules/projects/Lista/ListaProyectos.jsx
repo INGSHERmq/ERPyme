@@ -107,7 +107,7 @@ const ListaProyectos = ({ proyectos, onSelect }) => {
         <div className="lista-filtros">
           <input 
             type="text" 
-            placeholder="🔍 Buscar proyecto o cliente..." 
+            placeholder="Buscar proyecto o cliente..." 
             value={search} 
             onChange={(e) => setSearch(e.target.value)} 
           />
@@ -157,7 +157,7 @@ const ListaProyectos = ({ proyectos, onSelect }) => {
                     </td>
                     <td>
                       <button className="btn-ver" onClick={() => onSelect(p)}>
-                        Ver 👁️
+                        Ver
                       </button>
                     </td>
                   </tr>

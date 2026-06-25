@@ -49,7 +49,7 @@ const ExecutiveSummary = ({ userId, compact = false, onNavigate }) => {
           <header className="risks-popover-header">
             <div>
               <span className="popover-badge-danger">CRÍTICO</span>
-              <h5>⚠️ Diagnóstico de Riesgos de Proyectos (IA)</h5>
+              <h5>Diagnóstico de Riesgos de Proyectos (IA)</h5>
             </div>
             <button className="btn-close-popover" onClick={() => setShowRisksPopover(false)}>×</button>
           </header>
@@ -59,7 +59,7 @@ const ExecutiveSummary = ({ userId, compact = false, onNavigate }) => {
               {summary.projectRisks.map((p) => (
                 <div key={p.id} className="popover-project-item">
                   <div className="popover-project-header-row">
-                    <span className="popover-project-name">📁 {p.nombre}</span>
+                    <span className="popover-project-name">{p.nombre}</span>
                     <span className="popover-project-progress">Avance: {p.progreso}%</span>
                   </div>
                   
@@ -74,7 +74,7 @@ const ExecutiveSummary = ({ userId, compact = false, onNavigate }) => {
                         }
                         return (
                           <div key={t.id} className="popover-task-item">
-                            <span className="popover-task-title">🔥 {t.titulo}</span>
+                            <span className="popover-task-title">{t.titulo}</span>
                             <span className="popover-task-info">
                               Responsable: <strong>{t.empleado_nombre || 'Sin asignar'}</strong> | Retraso: {daysOverdue} día{daysOverdue > 1 ? 's' : ''} ({t.duracion_horas || '0'}h planificadas)
                             </span>

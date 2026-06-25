@@ -401,7 +401,7 @@ const EmpleadosView = () => {
                   <td className="cell-bold">{[empleado.nombre, empleado.apellidos].filter(Boolean).join(' ')}</td>
                   <td>{empleado.cargo || '-'}</td>
                   <td>{empleado.departamento || '-'}</td>
-                  <td>${empleado.salario?.toLocaleString() || 0}</td>
+                  <td>S/ {empleado.salario?.toLocaleString() || 0}</td>
                   <td>{empleado.salario_periodo || 'mensual'}</td>
                   <td><span className="badge badge-blue">{empleado.proyectos_asignados || 0}</span></td>
                   <td><span className={`badge ${empleado.estado_laboral === 'Activo' ? 'badge-green' : 'badge-gray'}`}>{empleado.estado_laboral || empleado.estado}</span></td>

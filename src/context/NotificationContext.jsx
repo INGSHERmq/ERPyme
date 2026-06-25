@@ -26,7 +26,7 @@ export const NotificationProvider = ({ children }) => {
         msgLower.includes('error') ||
         msgLower.includes('falló') ||
         msgLower.includes('no se pudo') ||
-        msgLower.includes('❌') ||
+        msgLower.includes('error') ||
         msgLower.includes('incorrecto') ||
         msgLower.includes('invalid') ||
         msgLower.includes('excepción')
@@ -40,7 +40,7 @@ export const NotificationProvider = ({ children }) => {
         msgLower.includes('creada') ||
         msgLower.includes('guardado') ||
         msgLower.includes('guardada') ||
-        msgLower.includes('✅') ||
+        msgLower.includes('exito') ||
         msgLower.includes('aprobada') ||
         msgLower.includes('eliminada') ||
         msgLower.includes('eliminado') ||
@@ -99,9 +99,9 @@ export const NotificationProvider = ({ children }) => {
         {toasts.map((toast) => (
           <div key={toast.id} className={`toast-card toast-${toast.type}`}>
             <div className="toast-icon-wrapper">
-              {toast.type === 'success' && <span className="toast-icon success-icon">✅</span>}
-              {toast.type === 'error' && <span className="toast-icon error-icon">❌</span>}
-              {toast.type === 'info' && <span className="toast-icon info-icon">ℹ️</span>}
+              {toast.type === 'success' && <span className="toast-icon success-icon" />}
+              {toast.type === 'error' && <span className="toast-icon error-icon" />}
+              {toast.type === 'info' && <span className="toast-icon info-icon" />}
             </div>
             <div className="toast-message">{toast.message}</div>
             <button className="toast-close" onClick={() => removeNotification(toast.id)}>×</button>
@@ -114,7 +114,7 @@ export const NotificationProvider = ({ children }) => {
         <div className="confirm-modal-backdrop" onClick={() => confirmData.resolve(false)}>
           <div className="confirm-modal" onClick={(e) => e.stopPropagation()}>
             <div className="confirm-modal-header">
-              <span className="confirm-modal-warning-icon">⚠️</span>
+              <span className="confirm-modal-warning-icon" />
               <h4>{confirmData.title}</h4>
             </div>
             <p className="confirm-modal-message">{confirmData.message}</p>

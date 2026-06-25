@@ -315,7 +315,7 @@ const FacturasCompraView = () => {
                         }}
                         onClick={() => setValidatingInvoice(row)}
                       >
-                        🔍 Validar SUNAT
+                        Validar SUNAT
                       </button>
                     )}
                   </div>

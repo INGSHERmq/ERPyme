@@ -131,7 +131,7 @@ const ChatForm = ({ form, onComplete, userId }) => {
     }
   };
 
-  if (done) return <div className="chat-form-done">✓ Registro guardado</div>;
+  if (done) return <div className="chat-form-done">Registro guardado</div>;
 
   return (
     <form className="chat-inline-form" onSubmit={handleSubmit}>
@@ -304,7 +304,7 @@ const AssistantView = ({ onBack, onNavigate }) => {
               onClick={() => handleShortcutClick(shortcut.prompt)}
               title={`Insertar prompt: "${shortcut.prompt}"`}
             >
-              <span className="shortcut-icon">⚡</span>
+              <span className="shortcut-icon" />
               <span className="shortcut-label">{shortcut.label}</span>
             </button>
           ))}
@@ -350,7 +350,7 @@ const AssistantView = ({ onBack, onNavigate }) => {
                         { 
                           role: 'assistant', 
                           content: msg,
-                          navigation: nav ? { module: nav.module, tab: nav.tab, label: `👉 Ir a la tabla de ${nav.label}` } : null
+                          navigation: nav ? { module: nav.module, tab: nav.tab, label: `Ir a la tabla de ${nav.label}` } : null
                         }
                       ]);
                     }} 

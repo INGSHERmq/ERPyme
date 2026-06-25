@@ -147,7 +147,7 @@ const Resumen = ({ proyecto }) => {
             <div className="resumen-ai-alerta">
               <div className="alerta-header">
                 <span className="alerta-pulsing-dot" />
-                <h5>⚠️ Análisis de Riesgo & Sugerencia IA</h5>
+                <h5>Análisis de Riesgo & Sugerencia IA</h5>
               </div>
               <div className="alerta-body">
                 <p style={{ fontSize: '13px', margin: '0 0 12px 0', opacity: 0.85 }}>
@@ -159,7 +159,7 @@ const Resumen = ({ proyecto }) => {
                     const daysOverdue = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
                     return (
                       <div key={t.id} className="alerta-tarea-item">
-                        <span className="alerta-tarea-titulo">🔥 {t.titulo}</span>
+                        <span className="alerta-tarea-titulo">{t.titulo}</span>
                         <span className="alerta-tarea-detalle">
                           Asignado a: <strong>{t.empleado_nombre || 'Sin asignar'}</strong> | Retraso: {daysOverdue} día{daysOverdue > 1 ? 's' : ''} ({t.duracion_horas || '0'}h estimadas).
                         </span>
