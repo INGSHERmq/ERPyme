@@ -31,6 +31,18 @@ const numberValue = (value) => Number(value || 0);
 const isPendingReceivable = (item) => (item.estado || '').toLowerCase() === 'pendiente';
 const isUnpaidPurchaseInvoice = (item) => !['pagada', 'anulada', 'cancelada'].includes((item.estado || '').toLowerCase());
 
+const isPastDue = (dateValue) => {
+  if (!dateValue) return false;
+  const str = String(dateValue);
+  const hasTime = /T\d{2}:\d{2}/.test(str) || /\d{1,2}:\d{2}/.test(str);
+  if (hasTime) {
+    const dueDate = parseDateInAppTimeZone(dateValue);
+    return dueDate !== null && dueDate < new Date();
+  }
+  const days = daysBetween(dateValue);
+  return days !== null && days < 0;
+};
+
 export const scoreOpportunity = (opportunity = {}, lead = {}) => {
   const amount = numberValue(opportunity.monto_estimado);
   const stage = opportunity.etapa || '';
@@ -216,14 +228,14 @@ export const generateExecutiveSummary = async (userId) => {
     tipo: 'compra',
     fecha_vencimiento: item.fecha_vencimiento || item.ordenes_compra?.fecha_vencimiento
   }));
-  const receivablesDueToday = cobros.filter(item => isPendingReceivable(item) && toAppDateKey(item.fecha_vencimiento) === today);
+  const receivablesDueToday = cobros.filter(item => isPendingReceivable(item) && toAppDateKey(item.fecha_vencimiento) === today && !isPastDue(item.fecha_vencimiento));
   const purchasesDueToday = purchaseInvoicesWithDue.filter(item => (
-    isUnpaidPurchaseInvoice(item) && toAppDateKey(item.fecha_vencimiento) === today
+    isUnpaidPurchaseInvoice(item) && toAppDateKey(item.fecha_vencimiento) === today && !isPastDue(item.fecha_vencimiento)
   ));
   const dueToday = [...receivablesDueToday, ...purchasesDueToday];
-  const receivablesOverdue = cobros.filter(item => isPendingReceivable(item) && daysBetween(item.fecha_vencimiento) < 0);
+  const receivablesOverdue = cobros.filter(item => isPendingReceivable(item) && isPastDue(item.fecha_vencimiento));
   const purchasesOverdue = purchaseInvoicesWithDue.filter(item => (
-    isUnpaidPurchaseInvoice(item) && daysBetween(item.fecha_vencimiento) < 0
+    isUnpaidPurchaseInvoice(item) && isPastDue(item.fecha_vencimiento)
   ));
   const overdue = [...receivablesOverdue, ...purchasesOverdue];
   const projectRisks = buildProjectRisks(projectsRes.data || [], tasksRes.data || []);
