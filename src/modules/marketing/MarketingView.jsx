@@ -21,7 +21,7 @@ const MarketingView = ({ onBack, initialTab }) => {
 
   const renderTab = () => {
     if (activeTabConfig?.locked) {
-      return <SubscriptionLock title={`${activeTabConfig.label} esta bloqueado`} />;
+      return <SubscriptionLock title={`${activeTabConfig.label} está bloqueado`} />;
     }
 
     switch (activeTab) {

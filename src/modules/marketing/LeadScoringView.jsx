@@ -21,7 +21,7 @@ const explainScore = (quotation, customer, lead, score) => {
   const status = (quotation.estado || '').toLowerCase();
   if (status === 'aprobada' || status === 'aceptada') return 'aceptada por boton Aprobar';
   if (status === 'rechazada') return 'marcada como rechazada';
-  if (status === 'vencida') return 'cotizacion vencida';
+  if (status === 'vencida') return 'cotización vencida';
 
   const reasons = [];
   const amount = Number(quotation.precio_total || quotation.monto || 0);
@@ -29,9 +29,9 @@ const explainScore = (quotation, customer, lead, score) => {
   const ageDays = quoteDate ? Math.max(0, Math.round((Date.now() - quoteDate.getTime()) / 86400000)) : null;
 
   if (customer?.industria || lead?.industria) reasons.push('industria identificada');
-  if (customer?.dni_ruc || lead?.dni_ruc) reasons.push('identificacion registrada');
+  if (customer?.dni_ruc || lead?.dni_ruc) reasons.push('identificación registrada');
   if (customer?.email || lead?.email) reasons.push('contacto digital disponible');
-  if (ageDays !== null && ageDays <= 3) reasons.push('cotizacion reciente');
+  if (ageDays !== null && ageDays <= 3) reasons.push('cotización reciente');
   if (amount >= 20000) reasons.push('monto alto');
   if (score < 45) reasons.push('requiere seguimiento comercial');
 
@@ -39,7 +39,7 @@ const explainScore = (quotation, customer, lead, score) => {
 };
 
 const LeadScoringView = () => {
-  const { clientes, leads, cotizaciones, loading, error } = useMarketing();
+  const { clientes, leads, cotizaciónes, loading, error } = useMarketing();
 
   const rows = useMemo(() => {
     const clientesById = Object.fromEntries((clientes || []).map(cliente => [cliente.id, cliente]));
@@ -48,11 +48,11 @@ const LeadScoringView = () => {
       || (lead.nombre && customer.nombre && lead.nombre.toLowerCase() === customer.nombre.toLowerCase())
     )) || {};
 
-    return (cotizaciones || [])
+    return (cotizaciónes || [])
       .map((quotation) => {
         const customer = clientesById[quotation.cliente_id] || {};
         const lead = findLeadForCustomer(customer);
-        const score = scoreQuotationAcceptance(quotation, customer, lead, cotizaciones);
+        const score = scoreQuotationAcceptance(quotation, customer, lead, cotizaciónes);
         return {
           ...quotation,
           customer,
@@ -68,7 +68,7 @@ const LeadScoringView = () => {
         if (aClosed !== bClosed) return aClosed ? 1 : -1;
         return b.score - a.score;
       });
-  }, [clientes, leads, cotizaciones]);
+  }, [clientes, leads, cotizaciónes]);
 
   const metrics = useMemo(() => {
     const pending = rows.filter(row => !['aprobada', 'aceptada', 'rechazada', 'vencida'].includes((row.estado || '').toLowerCase()));
@@ -114,16 +114,16 @@ const LeadScoringView = () => {
 
       <section className="scoring-panel">
         <div className="view-header">
-          <h2>Scoring de cotizaciones</h2>
-          <span className="model-pill">Aceptacion por cotizacion</span>
+          <h2>Scoring de cotizaciónes</h2>
+          <span className="model-pill">Aceptacion por cotización</span>
         </div>
 
         {rows.length === 0 ? (
           <div className="scoring-empty">
-            <h3>No hay cotizaciones para puntuar todavia</h3>
+            <h3>No hay cotizaciónes para puntuar todavía</h3>
             <p>
-              El flujo inicia registrando un lead, luego creando su cotizacion. Cuando el cliente acepta, el boton Aprobar
-              marca esa cotizacion como aceptada y se usa como resultado real del analisis.
+              El flujo inicia registrando un lead, luego creando su cotización. Cuando el cliente acepta, el boton Aprobar
+              marca esa cotización como aceptada y se usa como resultado real del análisis.
             </p>
             <div className="scoring-empty-grid">
               <article>
@@ -145,7 +145,7 @@ const LeadScoringView = () => {
                   <th>Cliente / Lead</th>
                   <th>Monto</th>
                   <th>Estado</th>
-                  <th>Probabilidad de aceptacion</th>
+                  <th>Probabilidad de aceptación</th>
                   <th>Señales</th>
                 </tr>
               </thead>

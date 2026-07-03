@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/auth/useAuth';
+import { traducirError } from '../lib/errores';
+import { validarCamposRequeridos } from '../lib/validacion';
 
 const useMarketing = () => {
   const { user, company, membership, profile } = useAuth();
@@ -47,7 +49,7 @@ const useMarketing = () => {
       setOportunidades(oportunidadesRes.data || []);
     } catch (err) {
       console.error('Error cargando marketing:', err);
-      setError(err.message);
+      setError(traducirError(err));
     } finally {
       setLoading(false);
     }
@@ -61,12 +63,19 @@ const useMarketing = () => {
   const addCliente = async (data) => {
     if (!user?.id) throw new Error('Usuario no autenticado');
     
+    const errores = validarCamposRequeridos(data, [
+      { nombre: 'nombre', etiqueta: 'Nombre del cliente' },
+    ]);
+    if (errores.length > 0) {
+      throw new Error(errores.join('\n'));
+    }
+
     const { data: nuevo, error } = await supabase
       .from('clientes')
       .insert([{ ...data, user_id: user.id, empresa_id: empresaId, creado: new Date().toISOString().split('T')[0] }])
       .select()
       .single();
-    if (error) throw error;
+    if (error) throw new Error(traducirError(error));
     setClientes(prev => [...prev, nuevo]);
     return nuevo;
   };
@@ -82,7 +91,7 @@ const useMarketing = () => {
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) throw new Error(traducirError(error));
     setClientes(prev => prev
       .map(cliente => (Number(cliente.id) === Number(clienteId) ? { ...cliente, ...actualizado } : cliente))
       .sort((a, b) => (a.nombre || '').localeCompare(b.nombre || ''))
@@ -115,12 +124,20 @@ const useMarketing = () => {
   const addCotizacion = async (data) => {
     if (!user?.id) throw new Error('Usuario no autenticado');
     
+    const errores = validarCamposRequeridos(data, [
+      { nombre: 'titulo', etiqueta: 'Título' },
+      { nombre: 'cliente_id', etiqueta: 'Cliente', alias: 'clienteId' },
+    ]);
+    if (errores.length > 0) {
+      throw new Error(errores.join('\n'));
+    }
+
     const { data: nueva, error } = await supabase
       .from('cotizaciones')
       .insert([{ ...data, user_id: user.id, empresa_id: empresaId, fecha: data.fecha || data.fecha_inicio || new Date().toISOString().split('T')[0] }])
       .select()
       .single();
-    if (error) throw error;
+    if (error) throw new Error(traducirError(error));
     setCotizaciones(prev => [...prev, nueva]);
     return nueva;
   };
@@ -190,6 +207,13 @@ const useMarketing = () => {
   const addOportunidad = async (data) => {
     if (!user?.id) throw new Error('Usuario no autenticado');
 
+    const errores = validarCamposRequeridos(data, [
+      { nombre: 'nombre', etiqueta: 'Nombre de oportunidad' },
+    ]);
+    if (errores.length > 0) {
+      throw new Error(errores.join('\n'));
+    }
+
     const payload = {
       ...data,
       user_id: user.id,
@@ -206,7 +230,7 @@ const useMarketing = () => {
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) throw new Error(traducirError(error));
     setOportunidades(prev => [nueva, ...prev]);
     return nueva;
   };
@@ -228,7 +252,7 @@ const useMarketing = () => {
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) throw new Error(traducirError(error));
     setCotizaciones(prev => prev.map(c => (
       Number(c.id) === Number(cotizacionId) ? { ...c, ...actualizada } : c
     )));

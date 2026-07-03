@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../context/auth/useAuth';
+import { traducirError } from '../../lib/errores';
 
 const getToday = () => new Date().toISOString().split('T')[0];
 
@@ -48,7 +49,7 @@ const FacturasVentaView = () => {
 
     if (error) {
       setCollectingId(null);
-      alert(error.message || 'No se pudo registrar el cobro');
+      alert(traducirError(error));
       return;
     }
 
@@ -83,7 +84,7 @@ const FacturasVentaView = () => {
       total: Number(formData.total || 0)
     }]);
     if (error) {
-      alert(error.message || 'No se pudo registrar');
+      alert(traducirError(error));
       return;
     }
     setFormData({ numero: '', cotizacion_id: '', cliente_id: '', fecha_emision: getToday(), total: '0' });

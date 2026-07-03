@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/auth/useAuth';
+import { traducirError } from '../lib/errores';
 
 const dedupeProjectsByQuote = (projects) => {
   const byQuoteId = new Map();
@@ -56,7 +57,7 @@ const useProjects = () => {
       setProyectos(dedupeProjectsByQuote(data || []));
     } catch (err) {
       console.error('Error al cargar proyectos:', err);
-      setError(err.message);
+      setError(traducirError(err));
     } finally {
       setLoading(false);
     }

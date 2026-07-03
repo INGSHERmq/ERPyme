@@ -28,7 +28,7 @@ const ModuleCard = ({ mod, isLocked, onClick }) => {
       </div>
       <span className="module-title">{mod.title}</span>
       <span className="module-desc">{mod.desc}</span>
-      {isLocked && <span className="module-lock-copy">Mejora tu suscripcion para activar este modulo.</span>}
+      {isLocked && <span className="module-lock-copy">Mejora tu suscripción para activar este módulo.</span>}
       <div className="card-footer">
         <span className="module-action">{isLocked ? 'Ver requisito' : 'Abrir ->'}</span>
       </div>

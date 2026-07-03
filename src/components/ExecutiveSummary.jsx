@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { generateExecutiveSummary } from '../modules/assistant/executiveSummary';
+import { traducirError } from '../lib/errores';
 import './ExecutiveSummary.css';
 
 const ExecutiveSummary = ({ userId, compact = false, onNavigate }) => {
@@ -18,7 +19,7 @@ const ExecutiveSummary = ({ userId, compact = false, onNavigate }) => {
         setSummary(data);
       } catch (err) {
         console.error('Error fetching summary:', err);
-        setError(err.message || 'No se pudo cargar el resumen.');
+        setError(traducirError(err));
       } finally {
         setLoading(false);
       }

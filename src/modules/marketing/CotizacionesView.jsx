@@ -20,18 +20,18 @@ const initialForm = () => ({
   fecha_inicio: today(),
   fecha_fin: '',
   descripcion: '',
-  validez: '30 dias'
+  validez: '30 días'
 });
 
-const CotizacionesView = () => {
+const CotizaciónesView = () => {
   const { user } = useAuth();
   const {
     clientes,
-    cotizaciones,
-    addCotizacion,
-    updateCotizacion,
-    anularCotizacion,
-    convertirCotizacion,
+    cotizaciónes,
+    addCotización,
+    updateCotización,
+    anularCotización,
+    convertirCotización,
     refetch,
     loading
   } = useMarketing();
@@ -70,7 +70,7 @@ const CotizacionesView = () => {
         for (const file of adjuntos) {
           const upload = await uploadPrivateFile({
             file,
-            folder: 'cotizaciones',
+            folder: 'cotizaciónes',
             userId: user?.id
           });
           archivosPaths.push(upload.publicUrl);
@@ -79,16 +79,16 @@ const CotizacionesView = () => {
 
       const payload = buildPayload(archivosPaths);
       if (editingId) {
-        await updateCotizacion(editingId, payload);
+        await updateCotización(editingId, payload);
       } else {
-        await addCotizacion(payload);
+        await addCotización(payload);
       }
       resetForm();
       await refetch();
-      alert(editingId ? 'Cotizacion actualizada correctamente' : 'Cotizacion creada correctamente');
+      alert(editingId ? 'Cotización actualizada correctamente' : 'Cotización creada correctamente');
     } catch (error) {
-      console.error('Error al guardar cotizacion:', error);
-      alert(error.message || 'No se pudo guardar la cotizacion');
+      console.error('Error al guardar cotización:', error);
+      alert(error.message || 'No se pudo guardar la cotización');
     } finally {
       setSubiendoAdjunto(false);
     }
@@ -110,61 +110,61 @@ const CotizacionesView = () => {
     });
   };
 
-  const handleEdit = (cotizacion) => {
-    setEditingId(cotizacion.id);
+  const handleEdit = (cotización) => {
+    setEditingId(cotización.id);
     setShowForm(true);
     setAdjuntos([]);
     setFormData({
-      cliente_id: cotizacion.cliente_id ? String(cotizacion.cliente_id) : '',
-      titulo: cotizacion.titulo || '',
-      cantidad: String(cotizacion.cantidad || 1),
-      unidad: cotizacion.unidad || 'DIA',
-      periodo_servicio: cotizacion.periodo_servicio || (cotizacion.unidad === 'HORAS' ? 'horas' : cotizacion.unidad === 'SEMANA' ? 'semanas' : 'dias'),
-      precio_unitario: String(cotizacion.precio_unitario || ''),
-      precio_total: String(cotizacion.precio_total || cotizacion.monto || 0),
-      estado: cotizacion.estado || 'borrador',
-      fecha: cotizacion.fecha || today(),
-      fecha_inicio: cotizacion.fecha_inicio || cotizacion.fecha || today(),
-      fecha_fin: cotizacion.fecha_fin || '',
-      descripcion: cotizacion.descripcion || '',
-      validez: cotizacion.validez || ''
+      cliente_id: cotización.cliente_id ? String(cotización.cliente_id) : '',
+      titulo: cotización.titulo || '',
+      cantidad: String(cotización.cantidad || 1),
+      unidad: cotización.unidad || 'DIA',
+      periodo_servicio: cotización.periodo_servicio || (cotización.unidad === 'HORAS' ? 'horas' : cotización.unidad === 'SEMANA' ? 'semanas' : 'dias'),
+      precio_unitario: String(cotización.precio_unitario || ''),
+      precio_total: String(cotización.precio_total || cotización.monto || 0),
+      estado: cotización.estado || 'borrador',
+      fecha: cotización.fecha || today(),
+      fecha_inicio: cotización.fecha_inicio || cotización.fecha || today(),
+      fecha_fin: cotización.fecha_fin || '',
+      descripcion: cotización.descripcion || '',
+      validez: cotización.validez || ''
     });
   };
 
-  const handleAnular = async (cotizacion) => {
-    const confirmed = await showConfirm('Anular esta cotizacion la deja fuera del flujo comercial, sin borrar el historial.', 'Confirmar anulacion');
+  const handleAnular = async (cotización) => {
+    const confirmed = await showConfirm('Anular esta cotización la deja fuera del flujo comercial, sin borrar el historial.', 'Confirmar anulación');
     if (!confirmed) return;
     try {
-      await anularCotizacion(cotizacion.id);
+      await anularCotización(cotización.id);
       await refetch();
     } catch (error) {
       console.error('Error al anular:', error);
-      alert(error.message || 'No se pudo anular la cotizacion');
+      alert(error.message || 'No se pudo anular la cotización');
     }
   };
 
-  const handleConvertir = async (cotizacion) => {
-    const confirmed = await showConfirm('Aprobar cotizacion y generar proyecto + factura de venta automaticamente?', 'Confirmar aprobacion');
+  const handleConvertir = async (cotización) => {
+    const confirmed = await showConfirm('Aprobar cotización y generar proyecto + factura de venta automáticamente?', 'Confirmar aprobación');
     if (!confirmed) return;
 
     try {
-      await convertirCotizacion(cotizacion.id);
-      alert('Cotizacion aprobada. Se crearon automaticamente el proyecto y la factura de venta.');
+      await convertirCotización(cotización.id);
+      alert('Cotización aprobada. Se crearon automáticamente el proyecto y la factura de venta.');
       await refetch();
     } catch (error) {
       console.error('Error al aprobar:', error);
-      alert(error.message || 'No se pudo aprobar la cotizacion');
+      alert(error.message || 'No se pudo aprobar la cotización');
     }
   };
 
-  if (loading) return <div className="loading">Cargando cotizaciones...</div>;
+  if (loading) return <div className="loading">Cargando cotizaciónes...</div>;
 
   return (
-    <div className="cotizaciones-view">
+    <div className="cotizaciónes-view">
       <div className="view-header">
-        <h2>Cotizaciones</h2>
+        <h2>Cotizaciónes</h2>
         <button className="btn-primary" onClick={() => (showForm ? resetForm() : setShowForm(true))}>
-          {showForm ? 'Cancelar' : '+ Nueva cotizacion'}
+          {showForm ? 'Cancelar' : '+ Nueva cotización'}
         </button>
       </div>
 
@@ -174,11 +174,11 @@ const CotizacionesView = () => {
             <option value="">Lead / cliente *</option>
             {clientes.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
           </select>
-          <input name="titulo" placeholder="Titulo del proyecto *" required value={formData.titulo} onChange={handleChange} />
+          <input name="titulo" placeholder="Título del proyecto *" required value={formData.titulo} onChange={handleChange} />
           <div className="form-row">
             <select name="periodo_servicio" value={formData.periodo_servicio} onChange={handleChange}>
               <option value="horas">Servicio por horas</option>
-              <option value="dias">Servicio por dias</option>
+              <option value="dias">Servicio por días</option>
               <option value="semanas">Servicio por semanas</option>
             </select>
             <input name="cantidad" type="number" placeholder="Cantidad" value={formData.cantidad} onChange={handleChange} min="1" />
@@ -215,7 +215,7 @@ const CotizacionesView = () => {
             </div>
           )}
           <button type="submit" className="btn-primary" disabled={subiendoAdjunto}>
-            {subiendoAdjunto ? 'Subiendo archivo...' : editingId ? 'Actualizar cotizacion' : 'Crear cotizacion'}
+            {subiendoAdjunto ? 'Subiendo archivo...' : editingId ? 'Actualizar cotización' : 'Crear cotización'}
           </button>
         </form>
       )}
@@ -225,7 +225,7 @@ const CotizacionesView = () => {
           <thead>
             <tr>
               <th>Lead / Cliente</th>
-              <th>Titulo</th>
+              <th>Título</th>
               <th>Cantidad</th>
               <th>Unidad</th>
               <th>Precio unit.</th>
@@ -238,7 +238,7 @@ const CotizacionesView = () => {
             </tr>
           </thead>
           <tbody>
-            {cotizaciones.map(c => (
+            {cotizaciónes.map(c => (
               <tr key={c.id}>
                 <td className="cell-bold">{c.clienteNombre || c.cliente_nombre || '-'}</td>
                 <td>{c.titulo}</td>
@@ -293,4 +293,4 @@ const CotizacionesView = () => {
   );
 };
 
-export default CotizacionesView;
+export default CotizaciónesView;

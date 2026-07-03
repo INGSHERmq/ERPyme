@@ -1,5 +1,6 @@
 import { createContext, useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
+import { traducirError } from '../lib/errores';
 
 const ProjectContext = createContext();
 
@@ -20,7 +21,7 @@ export const ProjectProvider = ({ children }) => {
       setProyectos(data || []);
     } catch (err) {
       console.error('Error cargando proyectos:', err);
-      setError(err.message);
+      setError(traducirError(err));
     } finally {
       setLoading(false);
     }
@@ -35,13 +36,13 @@ export const ProjectProvider = ({ children }) => {
       .from('proyectos')
       .update(updates)
       .eq('id', id);
-    if (error) throw error;
+    if (error) throw new Error(traducirError(error));
     setProyectos(prev => prev.map(p => p.id === id ? { ...p, ...updates } : p));
   };
 
   const deleteProyecto = async (id) => {
     const { error } = await supabase.from('proyectos').delete().eq('id', id);
-    if (error) throw error;
+    if (error) throw new Error(traducirError(error));
     setProyectos(prev => prev.filter(p => p.id !== id));
   };
 

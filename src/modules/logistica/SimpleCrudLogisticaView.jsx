@@ -106,6 +106,17 @@ const SimpleCrudLogisticaView = ({ title, table, fields }) => {
                 >
                   {field.options?.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
                 </select>
+              ) : field.name === 'ruc' ? (
+                <input
+                  id={`${table}-${field.name}`}
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={11}
+                  required={field.required}
+                  placeholder={field.label}
+                  value={formData[field.name]}
+                  onChange={(event) => setFormData((prev) => ({ ...prev, [field.name]: event.target.value.replace(/\D/g, '').slice(0, 11) }))}
+                />
               ) : (
                 <input
                   id={`${table}-${field.name}`}

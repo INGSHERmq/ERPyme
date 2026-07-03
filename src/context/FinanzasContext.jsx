@@ -1,5 +1,7 @@
 import { createContext, useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
+import { traducirError } from '../lib/errores';
+import { validarCamposRequeridos } from '../lib/validacion';
 
 const FinanzasContext = createContext();
 
@@ -40,7 +42,7 @@ export const FinanzasProvider = ({ children }) => {
       });
     } catch (err) {
       console.error('Error cargando finanzas:', err);
-      setError(err.message);
+      setError(traducirError(err));
     } finally {
       setLoading(false);
     }
@@ -51,34 +53,59 @@ export const FinanzasProvider = ({ children }) => {
   }, []);
 
   const addIngreso = async (data) => {
+    const errores = validarCamposRequeridos(data, [
+      { nombre: 'concepto', etiqueta: 'Concepto' },
+      { nombre: 'monto', etiqueta: 'Monto' },
+    ]);
+    if (errores.length > 0) {
+      throw new Error(errores.join('\n'));
+    }
+
     const { data: nuevo, error } = await supabase
       .from('ingresos')
       .insert([{ ...data, fecha: data.fecha || new Date().toISOString().split('T')[0] }])
       .select()
       .single();
-    if (error) throw error;
+    if (error) throw new Error(traducirError(error));
     setIngresos(prev => [...prev, nuevo]);
     return nuevo;
   };
 
   const addEgreso = async (data) => {
+    const errores = validarCamposRequeridos(data, [
+      { nombre: 'concepto', etiqueta: 'Concepto' },
+      { nombre: 'monto', etiqueta: 'Monto' },
+    ]);
+    if (errores.length > 0) {
+      throw new Error(errores.join('\n'));
+    }
+
     const { data: nuevo, error } = await supabase
       .from('egresos')
       .insert([{ ...data, fecha: data.fecha || new Date().toISOString().split('T')[0] }])
       .select()
       .single();
-    if (error) throw error;
+    if (error) throw new Error(traducirError(error));
     setEgresos(prev => [...prev, nuevo]);
     return nuevo;
   };
 
   const addCuentaPorCobrar = async (data) => {
+    const errores = validarCamposRequeridos(data, [
+      { nombre: 'concepto', etiqueta: 'Concepto' },
+      { nombre: 'monto', etiqueta: 'Monto' },
+      { nombre: 'cliente_id', etiqueta: 'Cliente', alias: 'clienteId' },
+    ]);
+    if (errores.length > 0) {
+      throw new Error(errores.join('\n'));
+    }
+
     const { data: nueva, error } = await supabase
       .from('cuentas_por_cobrar')
       .insert([{ ...data, fecha_emision: data.fecha_emision || new Date().toISOString().split('T')[0], estado: 'Pendiente' }])
       .select()
       .single();
-    if (error) throw error;
+    if (error) throw new Error(traducirError(error));
     setCuentasPorCobrar(prev => [...prev, nueva]);
     return nueva;
   };
@@ -88,7 +115,7 @@ export const FinanzasProvider = ({ children }) => {
       .from('cuentas_por_cobrar')
       .update({ estado: 'Cobrada' })
       .eq('id', id);
-    if (error) throw error;
+    if (error) throw new Error(traducirError(error));
     setCuentasPorCobrar(prev => prev.map(c => c.id === id ? { ...c, estado: 'Cobrada' } : c));
   };
 

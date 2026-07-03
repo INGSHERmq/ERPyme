@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../../context/auth/useAuth';
 import { APP_FEATURES, ERP_MODULES, getPlanConfig } from '../../config/modules';
 import { formatTrialDate, getTrialStatus } from '../../lib/trial';
+import { traducirError } from '../../lib/errores';
 import './AdminView.css';
 
 const COMPANY_OWNER_ROLES = ['owner', 'super_admin'];
@@ -70,7 +71,7 @@ const AdminView = ({ onBack }) => {
       setUsers(data);
       if (!selectedUserId && data.length > 0) setSelectedUserId(data[0].user_id);
     } catch (loadError) {
-      setError(loadError.message || 'No se pudo cargar usuarios');
+      setError(traducirError(loadError));
     } finally {
       setLoading(false);
     }
@@ -120,7 +121,7 @@ const AdminView = ({ onBack }) => {
       setMessage('Usuario creado correctamente y vinculado a Supabase Auth.');
       await loadUsers();
     } catch (createError) {
-      setError(createError.message || 'No se pudo crear el usuario');
+      setError(traducirError(createError));
     } finally {
       setLoading(false);
     }
@@ -141,7 +142,7 @@ const AdminView = ({ onBack }) => {
       setMessage(`Estado actualizado a ${nextStatus}.`);
       await loadUsers();
     } catch (statusError) {
-      setError(statusError.message || 'No se pudo actualizar estado');
+      setError(traducirError(statusError));
     } finally {
       setLoading(false);
     }
@@ -159,10 +160,10 @@ const AdminView = ({ onBack }) => {
     setLoading(true);
     try {
       await updateManagedUserModules(modalUser.user_id, enabledKeys);
-      setMessage('Permisos de modulos actualizados.');
+      setMessage('Permisos de módulos actualizados.');
       await loadUsers();
     } catch (moduleError) {
-      setError(moduleError.message || 'No se pudo actualizar modulos');
+      setError(traducirError(moduleError));
     } finally {
       setLoading(false);
     }
@@ -183,7 +184,7 @@ const AdminView = ({ onBack }) => {
       setMessage('Permisos por apartado actualizados.');
       await loadUsers();
     } catch (featureError) {
-      setError(featureError.message || 'No se pudo actualizar apartados');
+      setError(traducirError(featureError));
     } finally {
       setLoading(false);
     }
@@ -210,12 +211,12 @@ const AdminView = ({ onBack }) => {
     if (!modalUser) return;
 
     if (passwordForm.password.length < 8) {
-      setError('La contrasena debe tener al menos 8 caracteres.');
+      setError('La contraseña debe tener al menos 8 caracteres.');
       return;
     }
 
     if (passwordForm.password !== passwordForm.confirmPassword) {
-      setError('Las contrasenas no coinciden.');
+      setError('Las contraseñas no coinciden.');
       return;
     }
 
@@ -227,7 +228,7 @@ const AdminView = ({ onBack }) => {
       setMessage('Contrasena actualizada correctamente.');
       setPasswordForm({ password: '', confirmPassword: '' });
     } catch (passwordError) {
-      setError(passwordError.message || 'No se pudo actualizar la contrasena');
+      setError(traducirError(passwordError));
     } finally {
       setLoading(false);
     }
@@ -393,7 +394,7 @@ const AdminView = ({ onBack }) => {
                     event.stopPropagation();
                     openUserModal(entry.user_id);
                   }}>
-                    Permisos y contrasena
+                    Permisos y contraseña
                   </button>
                 </div>
               </article>
@@ -415,7 +416,7 @@ const AdminView = ({ onBack }) => {
             </p>
             {!canEditModalUserAccess && (
               <p className="admin-modal-subtitle">
-                Este perfil es <strong>{modalUser.rol}</strong>: no aplica gestion granular en esta vista.
+                Este perfil es <strong>{modalUser.rol}</strong>: no aplica gestión granular en esta vista.
               </p>
             )}
 
@@ -450,19 +451,19 @@ const AdminView = ({ onBack }) => {
             </div>
 
             <form className="admin-password-form" onSubmit={handleChangePassword}>
-              <h3>Cambiar contrasena</h3>
+              <h3>Cambiar contraseña</h3>
               <div className="admin-form-row">
                 <label>
-                  Nueva contrasena
+                  Nueva contraseña
                   <input type="password" name="password" value={passwordForm.password} onChange={handlePasswordInput} minLength={8} required disabled={loading} />
                 </label>
                 <label>
-                  Confirmar contrasena
+                  Confirmar contraseña
                   <input type="password" name="confirmPassword" value={passwordForm.confirmPassword} onChange={handlePasswordInput} minLength={8} required disabled={loading} />
                 </label>
               </div>
               <button type="submit" className="admin-primary" disabled={loading}>
-                {loading ? 'Guardando...' : 'Actualizar contrasena'}
+                {loading ? 'Guardando...' : 'Actualizar contraseña'}
               </button>
             </form>
           </section>

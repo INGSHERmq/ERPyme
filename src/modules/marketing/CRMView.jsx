@@ -111,7 +111,7 @@ const CRMView = () => {
           <span>Inscripcion comercial</span>
         </div>
         <p className="crm-hint">
-          Registra aqui al prospecto. Al guardar, quedara inscrito para que puedas crear su cotizacion.
+          Registra aquí al prospecto. Al guardar, quedará inscrito para que puedas crear su cotizacion.
         </p>
         <form className="crm-form" onSubmit={submitLead}>
           <input name="nombre" placeholder="Empresa o persona *" required value={leadForm.nombre} onChange={handleLeadChange} />
@@ -126,7 +126,7 @@ const CRMView = () => {
             name="dni_ruc"
             inputMode="numeric"
             maxLength={documentLimit}
-            placeholder={leadForm.tipo_identificacion === 'RUC' ? 'RUC (11 digitos)' : 'DNI (8 digitos)'}
+            placeholder={leadForm.tipo_identificacion === 'RUC' ? 'RUC (11 dígitos)' : 'DNI (8 dígitos)'}
             value={leadForm.dni_ruc}
             onChange={handleLeadChange}
           />

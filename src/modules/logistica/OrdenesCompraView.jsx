@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../context/auth/useAuth';
 import useProjects from '../../hooks/useProjects';
+import { traducirError } from '../../lib/errores';
+import { validarCamposRequeridos } from '../../lib/validacion';
 import {
   datetimeLocalToAppIso,
   formatDateTimeInAppTimeZone,
@@ -83,6 +85,18 @@ const OrdenesCompraView = () => {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+    
+    const errores = validarCamposRequeridos(formData, [
+      { nombre: 'nombre_compra', etiqueta: 'Nombre de compra' },
+      { nombre: 'proveedor_id', etiqueta: 'Proveedor' },
+      { nombre: 'serie', etiqueta: 'Serie' },
+      { nombre: 'correlativo', etiqueta: 'Correlativo' },
+    ]);
+    if (errores.length > 0) {
+      alert(errores.join('\n'));
+      return;
+    }
+
     const total = Number(formData.cantidad || 0) * Number(formData.costo_unitario || 0);
     const empresaId = membership?.empresa_id || profile?.empresa_actual_id;
     const cleanSerie = formData.serie.toUpperCase().trim();
@@ -106,7 +120,7 @@ const OrdenesCompraView = () => {
     }]).select().single();
 
     if (ordenError) {
-      alert(ordenError.message || 'No se pudo crear la orden');
+      alert(traducirError(ordenError));
       return;
     }
 
@@ -121,7 +135,7 @@ const OrdenesCompraView = () => {
     }]);
 
     if (materialError) {
-      alert(materialError.message || 'Se creó la orden, pero falló el registro del material');
+      alert(traducirError(materialError));
     }
 
     setFormData({ tipo_comprobante: '01', serie: '', correlativo: '', nombre_compra: '', proveedor_id: '', proyecto_id: '', fecha: getTodayInAppTimeZone(), fecha_vencimiento: '', cantidad: '1', costo_unitario: '0' });
@@ -169,7 +183,7 @@ const OrdenesCompraView = () => {
 
     if (error) {
       setEnviandoOrdenId(null);
-      alert(error.message || 'No se pudo enviar la orden a contabilidad');
+      alert(traducirError(error));
       return;
     }
 

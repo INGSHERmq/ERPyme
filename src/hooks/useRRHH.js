@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/auth/useAuth';
+import { traducirError } from '../lib/errores';
+import { validarCamposRequeridos } from '../lib/validacion';
 
 const useRRHH = () => {
   const { user, company, profile } = useAuth();
@@ -75,7 +77,7 @@ const useRRHH = () => {
       });
     } catch (err) {
       console.error('Error cargando RRHH:', err);
-      setError(err.message);
+      setError(traducirError(err));
     } finally {
       setLoading(false);
     }
@@ -88,6 +90,14 @@ const useRRHH = () => {
   const addEmpleado = async (data) => {
     if (!user?.id) throw new Error('Usuario no autenticado');
     
+    const errores = validarCamposRequeridos(data, [
+      { nombre: 'nombre', etiqueta: 'Nombre del empleado' },
+      { nombre: 'salario', etiqueta: 'Salario' },
+    ]);
+    if (errores.length > 0) {
+      throw new Error(errores.join('\n'));
+    }
+
     const { data: nuevo, error } = await supabase
       .from('empleados')
       .insert([{
@@ -99,7 +109,7 @@ const useRRHH = () => {
       }])
       .select()
       .single();
-    if (error) throw error;
+    if (error) throw new Error(traducirError(error));
     setEmpleados(prev => [...prev, nuevo]);
     return nuevo;
   };
@@ -115,7 +125,7 @@ const useRRHH = () => {
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) throw new Error(traducirError(error));
     setEmpleados(prev => prev.map(empleado => (Number(empleado.id) === Number(empleadoId) ? { ...empleado, ...actualizado } : empleado)));
     return actualizado;
   };
@@ -128,12 +138,19 @@ const useRRHH = () => {
   const registrarAsistencia = async (data) => {
     if (!user?.id) throw new Error('Usuario no autenticado');
     
+    const errores = validarCamposRequeridos(data, [
+      { nombre: 'empleado_id', etiqueta: 'Empleado' },
+    ]);
+    if (errores.length > 0) {
+      throw new Error(errores.join('\n'));
+    }
+
     const { data: nueva, error } = await supabase
       .from('asistencias')
       .insert([{ ...data, user_id: user.id, empresa_id: empresaIdActual, fecha: data.fecha || new Date().toISOString().split('T')[0] }])
       .select()
       .single();
-    if (error) throw error;
+    if (error) throw new Error(traducirError(error));
     setAsistencias(prev => [...prev, nueva]);
     return nueva;
   };
@@ -142,6 +159,14 @@ const useRRHH = () => {
     if (!user?.id) throw new Error('Usuario no autenticado');
     
     try {
+      const errores = validarCamposRequeridos(data, [
+        { nombre: 'empleado_id', etiqueta: 'Empleado' },
+        { nombre: 'proyecto_id', etiqueta: 'Proyecto' },
+      ]);
+      if (errores.length > 0) {
+        throw new Error(errores.join('\n'));
+      }
+
       const { data: existente, error: fetchError } = await supabase
         .from('asignaciones_proyecto')
         .select('*')
@@ -170,7 +195,7 @@ const useRRHH = () => {
           .select()
           .single();
         
-        if (updateError) throw updateError;
+        if (updateError) throw new Error(traducirError(updateError));
         resultado = actualizado;
         setAsignaciones(prev => prev.map(a => a.id === existente.id ? actualizado : a));
       } else {
@@ -191,7 +216,7 @@ const useRRHH = () => {
           .select()
           .single();
         
-        if (insertError) throw insertError;
+        if (insertError) throw new Error(traducirError(insertError));
         resultado = nuevo;
         setAsignaciones(prev => [...prev, nuevo]);
       }
@@ -214,7 +239,7 @@ const useRRHH = () => {
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) throw new Error(traducirError(error));
     setAsignaciones(prev => prev.map(asignacion => (
       Number(asignacion.id) === Number(asignacionId) ? { ...asignacion, ...actualizada } : asignacion
     )));
@@ -226,6 +251,15 @@ const useRRHH = () => {
   const registrarIncidente = async (data) => {
     if (!user?.id) throw new Error('Usuario no autenticado');
     
+    const errores = validarCamposRequeridos(data, [
+      { nombre: 'empleado_id', etiqueta: 'Empleado' },
+      { nombre: 'tipo', etiqueta: 'Tipo de incidente' },
+      { nombre: 'descripcion', etiqueta: 'Descripción' },
+    ]);
+    if (errores.length > 0) {
+      throw new Error(errores.join('\n'));
+    }
+
     const { data: nuevo, error } = await supabase
       .from('registro_accidentes')
       .insert([{
@@ -238,7 +272,7 @@ const useRRHH = () => {
       }])
       .select()
       .single();
-    if (error) throw error;
+    if (error) throw new Error(traducirError(error));
     setIncidentes(prev => [...prev, nuevo]);
     return nuevo;
   };

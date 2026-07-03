@@ -3,6 +3,7 @@ import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../context/auth/useAuth';
 import useProjects from '../../hooks/useProjects';
 import { useNotification } from '../../context/NotificationContext';
+import { traducirError } from '../../lib/errores';
 import {
   datetimeLocalToAppIso,
   formatDateTimeInAppTimeZone,
@@ -74,7 +75,7 @@ const FacturasCompraView = () => {
 
     if (facturaError) {
       setPayingId(null);
-      alert(facturaError.message || 'No se pudo marcar como pagada');
+      alert(traducirError(facturaError));
       return;
     }
 
@@ -86,7 +87,7 @@ const FacturasCompraView = () => {
         .eq('estado', 'pendiente_contabilidad');
       if (materialError) {
         setPayingId(null);
-        alert(materialError.message || 'Se pagó, pero no se pudo enviar a Materiales');
+        alert(traducirError(materialError));
         return;
       }
       await supabase.from('ordenes_compra').update({ estado: 'Pagado' }).eq('id', row.orden_compra_id);
@@ -108,7 +109,7 @@ const FacturasCompraView = () => {
 
     if (facturaError) {
       setPayingId(null);
-      alert(facturaError.message || 'No se pudo cancelar');
+      alert(traducirError(facturaError));
       return;
     }
 
@@ -141,7 +142,7 @@ const FacturasCompraView = () => {
       total: Number(formData.total || 0)
     }]);
     if (error) {
-      alert(error.message || 'No se pudo registrar');
+      alert(traducirError(error));
       return;
     }
     setFormData({ serie: '', correlativo: '', tipo_comprobante: '01', orden_compra_id: '', proveedor_id: '', proyecto_id: '', fecha_emision: getTodayInAppTimeZone(), fecha_vencimiento: '', total: '0' });

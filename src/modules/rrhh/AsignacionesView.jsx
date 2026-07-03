@@ -100,7 +100,7 @@ const AsignacionesView = () => {
       await desactivarAsignacionProyecto(asignacion.id);
       await refetch();
     } catch (error) {
-      alert(error.message || 'No se pudo desactivar la asignacion');
+      alert(error.message || 'No se pudo desactivar la asignación');
     }
   };
 
@@ -191,20 +191,20 @@ const AsignacionesView = () => {
           <div className="form-field">
             <label>Tipo de horas</label>
             <select value={formData.tipo_asignacion} onChange={e => setFormData({ ...formData, tipo_asignacion: e.target.value })}>
-              <option value="horas_dia">Horas por dia</option>
+              <option value="horas_día">Horas por día</option>
               <option value="horas_semana">Horas por semana</option>
             </select>
           </div>
 
           <div className="form-field">
-            <label>{formData.tipo_asignacion === 'horas_dia' ? 'Horas por dia' : 'Horas por semana'}</label>
+            <label>{formData.tipo_asignacion === 'horas_día' ? 'Horas por día' : 'Horas por semana'}</label>
             <input
               type="number"
-              placeholder={formData.tipo_asignacion === 'horas_dia' ? 'Ej. 8' : 'Ej. 40'}
+              placeholder={formData.tipo_asignacion === 'horas_día' ? 'Ej. 8' : 'Ej. 40'}
               value={formData.horas_semanales}
               onChange={e => setFormData({ ...formData, horas_semanales: Number(e.target.value) })}
               min="1"
-              max={formData.tipo_asignacion === 'horas_dia' ? '24' : '80'}
+              max={formData.tipo_asignacion === 'horas_día' ? '24' : '80'}
             />
           </div>
 
@@ -234,7 +234,7 @@ const AsignacionesView = () => {
                 <td>{a.rol}</td>
                 <td>{a.fecha_inicio ? new Date(a.fecha_inicio).toLocaleDateString('es-ES') : '-'}</td>
                 <td>{a.fecha_fin ? new Date(a.fecha_fin).toLocaleDateString('es-ES') : 'Indefinido'}</td>
-                <td>{a.horas_semanales}h {a.tipo_asignacion === 'horas_dia' ? '/ dia' : '/ sem'}</td>
+                <td>{a.horas_semanales}h {a.tipo_asignacion === 'horas_día' ? '/ día' : '/ sem'}</td>
                 <td><span className={`badge badge-${a.estado === 'Activo' ? 'green' : 'gray'}`}>{a.estado}</span></td>
                 <td>
                   <div className="document-status">

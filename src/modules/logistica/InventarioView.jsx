@@ -10,7 +10,7 @@ const InventarioView = () => {
     <div className="logistica-view">
       <div className="view-header">
         <h2>Equipos</h2>
-        <span className="view-hint">Se actualiza automaticamente desde Productos e inventario.</span>
+        <span className="view-hint">Se actualiza automáticamente desde Productos e inventario.</span>
       </div>
 
       <div className="table-responsive">

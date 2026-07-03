@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import './Notification.css';
+import { traducirError } from '../lib/errores';
 
 const NotificationContext = createContext();
 
@@ -18,10 +19,13 @@ export const NotificationProvider = ({ children }) => {
   const showNotification = useCallback((message, type = 'info', duration = 4000) => {
     const id = Date.now() + Math.random().toString(36).substr(2, 9);
     
+    // Traducir errores técnicos a mensajes amigables en español
+    const mensajeFinal = traducirError(message);
+
     // Auto-detect type based on message keywords
     let detectedType = type;
     if (type === 'info') {
-      const msgLower = message.toLowerCase();
+      const msgLower = mensajeFinal.toLowerCase();
       if (
         msgLower.includes('error') ||
         msgLower.includes('falló') ||
@@ -53,7 +57,7 @@ export const NotificationProvider = ({ children }) => {
       }
     }
 
-    setToasts((prev) => [...prev, { id, message, type: detectedType }]);
+    setToasts((prev) => [...prev, { id, message: mensajeFinal, type: detectedType }]);
 
     setTimeout(() => {
       removeNotification(id);

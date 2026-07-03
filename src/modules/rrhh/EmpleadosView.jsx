@@ -162,7 +162,7 @@ const EmpleadosView = () => {
     } catch (error) {
       console.error('Error al guardar empleado:', error);
       if (error?.code === '23505') {
-        alert('Error: el correo o usuario ya esta vinculado a otro empleado.');
+        alert('Error: el correo o usuario ya está vinculado a otro empleado.');
       } else {
         alert(`Error al registrar el empleado: ${error?.message || 'Error desconocido'}`);
       }
@@ -229,7 +229,7 @@ const EmpleadosView = () => {
   return (
     <div className="rrhh-view">
       <div className="view-header">
-        <h2>Gestion de Empleados</h2>
+        <h2>Gestión de empleados</h2>
         <button className="btn-primary" onClick={() => {
           if (showForm) {
             setEditingId(null);
@@ -275,12 +275,12 @@ const EmpleadosView = () => {
             <input id="emp-email" name="email" type="email" placeholder="Email corporativo *" required value={formData.email} onChange={handleChange} />
           </div>
           <div className="form-field">
-            <label htmlFor="emp-telefono">Telefono</label>
-            <input id="emp-telefono" name="telefono" placeholder="Telefono" value={formData.telefono} onChange={handleChange} />
+            <label htmlFor="emp-telefono">Teléfono</label>
+            <input id="emp-telefono" name="telefono" placeholder="Teléfono" value={formData.telefono} onChange={handleChange} />
           </div>
           <div className="form-field form-field-wide">
-            <label htmlFor="emp-direccion">Direccion</label>
-            <input id="emp-direccion" name="direccion" placeholder="Direccion" value={formData.direccion} onChange={handleChange} />
+            <label htmlFor="emp-direccion">Dirección</label>
+            <input id="emp-direccion" name="direccion" placeholder="Dirección" value={formData.direccion} onChange={handleChange} />
           </div>
           <div className="form-field">
             <label htmlFor="emp-cargo">Cargo *</label>
@@ -361,7 +361,7 @@ const EmpleadosView = () => {
               alert(error.message || 'No se pudo crear la solicitud');
               return;
             }
-            alert('Solicitud creada. El empleado vera la alerta al iniciar sesion.');
+            alert('Solicitud creada. El empleado verá la alerta al iniciar sesión.');
             setSolicitudEmpleadoId(null);
             setFechaLimite('');
             await cargarEstadoDocumentos();

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../context/auth/useAuth';
+import { traducirError } from '../../lib/errores';
 
 const AnaliticaProyectoView = () => {
   const { user, membership, profile } = useAuth();
@@ -77,7 +78,7 @@ const AnaliticaProyectoView = () => {
       setRows(await buildRowsFromTables());
     } catch (err) {
       console.error('Error cargando analítica por proyecto:', err);
-      setError(err.message || 'No se pudo cargar la analítica');
+      setError(traducirError(err));
       setRows([]);
     } finally {
       setLoading(false);
