@@ -71,7 +71,7 @@ const DashboardMarketing = () => {
         </div>
         <div className="kpi-card kpi-blue">
           <span className="kpi-label">Monto aceptado</span>
-          <span className="kpi-value">S/ {stats.montoAceptado.toLocaleString()}</span>
+          <span className="kpi-value">S/ {stats.montoAceptado.toLocaleString('en-US')}</span>
         </div>
         <div className="kpi-card kpi-orange">
           <span className="kpi-label">Proyectos activos</span>

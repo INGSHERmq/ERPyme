@@ -140,7 +140,7 @@ const MaterialesView = () => {
                 <td className="cell-bold">{row.descripcion}</td>
                 <td>{proyectos.find((p) => Number(p.id) === Number(row.proyecto_id || ordenes.find((orden) => orden.id === row.orden_compra_id)?.proyecto_id))?.nombre_mostrar || proyectos.find((p) => Number(p.id) === Number(row.proyecto_id || ordenes.find((orden) => orden.id === row.orden_compra_id)?.proyecto_id))?.nombre || '-'}</td>
                 <td>{row.cantidad}</td>
-                <td>S/ {Number(row.costo_unitario || 0).toLocaleString()}</td>
+                <td>S/ {Number(row.costo_unitario || 0).toLocaleString('en-US')}</td>
                 <td>{row.estado}</td>
                 <td>
                   {row.estado === 'aceptada' ? (

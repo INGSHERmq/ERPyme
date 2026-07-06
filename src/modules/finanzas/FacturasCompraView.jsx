@@ -268,7 +268,7 @@ const FacturasCompraView = () => {
                 <td>{row.estado === 'registrada' ? 'en proceso' : row.estado}</td>
                 <td>{row.fecha_emision}</td>
                 <td>{formatDateTimeInAppTimeZone(row.fecha_vencimiento)}</td>
-                <td>S/ {Number(row.total || 0).toLocaleString()}</td>
+                <td>S/ {Number(row.total || 0).toLocaleString('en-US')}</td>
                  <td>
                   <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                     {row.estado === 'pagada' ? (

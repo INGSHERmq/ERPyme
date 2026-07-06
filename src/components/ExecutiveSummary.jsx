@@ -119,7 +119,10 @@ const ExecutiveSummary = ({ userId, compact = false, onNavigate }) => {
   const renderOverduePopover = () => {
     if (!showOverduePopover || summary.overdue.length === 0) return null;
     const totalOverdue = summary.overdue.reduce((sum, item) => sum + Number(item.monto || 0), 0);
-    const currencyFormatter = new Intl.NumberFormat('es-PE', { style: 'currency', currency: 'PEN' });
+    const formatCurrency = (value) => {
+      const num = Number(value || 0);
+      return `S/ ${num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    };
     return (
       <div className="risks-popover-backdrop" onClick={() => setShowOverduePopover(false)}>
         <div className="risks-popover-card" onClick={(e) => e.stopPropagation()}>
@@ -132,7 +135,7 @@ const ExecutiveSummary = ({ userId, compact = false, onNavigate }) => {
           </header>
           <div className="risks-popover-body">
             <p className="popover-intro">
-              <strong>{summary.overdue.length}</strong> factura{summary.overdue.length === 1 ? '' : 's'} vencida{summary.overdue.length === 1 ? '' : 's'} por un total de <strong>{currencyFormatter.format(totalOverdue)}</strong>:
+              <strong>{summary.overdue.length}</strong> factura{summary.overdue.length === 1 ? '' : 's'} vencida{summary.overdue.length === 1 ? '' : 's'} por un total de <strong>{formatCurrency(totalOverdue)}</strong>:
             </p>
             <div className="popover-projects-list">
               {summary.overdue.map((item) => {
@@ -168,7 +171,7 @@ const ExecutiveSummary = ({ userId, compact = false, onNavigate }) => {
                     </div>
                     <div className="popover-delayed-tasks">
                       <div className="popover-task-item" style={{ borderLeftColor: '#ff4d6a' }}>
-                        <span className="popover-task-title">{currencyFormatter.format(Number(item.monto || 0))}</span>
+                        <span className="popover-task-title">{formatCurrency(Number(item.monto || 0))}</span>
                         <span className="popover-task-info">
                           {item.tipo === 'compra' ? 'Factura de compra' : 'Cuenta por cobrar'}
                           {item.cliente_id ? ` | Cliente ID: ${item.cliente_id}` : ''}

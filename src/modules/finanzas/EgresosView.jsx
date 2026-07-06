@@ -48,7 +48,7 @@ const EgresosView = () => {
               <tr key={e.id}>
                 <td className="cell-bold">{e.concepto}</td>
                 <td>{e.categoria}</td>
-                <td><strong className="text-red">-S/ {e.monto.toLocaleString()}</strong></td>
+                <td><strong className="text-red">-S/ {e.monto.toLocaleString('en-US')}</strong></td>
                 <td>{e.fecha}</td>
                 <td>{e.tipo}</td>
                 <td>{e.metodo}</td>

@@ -163,7 +163,7 @@ const FacturasVentaView = () => {
                 <td>{clientes.find((c) => c.id === row.cliente_id)?.nombre || '-'}</td>
                 <td>{row.estado === 'emitida' ? 'en proceso' : row.estado}</td>
                 <td>{row.fecha_emision}</td>
-                <td>S/ {Number(row.total || 0).toLocaleString()}</td>
+                <td>S/ {Number(row.total || 0).toLocaleString('en-US')}</td>
                 <td>
                   {row.estado === 'cobrada' ? (
                     <span className="badge badge-green">Cobrada</span>

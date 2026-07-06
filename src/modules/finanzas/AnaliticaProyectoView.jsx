@@ -112,11 +112,11 @@ const AnaliticaProyectoView = () => {
             {rows.map((r) => (
               <tr key={r.proyecto_id}>
                 <td className="cell-bold">{r.proyecto_nombre}</td>
-                <td>S/ {Number(r.ingresos_cobrados || 0).toLocaleString()}</td>
-                <td>S/ {Number(r.egresos || 0).toLocaleString()}</td>
+                <td>S/ {Number(r.ingresos_cobrados || 0).toLocaleString('en-US')}</td>
+                <td>S/ {Number(r.egresos || 0).toLocaleString('en-US')}</td>
                 <td>
                   <span className={`badge ${Number(r.utilidad || 0) >= 0 ? 'badge-green' : 'badge-red'}`}>
-                    S/ {Number(r.utilidad || 0).toLocaleString()}
+                    S/ {Number(r.utilidad || 0).toLocaleString('en-US')}
                   </span>
                 </td>
               </tr>

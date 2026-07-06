@@ -36,7 +36,7 @@ const InventarioView = () => {
                   <small className="text-muted">{a.modelo || ''}</small>
                 </td>
                 <td>{a.ubicacion || '-'}</td>
-                <td>S/ {a.costo?.toLocaleString() || 0}</td>
+                <td>S/ {a.costo?.toLocaleString('en-US') || 0}</td>
                 <td>{a.stockActual ?? 0} {a.unidad || ''}</td>
                 <td>
                   <span className={`badge badge-${

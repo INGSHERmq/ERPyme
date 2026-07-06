@@ -273,7 +273,7 @@ const OrdenesCompraView = () => {
           </div>
           <div className="form-field">
             <label>Total Calculado</label>
-            <div className="form-total">S/ {Number((Number(formData.cantidad || 0) * Number(formData.costo_unitario || 0)).toFixed(2)).toLocaleString()}</div>
+            <div className="form-total">S/ {Number((Number(formData.cantidad || 0) * Number(formData.costo_unitario || 0)).toFixed(2)).toLocaleString('en-US')}</div>
           </div>
           <div></div>
 
@@ -313,7 +313,7 @@ const OrdenesCompraView = () => {
                 <td>{orden.fecha}</td>
                 <td>{formatDateTimeInAppTimeZone(orden.fecha_vencimiento)}</td>
                 <td>{materialesPorOrden[orden.id]?.cantidad ?? '-'}</td>
-                <td>S/ {Number(materialesPorOrden[orden.id]?.costo_unitario || 0).toLocaleString()}</td>
+                <td>S/ {Number(materialesPorOrden[orden.id]?.costo_unitario || 0).toLocaleString('en-US')}</td>
                 <td>
                   <span className={`estado-badge ${
                     orden.estado === 'Pagado' ? 'estado-pagado' : 
@@ -382,7 +382,7 @@ const OrdenesCompraView = () => {
               </label>
               <label>
                 Total
-                <input type="text" readOnly value={`S/ ${Number((Number(materialesPorOrden[convertingOrden.id]?.cantidad || 0) * Number(materialesPorOrden[convertingOrden.id]?.costo_unitario || 0)).toFixed(2)).toLocaleString()}`} className="input-readonly" />
+                <input type="text" readOnly value={`S/ ${Number((Number(materialesPorOrden[convertingOrden.id]?.cantidad || 0) * Number(materialesPorOrden[convertingOrden.id]?.costo_unitario || 0)).toFixed(2)).toLocaleString('en-US')}`} className="input-readonly" />
               </label>
               <button type="submit" className="btn-primary" disabled={enviandoOrdenId === convertingOrden.id}>
                 {enviandoOrdenId === convertingOrden.id ? 'Registrando...' : 'Registrar Comprobante'}

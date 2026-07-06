@@ -6,11 +6,10 @@ import {
   toAppDateKey
 } from '../../lib/dates';
 
-const currencyFormatter = new Intl.NumberFormat('es-PE', {
-  style: 'currency',
-  currency: 'PEN',
-  maximumFractionDigits: 0
-});
+const formatCurrency = (value) => {
+  const num = Number(value || 0);
+  return `S/ ${num.toLocaleString('en-US', { maximumFractionDigits: 0 })}`;
+};
 
 const daysBetween = (dateValue, reference = new Date()) => {
   if (!dateValue) return null;
@@ -265,11 +264,11 @@ export const generateExecutiveSummary = async (userId) => {
   const actions = [];
 
   if (dueToday.length) {
-    highlights.push(`${dueToday.length} factura${dueToday.length === 1 ? '' : 's'} vencen hoy por ${currencyFormatter.format(totalDueToday)}.`);
+    highlights.push(`${dueToday.length} factura${dueToday.length === 1 ? '' : 's'} vencen hoy por ${formatCurrency(totalDueToday)}.`);
     actions.push('Revisar las facturas pendientes que vencen hoy.');
   }
   if (overdue.length) {
-    highlights.push(`${overdue.length} cobranza${overdue.length === 1 ? '' : 's'} ya vencida${overdue.length === 1 ? '' : 's'} suman ${currencyFormatter.format(totalOverdue)}.`);
+    highlights.push(`${overdue.length} cobranza${overdue.length === 1 ? '' : 's'} ya vencida${overdue.length === 1 ? '' : 's'} suman ${formatCurrency(totalOverdue)}.`);
     actions.push('Priorizar seguimiento de cobranzas vencidas antes de nuevas ventas.');
   }
   if (projectRisks.length) {
@@ -296,7 +295,7 @@ export const generateExecutiveSummary = async (userId) => {
   }
   if (purchaseDueSoon.length) {
     const totalPurchasesDue = purchaseDueSoon.reduce((sum, item) => sum + numberValue(item.total), 0);
-    highlights.push(`${purchaseDueSoon.length} factura${purchaseDueSoon.length === 1 ? '' : 's'} de compra vencen en los proximos 7 dias por ${currencyFormatter.format(totalPurchasesDue)}.`);
+    highlights.push(`${purchaseDueSoon.length} factura${purchaseDueSoon.length === 1 ? '' : 's'} de compra vencen en los proximos 7 dias por ${formatCurrency(totalPurchasesDue)}.`);
     actions.push('Revisar vencimientos de ordenes de compra antes del cierre contable.');
   }
   if (!highlights.length) {

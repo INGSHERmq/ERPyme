@@ -3,11 +3,10 @@ import useMarketing from '../../hooks/useMarketing';
 import { classifyOpportunity, scoreQuotationAcceptance } from '../assistant/executiveSummary';
 import './LeadScoringView.css';
 
-const currencyFormatter = new Intl.NumberFormat('es-PE', {
-  style: 'currency',
-  currency: 'PEN',
-  maximumFractionDigits: 0
-});
+const formatCurrency = (value) => {
+  const num = Number(value || 0);
+  return num.toLocaleString('en-US', { maximumFractionDigits: 0 });
+};
 
 const statusLabel = {
   borrador: 'Pendiente',
@@ -108,7 +107,7 @@ const LeadScoringView = () => {
         </article>
         <article>
           <span>Valor esperado pendiente</span>
-          <strong>{currencyFormatter.format(metrics.weightedPipeline)}</strong>
+          <strong>S/ {formatCurrency(metrics.weightedPipeline)}</strong>
         </article>
       </section>
 
@@ -154,7 +153,7 @@ const LeadScoringView = () => {
                   <tr key={row.id}>
                     <td className="cell-bold">{row.titulo}</td>
                     <td>{row.cliente_nombre || row.customer?.nombre || row.lead?.nombre || 'Sin cliente'}</td>
-                    <td>{currencyFormatter.format(Number(row.precio_total || row.monto || 0))}</td>
+                    <td>S/ {formatCurrency(Number(row.precio_total || row.monto || 0))}</td>
                     <td>{statusLabel[(row.estado || '').toLowerCase()] || row.estado || 'Pendiente'}</td>
                     <td>
                       <div className="score-cell">

@@ -244,8 +244,8 @@ const CotizaciónesView = () => {
                 <td>{c.titulo}</td>
                 <td>{c.cantidad || '-'}</td>
                 <td>{c.periodo_servicio || c.unidad || '-'}</td>
-                <td>S/ {Number(c.precio_unitario || 0).toLocaleString()}</td>
-                <td><strong>S/ {Number(c.precio_total || c.monto || 0).toLocaleString()}</strong></td>
+                <td>S/ {Number(c.precio_unitario || 0).toLocaleString('en-US')}</td>
+                <td><strong>S/ {Number(c.precio_total || c.monto || 0).toLocaleString('en-US')}</strong></td>
                 <td>
                   <span className={`badge badge-${
                     c.estado === 'aprobada' ? 'green' : c.estado === 'rechazada' || c.estado === 'vencida' ? 'red' : 'yellow'

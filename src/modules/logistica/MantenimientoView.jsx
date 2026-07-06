@@ -194,7 +194,7 @@ const MantenimientoView = () => {
                 <td className="cell-bold">{m.activoNombre || '—'}</td>
                 <td>{m.tipo}</td>
                 <td>{m.descripcion}</td>
-                <td>S/ {m.costo?.toLocaleString() || 0}</td>
+                <td>S/ {m.costo?.toLocaleString('en-US') || 0}</td>
                 <td>{m.tecnico || '—'}</td>
                 <td>
                   <span className={`badge badge-${m.estado === 'Completado' ? 'green' : 'yellow'}`}>

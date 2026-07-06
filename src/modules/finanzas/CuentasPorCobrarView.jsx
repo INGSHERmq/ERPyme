@@ -95,7 +95,7 @@ const CuentasPorCobrarView = () => {
               <tr key={c.id}>
                 <td className="cell-bold">{c.clienteNombre}</td>
                 <td>{c.concepto}</td>
-                <td><strong>S/ {Number(c.monto || 0).toLocaleString()}</strong></td>
+                <td><strong>S/ {Number(c.monto || 0).toLocaleString('en-US')}</strong></td>
                 <td>{c.fechaVencimiento}</td>
                 <td><span className={`badge ${c.estado === 'Cobrada' ? 'badge-green' : 'badge-yellow'}`}>{c.estado}</span></td>
                 <td>
