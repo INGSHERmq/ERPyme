@@ -34,14 +34,14 @@ const AsignacionesView = () => {
         observaciones: ''
       });
       refetch();
-      alert('✅ Activo asignado correctamente');
+      alert('Activo asignado correctamente');
     } catch (error) {
       console.error('Error al asignar:', error);
-      alert('❌ Error: ' + (error.message || 'No se pudo asignar el activo'));
+      alert('Error: ' + (error.message || 'No se pudo asignar el activo'));
     }
   };
 
-  // ✅ FIX: Lógica limpia sin 'let' para evitar errores de ESLint
+  // FIX: Lógica limpia sin 'let' para evitar errores de ESLint
   const asignacionesConDetalles = useMemo(() => {
     if (!asignaciones || !activos) return [];
     
@@ -66,7 +66,7 @@ const AsignacionesView = () => {
   return (
     <div className="logistica-view">
       <div className="view-header">
-        <h2>🔗 Asignaciones de Activos</h2>
+        <h2>Asignaciones de Activos</h2>
         <button className="btn-primary" onClick={() => setShowForm(!showForm)}>
           {showForm ? 'Cancelar' : '+ Nueva Asignación'}
         </button>

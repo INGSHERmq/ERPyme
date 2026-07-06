@@ -26,7 +26,7 @@ const DashboardRRHH = () => {
   if (error) return <div className="empty-state">Error: {error}</div>;
   if (!dashboardData) return <div className="empty-state">No hay datos disponibles</div>;
 
-  const formatCurrency = (value) => `S/ ${(value || 0).toLocaleString()}`;
+  const formatCurrency = (value) => `S/ ${(value || 0).toLocaleString('en-US')}`;
 
   return (
     <div className="rrhh-dashboard">

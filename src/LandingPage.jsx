@@ -104,7 +104,7 @@ const LandingPage = () => {
       const message = String(error?.message || '').toLowerCase();
       setDemoError(
         message.includes('already') || message.includes('registered') || message.includes('exists')
-          ? 'Ese correo ya esta registrado. Usa otro correo para la demo o ingresa con tu cuenta.'
+          ? 'Ese correo ya está registrado. Usa otro correo para la demo o ingresa con tu cuenta.'
           : error.message || 'No se pudo iniciar la demo.'
       );
     } finally {
@@ -134,7 +134,7 @@ const LandingPage = () => {
         <section className="demo-access-card">
           <span className="landing-eyebrow">Demo gratuita</span>
           <h1>Entra a ERPyme en segundos.</h1>
-          <p>Solo necesitamos tu correo y numero para activar una empresa demo con todos los modulos por 14 dias.</p>
+          <p>Solo necesitamos tu correo y número para activar una empresa demo con todos los módulos por 14 días.</p>
           <form className="demo-access-form" onSubmit={handleDemoSubmit}>
             {demoError && <div className="demo-access-error">{demoError}</div>}
             <label>
@@ -279,15 +279,12 @@ const LandingPage = () => {
                   <span className="vc-label">Áreas operativas / de negocio</span>
                   <div className="vc-cols">
                     <button type="button" className={`vc-col ${activeModule === 'logistica' ? 'active' : ''}`} onClick={() => setActiveModule('logistica')}>
-                      <span className="vc-icon">📦</span>
                       <span>Logística</span>
                     </button>
                     <button type="button" className={`vc-col ${activeModule === 'proyectos' ? 'active' : ''}`} onClick={() => setActiveModule('proyectos')}>
-                      <span className="vc-icon">🏗️</span>
                       <span>Proyectos</span>
                     </button>
                     <button type="button" className={`vc-col ${activeModule === 'ventas' ? 'active' : ''}`} onClick={() => setActiveModule('ventas')}>
-                      <span className="vc-icon">💰</span>
                       <span>Ventas</span>
                     </button>
                   </div>
@@ -296,19 +293,16 @@ const LandingPage = () => {
                   <span className="vc-label">Áreas de soporte / staff</span>
                   <button type="button" className={`vc-row ${activeModule === 'ia' ? 'active' : ''}`} onClick={() => setActiveModule('ia')}>
                     <div className="vc-row-content">
-                      <span className="vc-icon-small">✨</span>
                       <span>Asistente IA</span>
                     </div>
                   </button>
                   <button type="button" className={`vc-row ${activeModule === 'contabilidad' ? 'active' : ''}`} onClick={() => setActiveModule('contabilidad')}>
                     <div className="vc-row-content">
-                      <span className="vc-icon-small">📊</span>
                       <span>Contabilidad</span>
                     </div>
                   </button>
                   <button type="button" className={`vc-row ${activeModule === 'rrhh' ? 'active' : ''}`} onClick={() => setActiveModule('rrhh')}>
                     <div className="vc-row-content">
-                      <span className="vc-icon-small">👥</span>
                       <span>RRHH</span>
                     </div>
                   </button>

@@ -25,7 +25,7 @@ const ProyectoDetalle = ({ proyecto, onBack }) => {
 
   const renderContent = () => {
     if (activeTabConfig?.locked) {
-      return <SubscriptionLock title={`${activeTabConfig.label} esta bloqueado`} />;
+      return <SubscriptionLock title={`${activeTabConfig.label} está bloqueado`} />;
     }
 
     switch (activeTab) {

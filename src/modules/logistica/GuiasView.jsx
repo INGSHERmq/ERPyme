@@ -22,7 +22,7 @@ const GuiasView = () => {
   return (
     <div className="logistica-view">
       <div className="view-header">
-        <h2>🚚 Guías de Salida</h2>
+        <h2>Guías de Salida</h2>
         <button className="btn-primary" onClick={() => setShowForm(!showForm)}>{showForm ? 'Cancelar' : '+ Nueva Guía'}</button>
       </div>
 

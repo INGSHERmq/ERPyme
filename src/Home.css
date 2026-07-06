@@ -1,4 +1,5 @@
 /* Home.css con diseño de Binance y soporte para tema oscuro/claro */
+@import './components/ModuleCard.css';
 
 .home-container {
   min-height: 100vh;
@@ -351,4 +352,3 @@
 }
 
 /* Importar estilos del componente ModuleCard */
-@import './components/ModuleCard.css';

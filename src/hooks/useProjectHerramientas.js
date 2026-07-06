@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import useLogistica from './useLogistica';
 import useRRHH from './useRRHH';
 import { supabase } from '../lib/supabase';
+import { traducirError } from '../lib/errores';
 import { formatDateOnlyInAppTimeZone } from '../lib/dates';
 
 const ACTIVE_INVENTORY_STATES = ['asignado'];
@@ -31,7 +32,7 @@ const useProjectHerramientas = (proyectoId) => {
         setAsignacionesInventario(asignacionesRes.data || []);
       } catch (err) {
         console.error('Error cargando herramientas del proyecto:', err);
-        setError(err.message || 'No se pudo cargar herramientas.');
+        setError(traducirError(err));
       } finally {
         setInventarioLoading(false);
       }

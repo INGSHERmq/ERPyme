@@ -53,7 +53,7 @@ const TareaModal = ({ show, onClose, onSave, tarea, empleadosProyecto }) => {
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content" onClick={e => e.stopPropagation()}>
         <div className="modal-header">
-          <h2>{tarea ? '✏️ Editar Tarea' : '✅ Nueva Tarea'}</h2>
+          <h2>{tarea ? 'Editar Tarea' : 'Nueva Tarea'}</h2>
           <button className="btn-close" onClick={onClose}>×</button>
         </div>
 

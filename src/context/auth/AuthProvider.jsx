@@ -211,7 +211,7 @@ export default function AuthProvider({ children }) {
 
     if (!currentMembership) {
       await supabase.auth.signOut();
-      throw new Error('Tu usuario esta inactivo o no tiene una membresia activa.');
+      throw new Error('Tu usuario está inactivo o no tiene una membresía activa.');
     }
 
     const loadedCompany = await loadCompany(currentMembership.empresa_id);
@@ -355,7 +355,7 @@ export default function AuthProvider({ children }) {
       );
 
       if (signInError) {
-        throw new Error('La cuenta se creo, pero Supabase no inicio sesion. Desactiva Confirm email en Authentication > Providers > Email y vuelve a intentar iniciar sesion.');
+        throw new Error('La cuenta se creó, pero Supabase no inició sesión. Desactiva Confirm email en Authentication > Providers > Email y vuelve a intentar iniciar sesión.');
       }
 
       createdUser = signInData.user || createdUser;

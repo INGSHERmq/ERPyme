@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import './Notification.css';
+import { traducirError } from '../lib/errores';
 
 const NotificationContext = createContext();
 
@@ -18,15 +19,18 @@ export const NotificationProvider = ({ children }) => {
   const showNotification = useCallback((message, type = 'info', duration = 4000) => {
     const id = Date.now() + Math.random().toString(36).substr(2, 9);
     
+    // Traducir errores técnicos a mensajes amigables en español
+    const mensajeFinal = traducirError(message);
+
     // Auto-detect type based on message keywords
     let detectedType = type;
     if (type === 'info') {
-      const msgLower = message.toLowerCase();
+      const msgLower = mensajeFinal.toLowerCase();
       if (
         msgLower.includes('error') ||
         msgLower.includes('falló') ||
         msgLower.includes('no se pudo') ||
-        msgLower.includes('❌') ||
+        msgLower.includes('error') ||
         msgLower.includes('incorrecto') ||
         msgLower.includes('invalid') ||
         msgLower.includes('excepción')
@@ -40,7 +44,7 @@ export const NotificationProvider = ({ children }) => {
         msgLower.includes('creada') ||
         msgLower.includes('guardado') ||
         msgLower.includes('guardada') ||
-        msgLower.includes('✅') ||
+        msgLower.includes('exito') ||
         msgLower.includes('aprobada') ||
         msgLower.includes('eliminada') ||
         msgLower.includes('eliminado') ||
@@ -53,7 +57,7 @@ export const NotificationProvider = ({ children }) => {
       }
     }
 
-    setToasts((prev) => [...prev, { id, message, type: detectedType }]);
+    setToasts((prev) => [...prev, { id, message: mensajeFinal, type: detectedType }]);
 
     setTimeout(() => {
       removeNotification(id);
@@ -99,9 +103,9 @@ export const NotificationProvider = ({ children }) => {
         {toasts.map((toast) => (
           <div key={toast.id} className={`toast-card toast-${toast.type}`}>
             <div className="toast-icon-wrapper">
-              {toast.type === 'success' && <span className="toast-icon success-icon">✅</span>}
-              {toast.type === 'error' && <span className="toast-icon error-icon">❌</span>}
-              {toast.type === 'info' && <span className="toast-icon info-icon">ℹ️</span>}
+              {toast.type === 'success' && <span className="toast-icon success-icon" />}
+              {toast.type === 'error' && <span className="toast-icon error-icon" />}
+              {toast.type === 'info' && <span className="toast-icon info-icon" />}
             </div>
             <div className="toast-message">{toast.message}</div>
             <button className="toast-close" onClick={() => removeNotification(toast.id)}>×</button>
@@ -114,7 +118,7 @@ export const NotificationProvider = ({ children }) => {
         <div className="confirm-modal-backdrop" onClick={() => confirmData.resolve(false)}>
           <div className="confirm-modal" onClick={(e) => e.stopPropagation()}>
             <div className="confirm-modal-header">
-              <span className="confirm-modal-warning-icon">⚠️</span>
+              <span className="confirm-modal-warning-icon" />
               <h4>{confirmData.title}</h4>
             </div>
             <p className="confirm-modal-message">{confirmData.message}</p>

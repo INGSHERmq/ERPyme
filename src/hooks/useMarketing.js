@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/auth/useAuth';
+import { traducirError } from '../lib/errores';
+import { validarCamposRequeridos } from '../lib/validacion';
 
 const useMarketing = () => {
-  const { user } = useAuth();
+  const { user, company, membership, profile } = useAuth();
   const [clientes, setClientes] = useState([]);
   const [cotizaciones, setCotizaciones] = useState([]);
   const [proyectos, setProyectos] = useState([]);
@@ -11,6 +13,7 @@ const useMarketing = () => {
   const [oportunidades, setOportunidades] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const empresaId = company?.id || membership?.empresa_id || profile?.empresa_actual_id || null;
 
   const fetchData = async () => {
     if (!user?.id) {
@@ -46,7 +49,7 @@ const useMarketing = () => {
       setOportunidades(oportunidadesRes.data || []);
     } catch (err) {
       console.error('Error cargando marketing:', err);
-      setError(err.message);
+      setError(traducirError(err));
     } finally {
       setLoading(false);
     }
@@ -60,14 +63,41 @@ const useMarketing = () => {
   const addCliente = async (data) => {
     if (!user?.id) throw new Error('Usuario no autenticado');
     
+    const errores = validarCamposRequeridos(data, [
+      { nombre: 'nombre', etiqueta: 'Nombre del cliente' },
+    ]);
+    if (errores.length > 0) {
+      throw new Error(errores.join('\n'));
+    }
+
     const { data: nuevo, error } = await supabase
       .from('clientes')
-      .insert([{ ...data, user_id: user.id, creado: new Date().toISOString().split('T')[0] }])
+      .insert([{ ...data, user_id: user.id, empresa_id: empresaId, creado: new Date().toISOString().split('T')[0] }])
       .select()
       .single();
-    if (error) throw error;
+    if (error) throw new Error(traducirError(error));
     setClientes(prev => [...prev, nuevo]);
     return nuevo;
+  };
+
+  const updateCliente = async (clienteId, updates) => {
+    if (!user?.id) throw new Error('Usuario no autenticado');
+
+    const { data: actualizado, error } = await supabase
+      .from('clientes')
+      .update({ ...updates, updated_at: new Date().toISOString() })
+      .eq('id', clienteId)
+      .eq('user_id', user.id)
+      .select()
+      .single();
+
+    if (error) throw new Error(traducirError(error));
+    setClientes(prev => prev
+      .map(cliente => (Number(cliente.id) === Number(clienteId) ? { ...cliente, ...actualizado } : cliente))
+      .sort((a, b) => (a.nombre || '').localeCompare(b.nombre || ''))
+    );
+    setLeads(prev => prev.map(lead => (Number(lead.id) === Number(clienteId) ? { ...lead, ...actualizado } : lead)));
+    return actualizado;
   };
 
   const updateClienteEstado = async (clienteId, estado) => {
@@ -83,7 +113,10 @@ const useMarketing = () => {
 
     if (error) throw error;
     setClientes(prev => prev.map(cliente => (
-      cliente.id === clienteId ? { ...cliente, estado: actualizado.estado } : cliente
+      Number(cliente.id) === Number(clienteId) ? { ...cliente, estado: actualizado.estado } : cliente
+    )));
+    setLeads(prev => prev.map(lead => (
+      Number(lead.id) === Number(clienteId) ? { ...lead, estado: actualizado.estado } : lead
     )));
     return actualizado;
   };
@@ -91,12 +124,20 @@ const useMarketing = () => {
   const addCotizacion = async (data) => {
     if (!user?.id) throw new Error('Usuario no autenticado');
     
+    const errores = validarCamposRequeridos(data, [
+      { nombre: 'titulo', etiqueta: 'Título' },
+      { nombre: 'cliente_id', etiqueta: 'Cliente', alias: 'clienteId' },
+    ]);
+    if (errores.length > 0) {
+      throw new Error(errores.join('\n'));
+    }
+
     const { data: nueva, error } = await supabase
       .from('cotizaciones')
-      .insert([{ ...data, user_id: user.id, fecha: data.fecha || new Date().toISOString().split('T')[0] }])
+      .insert([{ ...data, user_id: user.id, empresa_id: empresaId, fecha: data.fecha || data.fecha_inicio || new Date().toISOString().split('T')[0] }])
       .select()
       .single();
-    if (error) throw error;
+    if (error) throw new Error(traducirError(error));
     setCotizaciones(prev => [...prev, nueva]);
     return nueva;
   };
@@ -135,6 +176,7 @@ const useMarketing = () => {
     if (!clienteExistente) {
       const payload = {
         user_id: user.id,
+        empresa_id: empresaId,
         nombre: data.nombre,
         contacto: data.contacto || null,
         email: data.email || null,
@@ -165,6 +207,13 @@ const useMarketing = () => {
   const addOportunidad = async (data) => {
     if (!user?.id) throw new Error('Usuario no autenticado');
 
+    const errores = validarCamposRequeridos(data, [
+      { nombre: 'nombre', etiqueta: 'Nombre de oportunidad' },
+    ]);
+    if (errores.length > 0) {
+      throw new Error(errores.join('\n'));
+    }
+
     const payload = {
       ...data,
       user_id: user.id,
@@ -181,10 +230,36 @@ const useMarketing = () => {
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) throw new Error(traducirError(error));
     setOportunidades(prev => [nueva, ...prev]);
     return nueva;
   };
+
+  const updateCotizacion = async (cotizacionId, updates) => {
+    if (!user?.id) throw new Error('Usuario no autenticado');
+
+    const payload = {
+      ...updates,
+      fecha: updates.fecha || updates.fecha_inicio || updates.fecha,
+      updated_at: new Date().toISOString()
+    };
+
+    const { data: actualizada, error } = await supabase
+      .from('cotizaciones')
+      .update(payload)
+      .eq('id', cotizacionId)
+      .eq('user_id', user.id)
+      .select()
+      .single();
+
+    if (error) throw new Error(traducirError(error));
+    setCotizaciones(prev => prev.map(c => (
+      Number(c.id) === Number(cotizacionId) ? { ...c, ...actualizada } : c
+    )));
+    return actualizada;
+  };
+
+  const anularCotizacion = (cotizacionId) => updateCotizacion(cotizacionId, { estado: 'rechazada' });
 
   const convertirCotizacion = async (cotizacionId) => {
     if (!user?.id) throw new Error('Usuario no autenticado');
@@ -198,10 +273,94 @@ const useMarketing = () => {
       .single();
     if (cotError) throw cotError;
 
+    let proyectoId = cotizacionActualizada.proyecto_id || null;
+    if (!proyectoId) {
+      const { data: proyectoExistente, error: proyectoExistenteError } = await supabase
+        .from('proyectos')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('cotizacion_id', cotizacionActualizada.id)
+        .order('created_at', { ascending: true })
+        .limit(1)
+        .maybeSingle();
+
+      if (proyectoExistenteError) throw proyectoExistenteError;
+      proyectoId = proyectoExistente?.id || null;
+    }
+
+    if (!proyectoId) {
+      const { data: proyecto, error: proyectoError } = await supabase
+        .from('proyectos')
+        .insert([{
+          user_id: user.id,
+          empresa_id: empresaId,
+          cliente_id: cotizacionActualizada.cliente_id,
+          cotizacion_id: cotizacionActualizada.id,
+          nombre: `Proyecto cotizacion #${cotizacionActualizada.id} - ${cotizacionActualizada.titulo}`,
+          estado: 'En Progreso',
+          prioridad: 'Media',
+          inicio: cotizacionActualizada.fecha_inicio || cotizacionActualizada.fecha || new Date().toISOString().split('T')[0],
+          fin: cotizacionActualizada.fecha_fin || null,
+          descripcion: cotizacionActualizada.descripcion,
+          monto: cotizacionActualizada.precio_total || cotizacionActualizada.monto || 0,
+          progreso: 0
+        }])
+        .select()
+        .single();
+
+      if (proyectoError) {
+        if (proyectoError.code !== '23505') throw proyectoError;
+
+        const { data: proyectoCreado, error: proyectoCreadoError } = await supabase
+          .from('proyectos')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('cotizacion_id', cotizacionActualizada.id)
+          .order('created_at', { ascending: true })
+          .limit(1)
+          .maybeSingle();
+
+        if (proyectoCreadoError) throw proyectoCreadoError;
+        if (!proyectoCreado?.id) throw proyectoError;
+        proyectoId = proyectoCreado.id;
+      } else {
+        proyectoId = proyecto.id;
+      }
+    }
+
+    if (proyectoId) {
+      await supabase
+        .from('cotizaciones')
+        .update({ proyecto_id: proyectoId })
+        .eq('id', cotizacionId)
+        .eq('user_id', user.id);
+    }
+
+    if (empresaId) {
+      const { data: facturaExistente } = await supabase
+        .from('facturas_venta')
+        .select('id')
+        .eq('empresa_id', empresaId)
+        .eq('cotizacion_id', cotizacionActualizada.id)
+        .limit(1);
+
+      if (!facturaExistente?.length) {
+        await supabase.from('facturas_venta').insert([{
+          empresa_id: empresaId,
+          numero: `FV-${String(cotizacionActualizada.id).padStart(5, '0')}`,
+          cotizacion_id: cotizacionActualizada.id,
+          cliente_id: cotizacionActualizada.cliente_id,
+          fecha_emision: new Date().toISOString().split('T')[0],
+          total: cotizacionActualizada.precio_total || cotizacionActualizada.monto || 0,
+          estado: 'emitida'
+        }]);
+      }
+    }
+
     setCotizaciones(prev => prev.map(c => 
-      c.id === cotizacionId ? { ...c, ...cotizacionActualizada } : c
+      Number(c.id) === Number(cotizacionId) ? { ...c, ...cotizacionActualizada, proyecto_id: proyectoId } : c
     ));
-    return cotizacionActualizada;
+    return { ...cotizacionActualizada, proyecto_id: proyectoId };
   };
 
   return {
@@ -213,8 +372,11 @@ const useMarketing = () => {
     loading,
     error,
     addCliente,
+    updateCliente,
     updateClienteEstado,
     addCotizacion,
+    updateCotizacion,
+    anularCotizacion,
     addLead,
     addOportunidad,
     convertirCotizacion,

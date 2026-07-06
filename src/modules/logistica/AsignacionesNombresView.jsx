@@ -59,7 +59,7 @@ const AsignacionesNombresView = () => {
       estado: formData.estado
     }]);
     if (error) {
-      alert(error.message || 'No se pudo registrar la asignacion');
+      alert(error.message || 'No se pudo registrar la asignación');
       return;
     }
 
@@ -80,7 +80,7 @@ const AsignacionesNombresView = () => {
       <div className="view-header">
         <h2>Asignaciones</h2>
         <button type="button" className="btn-primary" onClick={() => setShowForm(!showForm)}>
-          {showForm ? 'Cancelar' : '+ Nueva asignacion'}
+          {showForm ? 'Cancelar' : '+ Nueva asignación'}
         </button>
       </div>
 

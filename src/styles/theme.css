@@ -23,6 +23,10 @@ html[data-theme="dark"] {
   --info: #3b82f6;
   --info-ring: #3b82f6;
   --primary-text: var(--primary);
+  --header-bg: #0b0e11;
+  --header-border: #2b3139;
+  --header-logo-text: #ffffff;
+  --header-shadow: none;
 
   /* Variables dinámicas para módulos */
   --canvas-bg: var(--canvas);
@@ -67,6 +71,10 @@ html[data-theme="light"] {
   --info: #3b82f6;
   --info-ring: #3b82f6;
   --primary-text: #c99400;
+  --header-bg: #ffffff;
+  --header-border: #eaecef;
+  --header-logo-text: #181a20;
+  --header-shadow: 0 1px 0 rgba(24, 26, 32, 0.04), 0 8px 24px rgba(24, 26, 32, 0.04);
 
   /* Variables dinámicas para módulos */
   --canvas-bg: var(--canvas);
@@ -237,8 +245,9 @@ body {
 
 /* Header */
 .header {
-  background-color: var(--canvas);
-  border-bottom: 1px solid var(--hairline);
+  background-color: var(--header-bg);
+  border-bottom: 1px solid var(--header-border);
+  box-shadow: var(--header-shadow);
   padding: 0 24px;
   height: 64px;
   display: flex;
@@ -264,7 +273,7 @@ body {
 .logo-text {
   font-size: 20px;
   font-weight: 800;
-  color: #ffffff;
+  color: var(--header-logo-text);
 }
 
 .logo-text span {
@@ -274,7 +283,7 @@ body {
 .header-divider {
   width: 1px;
   height: 24px;
-  background-color: var(--hairline);
+  background-color: var(--header-border);
 }
 
 .header-stats {

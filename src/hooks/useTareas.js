@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/auth/useAuth';
+import { traducirError } from '../lib/errores';
+import { validarCamposRequeridos, validarFechas } from '../lib/validacion';
 
 const useTareas = (proyectoId) => {
   const { user } = useAuth();
@@ -29,7 +31,7 @@ const useTareas = (proyectoId) => {
       setTareas(data || []);
     } catch (err) {
       console.error('Error cargando tareas:', err);
-      setError(err.message);
+      setError(traducirError(err));
     } finally {
       setLoading(false);
     }
@@ -43,13 +45,27 @@ const useTareas = (proyectoId) => {
   const createTarea = async (tareaData) => {
     if (!user?.id) throw new Error('Usuario no autenticado');
     
+    const errores = [
+      ...validarCamposRequeridos(tareaData, [
+        { nombre: 'nombre', etiqueta: 'Nombre de la tarea' },
+        { nombre: 'estado', etiqueta: 'Estado' },
+      ]),
+      ...validarFechas(tareaData, [
+        { nombre: 'fecha_inicio', etiqueta: 'fecha de inicio' },
+        { nombre: 'fecha_fin', etiqueta: 'fecha de fin' },
+      ]),
+    ];
+    if (errores.length > 0) {
+      throw new Error(errores.join('\n'));
+    }
+
     const { data: nueva, error } = await supabase
       .from('tareas')
       .insert([{ ...tareaData, proyecto_id: proyectoId, user_id: user.id }])
       .select()
       .single();
     
-    if (error) throw error;
+    if (error) throw new Error(traducirError(error));
     setTareas(prev => [...prev, nueva]);
     return nueva;
   };
@@ -63,7 +79,7 @@ const useTareas = (proyectoId) => {
       .select()
       .single();
     
-    if (error) throw error;
+    if (error) throw new Error(traducirError(error));
     setTareas(prev => prev.map(t => t.id === id ? actualizada : t));
     return actualizada;
   };
@@ -75,7 +91,7 @@ const useTareas = (proyectoId) => {
       .eq('id', id)
       .eq('user_id', user?.id);
     
-    if (error) throw error;
+    if (error) throw new Error(traducirError(error));
     setTareas(prev => prev.filter(t => t.id !== id));
   };
 

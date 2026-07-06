@@ -25,7 +25,7 @@ const Herramientas = ({ proyectoId }) => {
                 <th>Origen</th>
                 <th>Asignado a</th>
                 <th>Cantidad</th>
-                <th>Fecha asignacion</th>
+                <th>Fecha asignación</th>
                 <th>Estado</th>
               </tr>
             </thead>

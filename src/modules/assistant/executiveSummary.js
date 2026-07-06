@@ -6,11 +6,10 @@ import {
   toAppDateKey
 } from '../../lib/dates';
 
-const currencyFormatter = new Intl.NumberFormat('es-PE', {
-  style: 'currency',
-  currency: 'PEN',
-  maximumFractionDigits: 0
-});
+const formatCurrency = (value) => {
+  const num = Number(value || 0);
+  return `S/ ${num.toLocaleString('en-US', { maximumFractionDigits: 0 })}`;
+};
 
 const daysBetween = (dateValue, reference = new Date()) => {
   if (!dateValue) return null;
@@ -30,6 +29,18 @@ const hoursBetween = (dateValue, reference = new Date()) => {
 const numberValue = (value) => Number(value || 0);
 const isPendingReceivable = (item) => (item.estado || '').toLowerCase() === 'pendiente';
 const isUnpaidPurchaseInvoice = (item) => !['pagada', 'anulada', 'cancelada'].includes((item.estado || '').toLowerCase());
+
+const isPastDue = (dateValue) => {
+  if (!dateValue) return false;
+  const str = String(dateValue);
+  const hasTime = /T\d{2}:\d{2}/.test(str) || /\d{1,2}:\d{2}/.test(str);
+  if (hasTime) {
+    const dueDate = parseDateInAppTimeZone(dateValue);
+    return dueDate !== null && dueDate < new Date();
+  }
+  const days = daysBetween(dateValue);
+  return days !== null && days < 0;
+};
 
 export const scoreOpportunity = (opportunity = {}, lead = {}) => {
   const amount = numberValue(opportunity.monto_estimado);
@@ -216,14 +227,14 @@ export const generateExecutiveSummary = async (userId) => {
     tipo: 'compra',
     fecha_vencimiento: item.fecha_vencimiento || item.ordenes_compra?.fecha_vencimiento
   }));
-  const receivablesDueToday = cobros.filter(item => isPendingReceivable(item) && toAppDateKey(item.fecha_vencimiento) === today);
+  const receivablesDueToday = cobros.filter(item => isPendingReceivable(item) && toAppDateKey(item.fecha_vencimiento) === today && !isPastDue(item.fecha_vencimiento));
   const purchasesDueToday = purchaseInvoicesWithDue.filter(item => (
-    isUnpaidPurchaseInvoice(item) && toAppDateKey(item.fecha_vencimiento) === today
+    isUnpaidPurchaseInvoice(item) && toAppDateKey(item.fecha_vencimiento) === today && !isPastDue(item.fecha_vencimiento)
   ));
   const dueToday = [...receivablesDueToday, ...purchasesDueToday];
-  const receivablesOverdue = cobros.filter(item => isPendingReceivable(item) && daysBetween(item.fecha_vencimiento) < 0);
+  const receivablesOverdue = cobros.filter(item => isPendingReceivable(item) && isPastDue(item.fecha_vencimiento));
   const purchasesOverdue = purchaseInvoicesWithDue.filter(item => (
-    isUnpaidPurchaseInvoice(item) && daysBetween(item.fecha_vencimiento) < 0
+    isUnpaidPurchaseInvoice(item) && isPastDue(item.fecha_vencimiento)
   ));
   const overdue = [...receivablesOverdue, ...purchasesOverdue];
   const projectRisks = buildProjectRisks(projectsRes.data || [], tasksRes.data || []);
@@ -253,11 +264,11 @@ export const generateExecutiveSummary = async (userId) => {
   const actions = [];
 
   if (dueToday.length) {
-    highlights.push(`${dueToday.length} factura${dueToday.length === 1 ? '' : 's'} vencen hoy por ${currencyFormatter.format(totalDueToday)}.`);
+    highlights.push(`${dueToday.length} factura${dueToday.length === 1 ? '' : 's'} vencen hoy por ${formatCurrency(totalDueToday)}.`);
     actions.push('Revisar las facturas pendientes que vencen hoy.');
   }
   if (overdue.length) {
-    highlights.push(`${overdue.length} cobranza${overdue.length === 1 ? '' : 's'} ya vencida${overdue.length === 1 ? '' : 's'} suman ${currencyFormatter.format(totalOverdue)}.`);
+    highlights.push(`${overdue.length} cobranza${overdue.length === 1 ? '' : 's'} ya vencida${overdue.length === 1 ? '' : 's'} suman ${formatCurrency(totalOverdue)}.`);
     actions.push('Priorizar seguimiento de cobranzas vencidas antes de nuevas ventas.');
   }
   if (projectRisks.length) {
@@ -284,7 +295,7 @@ export const generateExecutiveSummary = async (userId) => {
   }
   if (purchaseDueSoon.length) {
     const totalPurchasesDue = purchaseDueSoon.reduce((sum, item) => sum + numberValue(item.total), 0);
-    highlights.push(`${purchaseDueSoon.length} factura${purchaseDueSoon.length === 1 ? '' : 's'} de compra vencen en los proximos 7 dias por ${currencyFormatter.format(totalPurchasesDue)}.`);
+    highlights.push(`${purchaseDueSoon.length} factura${purchaseDueSoon.length === 1 ? '' : 's'} de compra vencen en los proximos 7 dias por ${formatCurrency(totalPurchasesDue)}.`);
     actions.push('Revisar vencimientos de ordenes de compra antes del cierre contable.');
   }
   if (!highlights.length) {

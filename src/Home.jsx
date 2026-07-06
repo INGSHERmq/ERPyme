@@ -29,8 +29,8 @@ const Home = ({ onNavigate, enabledModules = [], profile = {}, canAccessFeature 
       {lockedModule && (
         <div className="home-lock-panel">
           <SubscriptionLock
-            title={`${lockedModule.title} esta disponible en un plan superior`}
-            message="Para disfrutar de este modulo, mejora tu suscripcion."
+            title={`${lockedModule.title} está disponible en un plan superior`}
+            message="Para disfrutar de este módulo, mejora tu suscripción."
           />
         </div>
       )}
@@ -58,14 +58,14 @@ const Home = ({ onNavigate, enabledModules = [], profile = {}, canAccessFeature 
         {filteredModules.length === 0 && (
           <div className="modules-empty">
             <span className="empty-icon">?</span>
-            <p>No se encontraron modulos con ese criterio.</p>
+            <p>No se encontraron módulos con ese criterio.</p>
             <p className="empty-hint">Intenta con otros terminos de busqueda.</p>
           </div>
         )}
       </main>
 
       <footer className="home-footer">
-        <p>© 2026 ERPyme - Sistema de gestion empresarial</p>
+        <p>© 2026 ERPyme - Sistema de gestión empresarial</p>
       </footer>
     </div>
   );

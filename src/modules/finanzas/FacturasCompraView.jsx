@@ -3,12 +3,14 @@ import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../context/auth/useAuth';
 import useProjects from '../../hooks/useProjects';
 import { useNotification } from '../../context/NotificationContext';
+import { traducirError } from '../../lib/errores';
 import {
   datetimeLocalToAppIso,
   formatDateTimeInAppTimeZone,
   getTodayInAppTimeZone,
   isoToDateTimeLocalInAppTimeZone
 } from '../../lib/dates';
+import SunatValidationModal from '../../components/SunatValidationModal';
 
 const FacturasCompraView = () => {
   const { user, membership, profile } = useAuth();
@@ -20,7 +22,9 @@ const FacturasCompraView = () => {
   const [payingId, setPayingId] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
-    numero: '',
+    serie: '',
+    correlativo: '',
+    tipo_comprobante: '01',
     orden_compra_id: '',
     proveedor_id: '',
     proyecto_id: '',
@@ -28,13 +32,16 @@ const FacturasCompraView = () => {
     fecha_vencimiento: '',
     total: '0'
   });
+  const [validatingInvoice, setValidatingInvoice] = useState(null);
+  const [miRuc, setMiRuc] = useState('');
 
   const fetchData = async () => {
     if (!user?.id) return;
+    const empId = membership?.empresa_id || profile?.empresa_actual_id;
     const [ocRes, prRes, fvRes] = await Promise.all([
-      supabase.from('ordenes_compra').select('id,numero,nombre_compra,proveedor_id,proyecto_id,fecha_vencimiento,estado').eq('user_id', user.id).order('created_at', { ascending: false }),
-      supabase.from('proveedores').select('id,nombre').eq('user_id', user.id).order('nombre'),
-      supabase.from('facturas_compra').select('*').order('created_at', { ascending: false })
+      supabase.from('ordenes_compra').select('id,numero,nombre_compra,proveedor_id,proyecto_id,fecha_vencimiento,estado').eq('empresa_id', empId).order('created_at', { ascending: false }),
+      supabase.from('proveedores').select('id,nombre,ruc').eq('empresa_id', empId).order('nombre'),
+      supabase.from('facturas_compra').select('*').eq('empresa_id', empId).order('created_at', { ascending: false })
     ]);
     setOrdenes(ocRes.data || []);
     setProveedores(prRes.data || []);
@@ -42,9 +49,22 @@ const FacturasCompraView = () => {
   };
 
   useEffect(() => {
-    (async () => { await fetchData(); })();
+    (async () => { 
+      await fetchData(); 
+      const empId = membership?.empresa_id || profile?.empresa_actual_id;
+      if (empId) {
+        const { data: empData } = await supabase
+          .from('empresas')
+          .select('ruc')
+          .eq('id', empId)
+          .maybeSingle();
+        if (empData?.ruc) {
+          setMiRuc(empData.ruc);
+        }
+      }
+    })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.id]);
+  }, [user?.id, membership?.empresa_id, profile?.empresa_actual_id]);
 
   const handlePagar = async (row) => {
     setPayingId(row.id);
@@ -55,7 +75,7 @@ const FacturasCompraView = () => {
 
     if (facturaError) {
       setPayingId(null);
-      alert(facturaError.message || 'No se pudo marcar como pagada');
+      alert(traducirError(facturaError));
       return;
     }
 
@@ -67,7 +87,7 @@ const FacturasCompraView = () => {
         .eq('estado', 'pendiente_contabilidad');
       if (materialError) {
         setPayingId(null);
-        alert(materialError.message || 'Se pagó, pero no se pudo enviar a Materiales');
+        alert(traducirError(materialError));
         return;
       }
       await supabase.from('ordenes_compra').update({ estado: 'Pagado' }).eq('id', row.orden_compra_id);
@@ -89,7 +109,7 @@ const FacturasCompraView = () => {
 
     if (facturaError) {
       setPayingId(null);
-      alert(facturaError.message || 'No se pudo cancelar');
+      alert(traducirError(facturaError));
       return;
     }
 
@@ -104,8 +124,15 @@ const FacturasCompraView = () => {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+    const cleanSerie = formData.serie.toUpperCase().trim();
+    const cleanCorrelativo = formData.correlativo.trim();
+    const fullNumero = `${cleanSerie}-${cleanCorrelativo}`;
+
     const { error } = await supabase.from('facturas_compra').insert([{
-      numero: formData.numero,
+      numero: fullNumero,
+      serie: cleanSerie,
+      correlativo: cleanCorrelativo,
+      tipo_comprobante: formData.tipo_comprobante,
       orden_compra_id: formData.orden_compra_id ? Number(formData.orden_compra_id) : null,
       proveedor_id: formData.proveedor_id ? Number(formData.proveedor_id) : null,
       proyecto_id: formData.proyecto_id ? Number(formData.proyecto_id) : null,
@@ -115,10 +142,10 @@ const FacturasCompraView = () => {
       total: Number(formData.total || 0)
     }]);
     if (error) {
-      alert(error.message || 'No se pudo registrar');
+      alert(traducirError(error));
       return;
     }
-    setFormData({ numero: '', orden_compra_id: '', proveedor_id: '', proyecto_id: '', fecha_emision: getTodayInAppTimeZone(), fecha_vencimiento: '', total: '0' });
+    setFormData({ serie: '', correlativo: '', tipo_comprobante: '01', orden_compra_id: '', proveedor_id: '', proyecto_id: '', fecha_emision: getTodayInAppTimeZone(), fecha_vencimiento: '', total: '0' });
     setShowForm(false);
     await fetchData();
   };
@@ -132,11 +159,37 @@ const FacturasCompraView = () => {
         </button>
       </div>
 
-      {showForm && (
+       {showForm && (
         <form className="simple-form" onSubmit={handleSubmit}>
           <div className="form-field">
-            <label htmlFor="fc-numero">Número de factura</label>
-            <input id="fc-numero" placeholder="Número factura" required value={formData.numero} onChange={(e) => setFormData((p) => ({ ...p, numero: e.target.value }))} />
+            <label htmlFor="fc-tipo">Tipo Comprobante</label>
+            <select id="fc-tipo" value={formData.tipo_comprobante} onChange={(e) => setFormData((p) => ({ ...p, tipo_comprobante: e.target.value }))}>
+              <option value="01">01 - Factura</option>
+              <option value="03">03 - Boleta de Venta</option>
+              <option value="07">07 - Nota de Crédito</option>
+              <option value="08">08 - Nota de Débito</option>
+              <option value="R1">R1 - Recibo por Honorarios</option>
+            </select>
+          </div>
+          <div className="form-field">
+            <label htmlFor="fc-serie">Serie</label>
+            <input id="fc-serie" placeholder="F001" required value={formData.serie} onChange={(e) => setFormData((p) => ({ ...p, serie: e.target.value }))} className="uppercase" />
+          </div>
+          <div className="form-field">
+            <label htmlFor="fc-correlativo">Correlativo</label>
+            <input id="fc-correlativo" placeholder="Correlativo" required value={formData.correlativo} onChange={(e) => setFormData((p) => ({ ...p, correlativo: e.target.value }))} />
+          </div>
+
+          <div className="form-field">
+            <label htmlFor="fc-proveedor">Proveedor</label>
+            <select id="fc-proveedor" value={formData.proveedor_id} onChange={(e) => setFormData((p) => ({ ...p, proveedor_id: e.target.value }))}>
+              <option value="">Seleccionar proveedor</option>
+              {proveedores.map((prov) => (
+                <option key={prov.id} value={prov.id}>
+                  {prov.nombre} {prov.ruc ? `(RUC: ${prov.ruc})` : ''}
+                </option>
+              ))}
+            </select>
           </div>
           <div className="form-field">
             <label htmlFor="fc-orden">Orden de compra</label>
@@ -158,22 +211,16 @@ const FacturasCompraView = () => {
             </select>
           </div>
           <div className="form-field">
-            <label htmlFor="fc-proveedor">Proveedor</label>
-            <select id="fc-proveedor" value={formData.proveedor_id} onChange={(e) => setFormData((p) => ({ ...p, proveedor_id: e.target.value }))}>
-              <option value="">Seleccionar proveedor</option>
-              {proveedores.map((prov) => <option key={prov.id} value={prov.id}>{prov.nombre}</option>)}
-            </select>
-          </div>
-          <div className="form-field">
-            <label htmlFor="fc-fecha">Fecha de emisión</label>
-            <input id="fc-fecha" type="date" required value={formData.fecha_emision} onChange={(e) => setFormData((p) => ({ ...p, fecha_emision: e.target.value }))} />
-          </div>
-          <div className="form-field">
             <label htmlFor="fc-proyecto">Proyecto</label>
             <select id="fc-proyecto" value={formData.proyecto_id} onChange={(e) => setFormData((p) => ({ ...p, proyecto_id: e.target.value }))}>
               <option value="">Sin proyecto</option>
               {proyectos.map((proyecto) => <option key={proyecto.id} value={proyecto.id}>{proyecto.nombre_mostrar || proyecto.nombre}</option>)}
             </select>
+          </div>
+
+          <div className="form-field">
+            <label htmlFor="fc-fecha">Fecha de emisión</label>
+            <input id="fc-fecha" type="date" required value={formData.fecha_emision} onChange={(e) => setFormData((p) => ({ ...p, fecha_emision: e.target.value }))} />
           </div>
           <div className="form-field">
             <label htmlFor="fc-vencimiento">Fecha vencimiento</label>
@@ -183,7 +230,10 @@ const FacturasCompraView = () => {
             <label htmlFor="fc-total">Total</label>
             <input id="fc-total" type="number" min="0" step="0.01" required placeholder="Total" value={formData.total} onChange={(e) => setFormData((p) => ({ ...p, total: e.target.value }))} />
           </div>
-          <button type="submit" className="btn-primary">Guardar</button>
+
+          <div className="form-actions">
+            <button type="submit" className="btn-primary">Guardar</button>
+          </div>
         </form>
       )}
 
@@ -191,7 +241,9 @@ const FacturasCompraView = () => {
         <table className="data-table">
           <thead>
             <tr>
-              <th>Número</th>
+              <th>Tipo</th>
+              <th>Serie</th>
+              <th>Correlativo</th>
               <th>Orden compra</th>
               <th>Proveedor</th>
               <th>Proyecto</th>
@@ -206,7 +258,9 @@ const FacturasCompraView = () => {
           <tbody>
             {rows.map((row) => (
               <tr key={row.id}>
-                <td className="cell-bold">{row.numero}</td>
+                <td className="cell-bold">{row.tipo_comprobante || '-'}</td>
+                <td>{row.serie || '-'}</td>
+                <td>{row.correlativo || '-'}</td>
                 <td>{ordenes.find((oc) => oc.id === row.orden_compra_id)?.numero || '-'}</td>
                 <td>{proveedores.find((p) => p.id === row.proveedor_id)?.nombre || '-'}</td>
                 <td>{proyectos.find((p) => Number(p.id) === Number(row.proyecto_id))?.nombre_mostrar || proyectos.find((p) => Number(p.id) === Number(row.proyecto_id))?.nombre || '-'}</td>
@@ -214,39 +268,72 @@ const FacturasCompraView = () => {
                 <td>{row.estado === 'registrada' ? 'en proceso' : row.estado}</td>
                 <td>{row.fecha_emision}</td>
                 <td>{formatDateTimeInAppTimeZone(row.fecha_vencimiento)}</td>
-                <td>S/ {Number(row.total || 0).toLocaleString()}</td>
-                <td>
-                  {row.estado === 'pagada' ? (
-                    <span className="badge badge-green">Pagada</span>
-                  ) : row.estado === 'anulada' ? (
-                    <span className="badge badge-red" style={{ color: 'red' }}>Anulada</span>
-                  ) : (
-                    <div style={{ display: 'flex', gap: '8px' }}>
+                <td>S/ {Number(row.total || 0).toLocaleString('en-US')}</td>
+                 <td>
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                    {row.estado === 'pagada' ? (
+                      <span className="badge badge-green">Pagada</span>
+                    ) : row.estado === 'anulada' ? (
+                      <span className="badge badge-red" style={{ color: 'red' }}>Anulada</span>
+                    ) : (
+                      <>
+                        <button
+                          type="button"
+                          className="btn-action btn-cobrar"
+                          disabled={payingId === row.id}
+                          onClick={() => handlePagar(row)}
+                        >
+                          {payingId === row.id ? 'Pagando...' : 'Pagar'}
+                        </button>
+                        <button
+                          type="button"
+                          className="btn-action btn-eliminar"
+                          style={{ backgroundColor: '#ff4444', color: 'white' }}
+                          disabled={payingId === row.id}
+                          onClick={() => handleCancelar(row)}
+                        >
+                          Anular
+                        </button>
+                      </>
+                    )}
+                    {row.estado !== 'anulada' && proveedores.find((p) => p.id === row.proveedor_id)?.ruc && (
                       <button
                         type="button"
-                        className="btn-action btn-cobrar"
-                        disabled={payingId === row.id}
-                        onClick={() => handlePagar(row)}
+                        className="btn-action"
+                        style={{ 
+                          backgroundColor: 'rgba(252, 213, 53, 0.1)', 
+                          color: 'var(--binance-yellow)', 
+                          border: '1px solid var(--binance-yellow)',
+                          padding: '6px 12px',
+                          borderRadius: 'var(--radius-sm)',
+                          cursor: 'pointer',
+                          fontWeight: '700',
+                          fontSize: '13px',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          transition: '0.2s'
+                        }}
+                        onClick={() => setValidatingInvoice(row)}
                       >
-                        {payingId === row.id ? 'Pagando...' : 'Pagar'}
+                        Validar SUNAT
                       </button>
-                      <button
-                        type="button"
-                        className="btn-action btn-eliminar"
-                        style={{ backgroundColor: '#ff4444', color: 'white' }}
-                        disabled={payingId === row.id}
-                        onClick={() => handleCancelar(row)}
-                      >
-                        Anular
-                      </button>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+
+      <SunatValidationModal 
+        isOpen={!!validatingInvoice}
+        onClose={() => setValidatingInvoice(null)}
+        invoice={validatingInvoice}
+        proveedor={proveedores.find((p) => p.id === validatingInvoice?.proveedor_id)}
+        miRuc={miRuc}
+      />
     </div>
   );
 };

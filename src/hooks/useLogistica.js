@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/auth/useAuth';
+import { traducirError } from '../lib/errores';
+import { validarCamposRequeridos } from '../lib/validacion';
 
 const useLogistica = () => {
   const { user } = useAuth();
@@ -91,7 +93,7 @@ const useLogistica = () => {
       });
     } catch (err) {
       console.error('Error cargando logística:', err);
-      setError(err.message);
+      setError(traducirError(err));
     } finally {
       setLoading(false);
     }
@@ -105,6 +107,13 @@ const useLogistica = () => {
   const addActivo = async (data) => {
     if (!user?.id) throw new Error('Usuario no autenticado');
     
+    const errores = validarCamposRequeridos(data, [
+      { nombre: 'nombre', etiqueta: 'Nombre del activo' },
+    ]);
+    if (errores.length > 0) {
+      throw new Error(errores.join('\n'));
+    }
+
     const { data: nuevo, error } = await supabase
       .from('activos')
       .insert([{ 
@@ -115,7 +124,7 @@ const useLogistica = () => {
       }])
       .select()
       .single();
-    if (error) throw error;
+    if (error) throw new Error(traducirError(error));
     setActivos(prev => [...prev, nuevo]);
     return nuevo;
   };
@@ -123,6 +132,13 @@ const useLogistica = () => {
   const asignarActivo = async (data) => {
     if (!user?.id) throw new Error('Usuario no autenticado');
     
+    const errores = validarCamposRequeridos(data, [
+      { nombre: 'activo_id', etiqueta: 'Activo' },
+    ]);
+    if (errores.length > 0) {
+      throw new Error(errores.join('\n'));
+    }
+
     const { data: nueva, error } = await supabase
       .from('asignaciones_activos')
       .insert([{ 
@@ -133,7 +149,7 @@ const useLogistica = () => {
       }])
       .select()
       .single();
-    if (error) throw error;
+    if (error) throw new Error(traducirError(error));
     
     if (data.activo_id) {
       await supabase.from('activos').update({ estado: 'En uso' }).eq('id', data.activo_id).eq('user_id', user.id);
@@ -153,7 +169,7 @@ const useLogistica = () => {
       })
       .eq('id', asignacionId)
       .eq('user_id', user?.id);
-    if (error) throw error;
+    if (error) throw new Error(traducirError(error));
     
     if (activoId) {
       await supabase.from('activos').update({ estado: 'Disponible' }).eq('id', activoId).eq('user_id', user?.id);
@@ -168,6 +184,14 @@ const useLogistica = () => {
   const programarMantenimiento = async (data) => {
     if (!user?.id) throw new Error('Usuario no autenticado');
     
+    const errores = validarCamposRequeridos(data, [
+      { nombre: 'activo_id', etiqueta: 'Activo' },
+      { nombre: 'descripcion', etiqueta: 'Descripción' },
+    ]);
+    if (errores.length > 0) {
+      throw new Error(errores.join('\n'));
+    }
+
     const { data: nuevo, error } = await supabase
       .from('mantenimientos')
       .insert([{ 
@@ -178,7 +202,7 @@ const useLogistica = () => {
       }])
       .select()
       .single();
-    if (error) throw error;
+    if (error) throw new Error(traducirError(error));
     
     if (data.activo_id) {
       await supabase.from('activos').update({ estado: 'En mantenimiento' }).eq('id', data.activo_id).eq('user_id', user.id);
@@ -195,7 +219,7 @@ const useLogistica = () => {
       .update({ estado: 'Completado' })
       .eq('id', mantenimientoId)
       .eq('user_id', user?.id);
-    if (error) throw error;
+    if (error) throw new Error(traducirError(error));
     
     if (activoId) {
       await supabase.from('activos').update({ estado: 'Disponible' }).eq('id', activoId).eq('user_id', user?.id);
@@ -210,6 +234,14 @@ const useLogistica = () => {
   const emitirGuia = async (data) => {
     if (!user?.id) throw new Error('Usuario no autenticado');
     
+    const errores = validarCamposRequeridos(data, [
+      { nombre: 'destino', etiqueta: 'Destino' },
+      { nombre: 'responsable', etiqueta: 'Responsable' },
+    ]);
+    if (errores.length > 0) {
+      throw new Error(errores.join('\n'));
+    }
+
     const { data: nueva, error } = await supabase
       .from('guias_salida')
       .insert([{ 
@@ -220,7 +252,7 @@ const useLogistica = () => {
       }])
       .select()
       .single();
-    if (error) throw error;
+    if (error) throw new Error(traducirError(error));
     
     if (data.activo_id) {
       await supabase.from('activos').update({ estado: 'En tránsito' }).eq('id', data.activo_id).eq('user_id', user.id);

@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../context/auth/useAuth';
 import { assistantConfig, sendAssistantMessage, createErpRecord, getOptions } from './erpAssistant';
 import { generateExecutiveSummary } from './executiveSummary';
+import { traducirError } from '../../lib/errores';
 import './AssistantView.css';
 
 const INITIAL_MESSAGES = [
@@ -125,13 +126,13 @@ const ChatForm = ({ form, onComplete, userId }) => {
       setDone(true);
       onComplete(`He creado el registro en ${form.table} correctamente.`, form.table);
     } catch (err) {
-      alert('Error al guardar: ' + err.message);
+      alert(traducirError(err));
     } finally {
       setSaving(false);
     }
   };
 
-  if (done) return <div className="chat-form-done">✓ Registro guardado</div>;
+  if (done) return <div className="chat-form-done">Registro guardado</div>;
 
   return (
     <form className="chat-inline-form" onSubmit={handleSubmit}>
@@ -164,6 +165,7 @@ const ChatForm = ({ form, onComplete, userId }) => {
                     name={field} 
                     value={formData[field] || ''} 
                     onChange={handleChange}
+                    maxLength={(formData['tipo_identificacion'] || formData['tipoIdentificacion'] || 'DNI') === 'RUC' ? 11 : 8}
                     required={form.schema.required.includes(field)}
                     placeholder={
                       (formData['tipo_identificacion'] || formData['tipoIdentificacion'] || 'DNI') === 'RUC'
@@ -255,9 +257,7 @@ const AssistantView = ({ onBack, onNavigate }) => {
       const { content, navigation, form } = await sendAssistantMessage(messages, text);
       setMessages(prev => [...prev, { role: 'assistant', content, navigation, form }]);
     } catch (err) {
-      const message = err.message?.includes('Failed to fetch')
-        ? 'No pude conectar con Groq. Verifica la API key en .env.local y reinicia el servidor de Vite.'
-        : err.message || 'No se pudo procesar la solicitud.';
+      const message = traducirError(err);
       setError(message);
       setMessages(prev => [...prev, { role: 'assistant', content: message }]);
     } finally {
@@ -275,7 +275,7 @@ const AssistantView = ({ onBack, onNavigate }) => {
       setSummary(nextSummary);
       setMessages(prev => [...prev, { role: 'assistant', content: nextSummary.summary }]);
     } catch (err) {
-      const message = err.message || 'No se pudo generar el resumen ejecutivo.';
+      const message = traducirError(err);
       setError(message);
       setMessages(prev => [...prev, { role: 'assistant', content: message }]);
     } finally {
@@ -304,7 +304,7 @@ const AssistantView = ({ onBack, onNavigate }) => {
               onClick={() => handleShortcutClick(shortcut.prompt)}
               title={`Insertar prompt: "${shortcut.prompt}"`}
             >
-              <span className="shortcut-icon">⚡</span>
+              <span className="shortcut-icon" />
               <span className="shortcut-label">{shortcut.label}</span>
             </button>
           ))}
@@ -327,7 +327,7 @@ const AssistantView = ({ onBack, onNavigate }) => {
           {messages.map((message, index) => (
             <article key={`${message.role}-${index}`} className={`chat-message ${message.role}`}>
               <div className="message-bubble">
-                <p>{message.content}</p>
+                <div className="message-content">{message.content}</div>
                 {message.navigation && (
                   <div className="message-actions">
                     <button 
@@ -350,7 +350,7 @@ const AssistantView = ({ onBack, onNavigate }) => {
                         { 
                           role: 'assistant', 
                           content: msg,
-                          navigation: nav ? { module: nav.module, tab: nav.tab, label: `👉 Ir a la tabla de ${nav.label}` } : null
+                          navigation: nav ? { module: nav.module, tab: nav.tab, label: `Ir a la tabla de ${nav.label}` } : null
                         }
                       ]);
                     }} 

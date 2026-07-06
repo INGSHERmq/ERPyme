@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { PLAN_KEYS, PLAN_OPTIONS } from '../../config/modules';
 import { useAuth } from '../../context/auth/useAuth';
+import { traducirError } from '../../lib/errores';
 import './Login.css';
 
 const EMPTY_REGISTER = {
@@ -36,7 +37,7 @@ const Login = ({ initialMode = 'login' }) => {
       await signIn(loginData.email, loginData.password);
     } catch (err) {
       console.error('Login error:', err);
-      setError(err.message || 'Error al iniciar sesión');
+      setError(traducirError(err));
     } finally {
       setSubmitting(false);
       setLoadingMessage('');
@@ -70,7 +71,7 @@ const Login = ({ initialMode = 'login' }) => {
       await registerCompanyAccount(registerData);
     } catch (err) {
       console.error('Register error:', err);
-      setError(err.message || 'No se pudo registrar la cuenta');
+      setError(traducirError(err));
     } finally {
       setSubmitting(false);
       setLoadingMessage('');
@@ -117,7 +118,7 @@ const Login = ({ initialMode = 'login' }) => {
             </article>
             <article>
               <strong>14</strong>
-              <span>dias de demo</span>
+              <span>días de demo</span>
             </article>
             <article>
               <strong>IA</strong>
@@ -202,7 +203,7 @@ const Login = ({ initialMode = 'login' }) => {
                 <p>
                   {registerStep === 'data'
                     ? 'Sin verificación de email por ahora. El primer usuario será super admin.'
-                    : 'La demo se abre con todos los modulos por 14 dias; tambien puedes elegir un plan fijo.'}
+                    : 'La demo se abre con todos los módulos por 14 días; también puedes elegir un plan fijo.'}
                 </p>
               </div>
 
@@ -217,7 +218,7 @@ const Login = ({ initialMode = 'login' }) => {
 
                   <label className="form-group">
                     DNI o RUC
-                    <input name="dni_ruc" value={registerData.dni_ruc} onChange={updateRegister} required disabled={isBusy} />
+                    <input name="dni_ruc" value={registerData.dni_ruc} onChange={updateRegister} required disabled={isBusy} inputMode="numeric" maxLength={11} />
                   </label>
 
                   <label className="form-group">

@@ -17,15 +17,35 @@ const CRMView = () => {
   const {
     leads,
     addLead,
+    updateCliente,
+    updateClienteEstado,
     refetch,
     loading,
     error
   } = useMarketing();
   const [leadForm, setLeadForm] = useState(initialLead);
+  const [editingId, setEditingId] = useState(null);
   const [saving, setSaving] = useState(false);
+
+  const documentLimit = leadForm.tipo_identificacion === 'RUC' ? 11 : 8;
 
   const handleLeadChange = (event) => {
     const { name, value } = event.target;
+    if (name === 'tipo_identificacion') {
+      setLeadForm(prev => ({
+        ...prev,
+        tipo_identificacion: value,
+        dni_ruc: prev.dni_ruc.slice(0, value === 'RUC' ? 11 : 8)
+      }));
+      return;
+    }
+    if (name === 'dni_ruc') {
+      setLeadForm(prev => ({
+        ...prev,
+        dni_ruc: value.replace(/\D/g, '').slice(0, prev.tipo_identificacion === 'RUC' ? 11 : 8)
+      }));
+      return;
+    }
     setLeadForm(prev => ({ ...prev, [name]: value }));
   };
 
@@ -33,15 +53,50 @@ const CRMView = () => {
     event.preventDefault();
     setSaving(true);
     try {
-      await addLead(leadForm);
+      if (editingId) {
+        await updateCliente(editingId, leadForm);
+      } else {
+        await addLead(leadForm);
+      }
       setLeadForm(initialLead);
+      setEditingId(null);
       await refetch();
-      alert('Cliente guardado. También queda disponible para crear cotizaciones.');
+      alert('Cliente guardado. Tambien queda disponible para crear cotizaciones.');
     } catch (submitError) {
       console.error('Error al guardar cliente:', submitError);
       alert(submitError.message || 'No se pudo guardar el cliente');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleEdit = (lead) => {
+    setEditingId(lead.id);
+    setLeadForm({
+      nombre: lead.nombre || '',
+      contacto: lead.contacto || '',
+      email: lead.email || '',
+      telefono: lead.telefono || '',
+      tipo_identificacion: lead.tipo_identificacion || 'DNI',
+      dni_ruc: lead.dni_ruc || '',
+      industria: lead.industria || '',
+      estado: lead.estado || 'Activo'
+    });
+  };
+
+  const handleCancelEdit = () => {
+    setEditingId(null);
+    setLeadForm(initialLead);
+  };
+
+  const handleToggleEstado = async (lead) => {
+    const nextEstado = lead.estado === 'Activo' ? 'Inactivo' : 'Activo';
+    try {
+      await updateClienteEstado(lead.id, nextEstado);
+      await refetch();
+    } catch (toggleError) {
+      console.error('Error al actualizar estado:', toggleError);
+      alert(toggleError.message || 'No se pudo actualizar el cliente');
     }
   };
 
@@ -52,11 +107,11 @@ const CRMView = () => {
     <div className="crm-view">
       <section className="crm-panel">
         <div className="panel-heading">
-          <h2>Nuevo cliente</h2>
-          <span>Inscripción comercial</span>
+          <h2>{editingId ? 'Editar cliente' : 'Nuevo cliente'}</h2>
+          <span>Inscripcion comercial</span>
         </div>
         <p className="crm-hint">
-          Registra aquí al prospecto. Al guardar, quedará inscrito para que puedas crear su cotización.
+          Registra aquí al prospecto. Al guardar, quedará inscrito para que puedas crear su cotizacion.
         </p>
         <form className="crm-form" onSubmit={submitLead}>
           <input name="nombre" placeholder="Empresa o persona *" required value={leadForm.nombre} onChange={handleLeadChange} />
@@ -67,15 +122,27 @@ const CRMView = () => {
             <option value="DNI">DNI</option>
             <option value="RUC">RUC</option>
           </select>
-          <input name="dni_ruc" placeholder="DNI / RUC" value={leadForm.dni_ruc} onChange={handleLeadChange} />
+          <input
+            name="dni_ruc"
+            inputMode="numeric"
+            maxLength={documentLimit}
+            placeholder={leadForm.tipo_identificacion === 'RUC' ? 'RUC (11 dígitos)' : 'DNI (8 dígitos)'}
+            value={leadForm.dni_ruc}
+            onChange={handleLeadChange}
+          />
           <input name="industria" placeholder="Industria" value={leadForm.industria} onChange={handleLeadChange} />
           <select name="estado" value={leadForm.estado} onChange={handleLeadChange}>
             <option value="Activo">Activo</option>
             <option value="Inactivo">Inactivo</option>
           </select>
           <button className="btn-primary" type="submit" disabled={saving}>
-            {saving ? 'Guardando...' : 'Guardar cliente'}
+            {saving ? 'Guardando...' : editingId ? 'Actualizar cliente' : 'Guardar cliente'}
           </button>
+          {editingId && (
+            <button className="btn-secondary" type="button" onClick={handleCancelEdit}>
+              Cancelar edicion
+            </button>
+          )}
         </form>
       </section>
 
@@ -88,28 +155,47 @@ const CRMView = () => {
           <table className="data-table">
             <thead>
               <tr>
+                <th>Tipo</th>
+                <th>DNI / RUC</th>
                 <th>Cliente</th>
                 <th>Contacto</th>
                 <th>Email</th>
-                <th>DNI / RUC</th>
                 <th>Industria</th>
                 <th>Estado</th>
+                <th>Acciones</th>
               </tr>
             </thead>
             <tbody>
               {leads.length === 0 ? (
                 <tr>
-                  <td colSpan="6" className="empty-table-cell">Aún no hay clientes registrados.</td>
+                  <td colSpan="8" className="empty-table-cell">Aun no hay clientes registrados.</td>
                 </tr>
               ) : (
                 leads.map(lead => (
                   <tr key={lead.id}>
+                    <td>
+                      <span className={`badge ${lead.tipo_identificacion === 'RUC' ? 'badge-teal' : 'badge-blue'}`}>
+                        {lead.tipo_identificacion || '-'}
+                      </span>
+                    </td>
+                    <td>{lead.dni_ruc || '-'}</td>
                     <td className="cell-bold">{lead.nombre}</td>
                     <td>{lead.contacto || '-'}</td>
                     <td>{lead.email ? <a href={`mailto:${lead.email}`}>{lead.email}</a> : '-'}</td>
-                    <td>{lead.dni_ruc || '-'}</td>
                     <td>{lead.industria || '-'}</td>
-                    <td><span className="badge badge-blue">{lead.estado}</span></td>
+                    <td>
+                      <span className={`badge ${lead.estado === 'Activo' ? 'badge-green' : 'badge-gray'}`}>
+                        {lead.estado || 'Activo'}
+                      </span>
+                    </td>
+                    <td>
+                      <div className="cell-actions">
+                        <button type="button" className="btn-action" onClick={() => handleEdit(lead)}>Editar</button>
+                        <button type="button" className="btn-action" onClick={() => handleToggleEstado(lead)}>
+                          {lead.estado === 'Activo' ? 'Desactivar' : 'Activar'}
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                 ))
               )}

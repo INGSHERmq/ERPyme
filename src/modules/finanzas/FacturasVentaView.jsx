@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../context/auth/useAuth';
+import { traducirError } from '../../lib/errores';
 
 const getToday = () => new Date().toISOString().split('T')[0];
 
 const FacturasVentaView = () => {
-  const { user } = useAuth();
+  const { user, membership, profile } = useAuth();
   const [cotizaciones, setCotizaciones] = useState([]);
   const [clientes, setClientes] = useState([]);
   const [rows, setRows] = useState([]);
@@ -24,7 +25,7 @@ const FacturasVentaView = () => {
     const [cotiRes, cliRes, facRes] = await Promise.all([
       supabase.from('cotizaciones').select('id,titulo,cliente_id,monto').eq('user_id', user.id).order('created_at', { ascending: false }),
       supabase.from('clientes').select('id,nombre').eq('user_id', user.id).order('nombre'),
-      supabase.from('facturas_venta').select('*').order('created_at', { ascending: false })
+      supabase.from('facturas_venta').select('*').eq('empresa_id', membership?.empresa_id || profile?.empresa_actual_id).order('created_at', { ascending: false })
     ]);
     setCotizaciones(cotiRes.data || []);
     setClientes(cliRes.data || []);
@@ -48,7 +49,7 @@ const FacturasVentaView = () => {
 
     if (error) {
       setCollectingId(null);
-      alert(error.message || 'No se pudo registrar el cobro');
+      alert(traducirError(error));
       return;
     }
 
@@ -75,6 +76,7 @@ const FacturasVentaView = () => {
   const handleSubmit = async (event) => {
     event.preventDefault();
     const { error } = await supabase.from('facturas_venta').insert([{
+      empresa_id: membership?.empresa_id || profile?.empresa_actual_id,
       numero: formData.numero,
       cotizacion_id: formData.cotizacion_id ? Number(formData.cotizacion_id) : null,
       cliente_id: formData.cliente_id ? Number(formData.cliente_id) : null,
@@ -82,7 +84,7 @@ const FacturasVentaView = () => {
       total: Number(formData.total || 0)
     }]);
     if (error) {
-      alert(error.message || 'No se pudo registrar');
+      alert(traducirError(error));
       return;
     }
     setFormData({ numero: '', cotizacion_id: '', cliente_id: '', fecha_emision: getToday(), total: '0' });
@@ -161,7 +163,7 @@ const FacturasVentaView = () => {
                 <td>{clientes.find((c) => c.id === row.cliente_id)?.nombre || '-'}</td>
                 <td>{row.estado === 'emitida' ? 'en proceso' : row.estado}</td>
                 <td>{row.fecha_emision}</td>
-                <td>S/ {Number(row.total || 0).toLocaleString()}</td>
+                <td>S/ {Number(row.total || 0).toLocaleString('en-US')}</td>
                 <td>
                   {row.estado === 'cobrada' ? (
                     <span className="badge badge-green">Cobrada</span>

@@ -1,7 +1,7 @@
 import { useMemo, useState, useEffect } from 'react';
 import useProjects from '../../../hooks/useProjects';
 import useTareas from '../../../hooks/useTareas';
-import { formatDateOnlyInAppTimeZone, parseDateInAppTimeZone, getTodayInAppTimeZone } from '../../../lib/dates';
+import { getTodayInAppTimeZone } from '../../../lib/dates';
 import { supabase } from '../../../lib/supabase';
 import './Cronograma.css';
 
@@ -49,15 +49,6 @@ const addProjectDuration = (startDate, days) => {
     result.setDate(result.getDate() + days);
   }
   return result;
-};
-
-const getProjectDatesFromQuote = (quote) => {
-  if (!quote || !quote.fecha) return { start: null, end: null };
-  const start = parseDate(quote.fecha);
-  if (!start) return { start: null, end: null };
-  const days = Number.parseInt(String(quote.validez || '').match(/\d+/)?.[0] || '30', 10);
-  const end = addProjectDuration(start, days);
-  return { start, end };
 };
 
 const getTaskColor = (tarea, todayStr) => {
@@ -156,10 +147,14 @@ const Cronograma = ({ proyectoId }) => {
       projectEnd = parseDate(rawEnd);
     }
 
-    if (quote && quote.fecha) {
-      projectStart = parseDate(quote.fecha);
-      const days = Number.parseInt(String(quote.validez || '').match(/\d+/)?.[0] || '30', 10);
-      projectEnd = addProjectDuration(projectStart, days);
+    if (quote && (quote.fecha_inicio || quote.fecha)) {
+      projectStart = parseDate(quote.fecha_inicio || quote.fecha);
+      if (quote.fecha_fin) {
+        projectEnd = parseDate(quote.fecha_fin);
+      } else {
+        const days = Number.parseInt(String(quote.validez || '').match(/\d+/)?.[0] || '30', 10);
+        projectEnd = addProjectDuration(projectStart, days);
+      }
     }
 
     if (!projectStart) {

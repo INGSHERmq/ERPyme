@@ -1,5 +1,7 @@
 import { createContext, useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
+import { traducirError } from '../lib/errores';
+import { validarCamposRequeridos } from '../lib/validacion';
 
 const MarketingContext = createContext();
 
@@ -22,7 +24,7 @@ export const MarketingProvider = ({ children }) => {
       setCotizaciones(cotizacionesRes.data || []);
     } catch (err) {
       console.error('Error cargando marketing:', err);
-      setError(err.message);
+      setError(traducirError(err));
     } finally {
       setLoading(false);
     }
@@ -33,23 +35,38 @@ export const MarketingProvider = ({ children }) => {
   }, []);
 
   const addCliente = async (data) => {
+    const errores = validarCamposRequeridos(data, [
+      { nombre: 'nombre', etiqueta: 'Nombre del cliente' },
+    ]);
+    if (errores.length > 0) {
+      throw new Error(errores.join('\n'));
+    }
+
     const { data: nuevo, error } = await supabase
       .from('clientes')
       .insert([{ ...data, creado: new Date().toISOString().split('T')[0] }])
       .select()
       .single();
-    if (error) throw error;
+    if (error) throw new Error(traducirError(error));
     setClientes(prev => [...prev, nuevo]);
     return nuevo;
   };
 
   const addCotizacion = async (data) => {
+    const errores = validarCamposRequeridos(data, [
+      { nombre: 'titulo', etiqueta: 'Título de cotización' },
+      { nombre: 'cliente_id', etiqueta: 'Cliente', alias: 'clienteId' },
+    ]);
+    if (errores.length > 0) {
+      throw new Error(errores.join('\n'));
+    }
+
     const { data: nueva, error } = await supabase
       .from('cotizaciones')
       .insert([{ ...data, fecha: data.fecha || new Date().toISOString().split('T')[0] }])
       .select()
       .single();
-    if (error) throw error;
+    if (error) throw new Error(traducirError(error));
     setCotizaciones(prev => [...prev, nueva]);
     return nueva;
   };

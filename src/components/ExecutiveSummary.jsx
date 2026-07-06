@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { generateExecutiveSummary } from '../modules/assistant/executiveSummary';
+import { traducirError } from '../lib/errores';
 import './ExecutiveSummary.css';
 
 const ExecutiveSummary = ({ userId, compact = false, onNavigate }) => {
@@ -7,6 +8,7 @@ const ExecutiveSummary = ({ userId, compact = false, onNavigate }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showRisksPopover, setShowRisksPopover] = useState(false);
+  const [showOverduePopover, setShowOverduePopover] = useState(false);
 
   useEffect(() => {
     const fetchSummary = async () => {
@@ -17,7 +19,7 @@ const ExecutiveSummary = ({ userId, compact = false, onNavigate }) => {
         setSummary(data);
       } catch (err) {
         console.error('Error fetching summary:', err);
-        setError(err.message || 'No se pudo cargar el resumen.');
+        setError(traducirError(err));
       } finally {
         setLoading(false);
       }
@@ -49,7 +51,7 @@ const ExecutiveSummary = ({ userId, compact = false, onNavigate }) => {
           <header className="risks-popover-header">
             <div>
               <span className="popover-badge-danger">CRÍTICO</span>
-              <h5>⚠️ Diagnóstico de Riesgos de Proyectos (IA)</h5>
+              <h5>Diagnóstico de Riesgos de Proyectos (IA)</h5>
             </div>
             <button className="btn-close-popover" onClick={() => setShowRisksPopover(false)}>×</button>
           </header>
@@ -59,7 +61,7 @@ const ExecutiveSummary = ({ userId, compact = false, onNavigate }) => {
               {summary.projectRisks.map((p) => (
                 <div key={p.id} className="popover-project-item">
                   <div className="popover-project-header-row">
-                    <span className="popover-project-name">📁 {p.nombre}</span>
+                    <span className="popover-project-name">{p.nombre}</span>
                     <span className="popover-project-progress">Avance: {p.progreso}%</span>
                   </div>
                   
@@ -74,7 +76,7 @@ const ExecutiveSummary = ({ userId, compact = false, onNavigate }) => {
                         }
                         return (
                           <div key={t.id} className="popover-task-item">
-                            <span className="popover-task-title">🔥 {t.titulo}</span>
+                            <span className="popover-task-title">{t.titulo}</span>
                             <span className="popover-task-info">
                               Responsable: <strong>{t.empleado_nombre || 'Sin asignar'}</strong> | Retraso: {daysOverdue} día{daysOverdue > 1 ? 's' : ''} ({t.duracion_horas || '0'}h planificadas)
                             </span>
@@ -114,6 +116,96 @@ const ExecutiveSummary = ({ userId, compact = false, onNavigate }) => {
     );
   };
 
+  const renderOverduePopover = () => {
+    if (!showOverduePopover || summary.overdue.length === 0) return null;
+    const totalOverdue = summary.overdue.reduce((sum, item) => sum + Number(item.monto || 0), 0);
+    const formatCurrency = (value) => {
+      const num = Number(value || 0);
+      return `S/ ${num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    };
+    return (
+      <div className="risks-popover-backdrop" onClick={() => setShowOverduePopover(false)}>
+        <div className="risks-popover-card" onClick={(e) => e.stopPropagation()}>
+          <header className="risks-popover-header">
+            <div>
+              <span className="popover-badge-danger">VENCIDO</span>
+              <h5>Facturas Vencidas</h5>
+            </div>
+            <button className="btn-close-popover" onClick={() => setShowOverduePopover(false)}>×</button>
+          </header>
+          <div className="risks-popover-body">
+            <p className="popover-intro">
+              <strong>{summary.overdue.length}</strong> factura{summary.overdue.length === 1 ? '' : 's'} vencida{summary.overdue.length === 1 ? '' : 's'} por un total de <strong>{formatCurrency(totalOverdue)}</strong>:
+            </p>
+            <div className="popover-projects-list">
+              {summary.overdue.map((item) => {
+                const dueDate = item.fecha_vencimiento ? new Date(item.fecha_vencimiento) : null;
+                const now = new Date();
+                let durationLabel = '';
+                if (dueDate && !Number.isNaN(dueDate.getTime())) {
+                  const diffMs = now - dueDate;
+                  if (diffMs < 0) {
+                    durationLabel = 'Vence hoy';
+                  } else if (diffMs < 3600000) {
+                    const mins = Math.floor(diffMs / 60000);
+                    durationLabel = `${mins} min vencido`;
+                  } else if (diffMs < 86400000) {
+                    const hours = Math.floor(diffMs / 3600000);
+                    const mins = Math.floor((diffMs % 3600000) / 60000);
+                    durationLabel = `${hours}h ${mins}m vencido`;
+                  } else {
+                    const days = Math.floor(diffMs / 86400000);
+                    durationLabel = `${days} día${days > 1 ? 's' : ''} vencido`;
+                  }
+                } else {
+                  durationLabel = 'Vencido';
+                }
+                const dueStr = item.fecha_vencimiento ? item.fecha_vencimiento.slice(0, 10) : '';
+                return (
+                  <div key={item.id} className="popover-project-item">
+                    <div className="popover-project-header-row">
+                      <span className="popover-project-name">{item.concepto || `Factura #${item.numero || item.id}`}</span>
+                      <span className="popover-project-progress" style={{ color: '#ff4d6a', background: 'rgba(246,70,93,0.1)' }}>
+                        {durationLabel}
+                      </span>
+                    </div>
+                    <div className="popover-delayed-tasks">
+                      <div className="popover-task-item" style={{ borderLeftColor: '#ff4d6a' }}>
+                        <span className="popover-task-title">{formatCurrency(Number(item.monto || 0))}</span>
+                        <span className="popover-task-info">
+                          {item.tipo === 'compra' ? 'Factura de compra' : 'Cuenta por cobrar'}
+                          {item.cliente_id ? ` | Cliente ID: ${item.cliente_id}` : ''}
+                          {item.fecha_vencimiento ? ` | Venció: ${dueStr}` : ''}
+                        </span>
+                        <div className="popover-ai-tip" style={{ color: '#ff4d6a', borderColor: 'rgba(246,70,93,0.2)' }}>
+                          <strong>IA:</strong> Priorizar seguimiento de esta cobranza vencida.
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+          <footer className="risks-popover-footer">
+            {onNavigate && (
+              <button 
+                className="btn-popover-action" 
+                style={{ background: '#ff4d6a', color: '#fff' }}
+                onClick={() => {
+                  setShowOverduePopover(false);
+                  onNavigate('contabilidad', 'facturas-compra');
+                }}
+              >
+                Ir a Contabilidad / Facturas Compra →
+              </button>
+            )}
+          </footer>
+        </div>
+      </div>
+    );
+  };
+
   if (compact) {
     return (
       <div className="summary-compact-row">
@@ -125,7 +217,13 @@ const ExecutiveSummary = ({ userId, compact = false, onNavigate }) => {
           {summary.dueToday.length > 0 && <div className="card-accent" />}
         </article>
         
-        <article className="summary-card compact">
+        <article 
+          className={`summary-card compact ${summary.overdue.length > 0 ? 'interactive-overdue-card' : ''}`}
+          onClick={() => {
+            if (summary.overdue.length > 0) setShowOverduePopover(true);
+          }}
+          title={summary.overdue.length > 0 ? 'Ver detalles de facturas vencidas' : undefined}
+        >
           <div className="card-inner">
             <strong>{summary.overdue.length}</strong>
             <span>Facturas vencidas</span>
@@ -168,6 +266,7 @@ const ExecutiveSummary = ({ userId, compact = false, onNavigate }) => {
         </article>
 
         {renderPopover()}
+        {renderOverduePopover()}
       </div>
     );
   }
@@ -191,7 +290,13 @@ const ExecutiveSummary = ({ userId, compact = false, onNavigate }) => {
           {summary.dueToday.length > 0 && <div className="card-accent" />}
         </article>
         
-        <article className="summary-card">
+        <article 
+          className={`summary-card ${summary.overdue.length > 0 ? 'interactive-overdue-card' : ''}`}
+          onClick={() => {
+            if (summary.overdue.length > 0) setShowOverduePopover(true);
+          }}
+          title={summary.overdue.length > 0 ? 'Ver detalles de facturas vencidas' : undefined}
+        >
           <div className="card-inner">
             <strong>{summary.overdue.length}</strong>
             <span>Facturas vencidas</span>
@@ -243,6 +348,7 @@ const ExecutiveSummary = ({ userId, compact = false, onNavigate }) => {
       </div>
 
       {renderPopover()}
+      {renderOverduePopover()}
     </section>
   );
 };

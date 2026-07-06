@@ -1,7 +1,7 @@
 import { useMemo, useState, useEffect } from 'react';
 import useProjects from '../../../hooks/useProjects';
 import useTareas from '../../../hooks/useTareas';
-import { formatDateOnlyInAppTimeZone, getTodayInAppTimeZone, parseDateInAppTimeZone, toAppDateKey } from '../../../lib/dates';
+import { getTodayInAppTimeZone, toAppDateKey } from '../../../lib/dates';
 import { supabase } from '../../../lib/supabase';
 import './Calendario.css';
 
@@ -27,12 +27,6 @@ const toDateString = (date) => {
   return `${year}-${month}-${day}`;
 };
 
-const addDays = (date, days) => {
-  const result = new Date(date);
-  result.setDate(result.getDate() + days);
-  return result;
-};
-
 const formatLocalCleanDate = (date) => {
   if (!date) return '-';
   const day = date.getDate();
@@ -50,15 +44,6 @@ const addProjectDuration = (startDate, days) => {
     result.setDate(result.getDate() + days);
   }
   return result;
-};
-
-const getProjectDatesFromQuote = (quote) => {
-  if (!quote || !quote.fecha) return { start: null, end: null };
-  const start = parseDate(quote.fecha);
-  if (!start) return { start: null, end: null };
-  const days = Number.parseInt(String(quote.validez || '').match(/\d+/)?.[0] || '30', 10);
-  const end = addProjectDuration(start, days);
-  return { start, end };
 };
 
 const getTaskColor = (tarea, todayStr) => {
@@ -129,10 +114,14 @@ const Calendario = ({ proyectoId }) => {
       end = parseDate(rawEnd);
     }
 
-    if (quote && quote.fecha) {
-      start = parseDate(quote.fecha);
-      const days = Number.parseInt(String(quote.validez || '').match(/\d+/)?.[0] || '30', 10);
-      end = addProjectDuration(start, days);
+    if (quote && (quote.fecha_inicio || quote.fecha)) {
+      start = parseDate(quote.fecha_inicio || quote.fecha);
+      if (quote.fecha_fin) {
+        end = parseDate(quote.fecha_fin);
+      } else {
+        const days = Number.parseInt(String(quote.validez || '').match(/\d+/)?.[0] || '30', 10);
+        end = addProjectDuration(start, days);
+      }
     }
 
     if (!start) {

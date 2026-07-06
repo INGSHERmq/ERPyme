@@ -2,11 +2,13 @@ import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../context/auth/useAuth';
 import { uploadPrivateFile } from '../../lib/storage';
+import './DocumentosView.css';
 
 const DocumentosView = () => {
   const { user, company, profile } = useAuth();
   const [documentos, setDocumentos] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [activeSection, setActiveSection] = useState('empresa');
   const [showForm, setShowForm] = useState(false);
   const [subiendo, setSubiendo] = useState(false);
   const [formData, setFormData] = useState({
@@ -78,16 +80,48 @@ const DocumentosView = () => {
 
   if (loading) return <div className="loading">Cargando documentos...</div>;
 
+  const documentosEmpresa = documentos.filter((doc) => !doc.empleado_id);
+  const documentosEmpleados = documentos.filter((doc) => doc.empleado_id);
+
   return (
     <div className="rrhh-view">
       <div className="view-header">
-        <h2>Documentos</h2>
-        <button type="button" className="btn-primary" onClick={() => setShowForm(!showForm)}>
-          {showForm ? 'Cancelar' : '+ Subir documento'}
+        <div>
+          <h2>Documentos</h2>
+          <p className="documentos-subtitle">
+            Separa los archivos generales de la empresa de los documentos propios de cada trabajador.
+          </p>
+        </div>
+        {activeSection === 'empresa' && (
+          <button type="button" className="btn-primary" onClick={() => setShowForm(!showForm)}>
+            {showForm ? 'Cancelar' : '+ Subir documento'}
+          </button>
+        )}
+      </div>
+
+      <div className="documents-section-tabs" aria-label="Secciones de documentos">
+        <button
+          type="button"
+          className={activeSection === 'empresa' ? 'active' : ''}
+          onClick={() => setActiveSection('empresa')}
+        >
+          Documentos de empresa
+          <span>{documentosEmpresa.length}</span>
+        </button>
+        <button
+          type="button"
+          className={activeSection === 'empleados' ? 'active' : ''}
+          onClick={() => {
+            setActiveSection('empleados');
+            setShowForm(false);
+          }}
+        >
+          Documentos de empleados
+          <span>{documentosEmpleados.length}</span>
         </button>
       </div>
 
-      {showForm && (
+      {showForm && activeSection === 'empresa' && (
         <form className="simple-form" onSubmit={handleSubmit}>
           <div className="form-field">
             <label htmlFor="doc-nombre">Nombre del documento *</label>
@@ -123,35 +157,73 @@ const DocumentosView = () => {
             <input id="doc-archivo" type="file" required onChange={(event) => setArchivo(event.target.files?.[0] || null)} />
           </div>
           <button type="submit" className="btn-primary" disabled={subiendo}>
-            {subiendo ? 'Subiendo...' : 'Guardar documento'}
+            {subiendo ? 'Subiendo...' : 'Guardar documento de empresa'}
           </button>
         </form>
       )}
 
-      <div className="table-responsive">
-        <table className="data-table">
-          <thead>
-            <tr>
-              <th>Nombre</th>
-              <th>Empleado</th>
-              <th>Tipo</th>
-              <th>Vence</th>
-              <th>Archivo</th>
-            </tr>
-          </thead>
-          <tbody>
-            {documentos.map((doc) => (
-              <tr key={doc.id}>
-                <td className="cell-bold">{doc.nombre}</td>
-                <td>{[doc.empleados?.nombre, doc.empleados?.apellidos].filter(Boolean).join(' ') || '-'}</td>
-                <td>{doc.tipo}</td>
-                <td>{doc.fecha_vencimiento || '-'}</td>
-                <td>{doc.storage_path ? <a href={doc.storage_path} target="_blank" rel="noreferrer">Ver</a> : '-'}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      {activeSection === 'empresa' ? (
+        documentosEmpresa.length > 0 ? (
+          <div className="table-responsive">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>Nombre</th>
+                  <th>Tipo</th>
+                  <th>Vence</th>
+                  <th>Archivo</th>
+                </tr>
+              </thead>
+              <tbody>
+                {documentosEmpresa.map((doc) => (
+                  <tr key={doc.id}>
+                    <td className="cell-bold">{doc.nombre}</td>
+                    <td>{doc.tipo}</td>
+                    <td>{doc.fecha_vencimiento || '-'}</td>
+                    <td>{doc.storage_path ? <a href={doc.storage_path} target="_blank" rel="noreferrer">Ver</a> : '-'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="empty-state">Aun no hay documentos generales de la empresa.</div>
+        )
+      ) : (
+        <>
+          <div className="documents-guidance">
+            Los documentos de trabajadores se registran desde la ficha de empleados o cuando el trabajador atiende una solicitud de RRHH.
+          </div>
+          {documentosEmpleados.length > 0 ? (
+            <div className="table-responsive">
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Nombre</th>
+                    <th>Empleado</th>
+                    <th>Tipo</th>
+                    <th>Vence</th>
+                    <th>Archivo</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {documentosEmpleados.map((doc) => (
+                    <tr key={doc.id}>
+                      <td className="cell-bold">{doc.nombre}</td>
+                      <td>{[doc.empleados?.nombre, doc.empleados?.apellidos].filter(Boolean).join(' ') || 'Empleado no disponible'}</td>
+                      <td>{doc.tipo}</td>
+                      <td>{doc.fecha_vencimiento || '-'}</td>
+                      <td>{doc.storage_path ? <a href={doc.storage_path} target="_blank" rel="noreferrer">Ver</a> : '-'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="empty-state">Aun no hay documentos cargados por empleados.</div>
+          )}
+        </>
+      )}
     </div>
   );
 };

@@ -10,7 +10,7 @@ const InventarioView = () => {
     <div className="logistica-view">
       <div className="view-header">
         <h2>Equipos</h2>
-        <span className="view-hint">Se actualiza automaticamente desde Productos e inventario.</span>
+        <span className="view-hint">Se actualiza automáticamente desde Productos e inventario.</span>
       </div>
 
       <div className="table-responsive">
@@ -36,7 +36,7 @@ const InventarioView = () => {
                   <small className="text-muted">{a.modelo || ''}</small>
                 </td>
                 <td>{a.ubicacion || '-'}</td>
-                <td>S/ {a.costo?.toLocaleString() || 0}</td>
+                <td>S/ {a.costo?.toLocaleString('en-US') || 0}</td>
                 <td>{a.stockActual ?? 0} {a.unidad || ''}</td>
                 <td>
                   <span className={`badge badge-${

@@ -7,6 +7,7 @@ import Home from './Home';
 import LandingPage from './LandingPage';
 import { getPlanConfig } from './config/modules';
 import { formatTrialDate } from './lib/trial';
+import { traducirError } from './lib/errores';
 import './styles/theme.css';
 
 const ProjectsView = lazy(() => import('./modules/projects/ProjectsView'));
@@ -98,7 +99,7 @@ function App() {
       await updateProfile(profileForm);
       setProfileMessage('Datos actualizados correctamente.');
     } catch (error) {
-      setProfileError(error.message || 'No se pudo actualizar el perfil.');
+      setProfileError(traducirError(error));
     }
   };
 
@@ -128,7 +129,7 @@ function App() {
               <span className="user-name">{profile?.nombre_completo || 'Usuario'}</span>
               <span className="user-plan">
                 {trialStatus?.isTrial
-                  ? `Demo: ${trialStatus.daysLeft} dia(s)`
+                  ? `Demo: ${trialStatus.daysLeft} día(s)`
                   : company?.plan ? planLabel : 'plan activo'}
               </span>
             </div>
@@ -145,7 +146,7 @@ function App() {
         <section className="trial-banner" role="status">
           <div>
             <strong>Demo gratuita activa</strong>
-            <span>Te quedan {trialStatus.daysLeft} dia(s). Vence el {trialEndsLabel}.</span>
+            <span>Te quedan {trialStatus.daysLeft} día(s). Vence el {trialEndsLabel}.</span>
           </div>
           <button type="button" onClick={() => navigate('admin')}>Ver plan</button>
         </section>
@@ -160,7 +161,7 @@ function App() {
               La empresa {company?.nombre || 'registrada'} ya no tiene acceso operativo. Para reactivarla, cambia el plan desde Supabase o habilita una pasarela de pago para convertir la demo en un plan activo.
             </p>
             <div className="trial-expired-actions">
-              <button type="button" onClick={signOut}>Cerrar sesion</button>
+              <button type="button" onClick={signOut}>Cerrar sesión</button>
             </div>
           </section>
         </main>
@@ -203,8 +204,8 @@ function App() {
               <label>Nombre visible<input name="nombre_completo" value={profileForm.nombre_completo || ''} onChange={handleProfileChange} /></label>
               <label>Fecha nacimiento<input name="fecha_nacimiento" type="date" value={profileForm.fecha_nacimiento || ''} onChange={handleProfileChange} /></label>
               <label>Documento<input name="documento_identidad" value={profileForm.documento_identidad || ''} onChange={handleProfileChange} /></label>
-              <label>Telefono<input name="telefono" value={profileForm.telefono || ''} onChange={handleProfileChange} /></label>
-              <label>Direccion<input name="direccion" value={profileForm.direccion || ''} onChange={handleProfileChange} /></label>
+              <label>Teléfono<input name="telefono" value={profileForm.telefono || ''} onChange={handleProfileChange} /></label>
+              <label>Dirección<input name="direccion" value={profileForm.direccion || ''} onChange={handleProfileChange} /></label>
               <label>Cargo<input name="cargo" value={profileForm.cargo || ''} onChange={handleProfileChange} /></label>
               <label>Departamento<input name="departamento" value={profileForm.departamento || ''} onChange={handleProfileChange} /></label>
               {(profileMessage || profileError) && (

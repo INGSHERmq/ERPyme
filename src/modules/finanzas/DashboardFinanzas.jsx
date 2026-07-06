@@ -34,7 +34,7 @@ const DashboardFinanzas = () => {
   if (loading) return <div className="loading">Cargando resumen de dinero...</div>;
   if (!dashboardData) return <div className="empty-state">No hay datos de dinero disponibles</div>;
 
-  const formatCurrency = (value) => `S/ ${(value || 0).toLocaleString()}`;
+  const formatCurrency = (value) => `S/ ${(value || 0).toLocaleString('en-US')}`;
 
   return (
     <div className="finanzas-dashboard">

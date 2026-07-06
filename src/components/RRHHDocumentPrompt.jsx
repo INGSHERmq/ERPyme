@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { uploadPrivateFile } from '../lib/storage';
 import { useAuth } from '../context/auth/useAuth';
+import { traducirError } from '../lib/errores';
 import './RRHHDocumentPrompt.css';
 
 const toDateLabel = (value) => {
@@ -116,7 +117,7 @@ const RRHHDocumentPrompt = () => {
       setRequest(null);
       setEmployee(null);
     } catch (error) {
-      setMessage(error.message || 'No se pudo subir el documento.');
+      setMessage(traducirError(error));
     } finally {
       setUploading(false);
     }

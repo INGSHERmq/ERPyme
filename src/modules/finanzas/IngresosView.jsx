@@ -67,7 +67,7 @@ const IngresosView = () => {
               <tr key={i.id}>
                 <td className="cell-bold">{i.concepto}</td>
                 <td>{i.tipo}</td>
-                <td><strong>S/ {Number(i.monto || 0).toLocaleString()}</strong></td>
+                <td><strong>S/ {Number(i.monto || 0).toLocaleString('en-US')}</strong></td>
                 <td>{i.fecha}</td>
                 <td><span className={`badge ${i.estado === 'Cobrado' ? 'badge-green' : 'badge-yellow'}`}>{i.estado}</span></td>
                 <td>{i.metodo}</td>

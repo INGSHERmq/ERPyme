@@ -1,0 +1,73 @@
+.documentos-subtitle {
+  margin: 6px 0 0;
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.documents-section-tabs {
+  display: inline-flex;
+  gap: 6px;
+  padding: 4px;
+  margin-bottom: 18px;
+  background: var(--surface-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+}
+
+.documents-section-tabs button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  padding: 8px 14px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.documents-section-tabs button.active {
+  background: var(--binance-yellow);
+  color: var(--on-primary);
+}
+
+.documents-section-tabs span {
+  min-width: 22px;
+  padding: 2px 7px;
+  border-radius: var(--radius-pill);
+  background: var(--surface-elevated);
+  color: var(--text-main);
+  font-size: 12px;
+  text-align: center;
+}
+
+.documents-section-tabs button.active span {
+  background: rgb(0 0 0 / 14%);
+  color: inherit;
+}
+
+.documents-guidance {
+  margin-bottom: 14px;
+  padding: 12px 14px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background: var(--surface-bg);
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+@media (max-width: 640px) {
+  .documents-section-tabs {
+    display: grid;
+    width: 100%;
+  }
+
+  .documents-section-tabs button {
+    justify-content: space-between;
+  }
+}

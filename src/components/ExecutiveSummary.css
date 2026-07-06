@@ -192,6 +192,18 @@
   transform: translateY(-3px) !important;
 }
 
+/* Interactividad en tarjetas de facturas vencidas */
+.interactive-overdue-card {
+  cursor: pointer !important;
+  border-color: rgba(246, 70, 93, 0.4) !important;
+}
+
+.interactive-overdue-card:hover {
+  border-color: #ff4d6a !important;
+  box-shadow: 0 0 16px rgba(246, 70, 93, 0.25), 0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: translateY(-3px) !important;
+}
+
 /* Modal / Popover de Detalles de Riesgos */
 .risks-popover-backdrop {
   position: fixed;
