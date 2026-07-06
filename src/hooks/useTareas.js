@@ -47,7 +47,7 @@ const useTareas = (proyectoId) => {
     
     const errores = [
       ...validarCamposRequeridos(tareaData, [
-        { nombre: 'nombre', etiqueta: 'Nombre de la tarea' },
+        { nombre: 'titulo', etiqueta: 'Nombre de la tarea' },
         { nombre: 'estado', etiqueta: 'Estado' },
       ]),
       ...validarFechas(tareaData, [
