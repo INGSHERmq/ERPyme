@@ -27,11 +27,11 @@ const CotizaciónesView = () => {
   const { user } = useAuth();
   const {
     clientes,
-    cotizaciónes,
-    addCotización,
-    updateCotización,
-    anularCotización,
-    convertirCotización,
+    cotizaciones: cotizaciónes,
+    addCotizacion: addCotización,
+    updateCotizacion: updateCotización,
+    anularCotizacion: anularCotización,
+    convertirCotizacion: convertirCotización,
     refetch,
     loading
   } = useMarketing();

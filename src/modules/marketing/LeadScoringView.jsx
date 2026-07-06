@@ -39,7 +39,7 @@ const explainScore = (quotation, customer, lead, score) => {
 };
 
 const LeadScoringView = () => {
-  const { clientes, leads, cotizaciónes, loading, error } = useMarketing();
+  const { clientes, leads, cotizaciones: cotizaciónes, loading, error } = useMarketing();
 
   const rows = useMemo(() => {
     const clientesById = Object.fromEntries((clientes || []).map(cliente => [cliente.id, cliente]));
