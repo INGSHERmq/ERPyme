@@ -122,6 +122,18 @@ const AnaliticaProyectoView = () => {
               </tr>
             ))}
           </tbody>
+          <tfoot>
+            <tr className="total-row">
+              <td className="cell-bold">TOTAL</td>
+              <td className="cell-bold">S/ {rows.reduce((s, r) => s + Number(r.ingresos_cobrados || 0), 0).toLocaleString('en-US')}</td>
+              <td className="cell-bold">S/ {rows.reduce((s, r) => s + Number(r.egresos || 0), 0).toLocaleString('en-US')}</td>
+              <td>
+                <span className={`badge ${rows.reduce((s, r) => s + Number(r.utilidad || 0), 0) >= 0 ? 'badge-green' : 'badge-red'}`}>
+                  S/ {rows.reduce((s, r) => s + Number(r.utilidad || 0), 0).toLocaleString('en-US')}
+                </span>
+              </td>
+            </tr>
+          </tfoot>
         </table>
       </div>
     </div>
