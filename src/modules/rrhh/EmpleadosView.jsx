@@ -162,7 +162,13 @@ const EmpleadosView = () => {
     } catch (error) {
       console.error('Error al guardar empleado:', error);
       if (error?.code === '23505') {
-        alert('Error: el correo o usuario ya está vinculado a otro empleado.');
+        const match = error.details?.match(/Key\s+\((\w+)\)\s*=\s*\((.+?)\)/);
+        if (match) {
+          const campo = match[1] === 'email' ? 'correo electrónico' : match[1];
+          alert(`El ${campo} "${match[2]}" ya está registrado en otro empleado.`);
+        } else {
+          alert('Error: el correo o usuario ya está vinculado a otro empleado.');
+        }
       } else {
         alert(`Error al registrar el empleado: ${error?.message || 'Error desconocido'}`);
       }

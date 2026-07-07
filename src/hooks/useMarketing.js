@@ -75,7 +75,13 @@ const useMarketing = () => {
       .insert([{ ...data, user_id: user.id, empresa_id: empresaId, creado: new Date().toISOString().split('T')[0] }])
       .select()
       .single();
-    if (error) throw new Error(traducirError(error));
+    if (error) {
+      const err = new Error(traducirError(error));
+      err.code = error.code;
+      err.details = error.details;
+      err.constraint = error.constraint;
+      throw err;
+    }
     setClientes(prev => [...prev, nuevo]);
     return nuevo;
   };
@@ -91,7 +97,13 @@ const useMarketing = () => {
       .select()
       .single();
 
-    if (error) throw new Error(traducirError(error));
+    if (error) {
+      const err = new Error(traducirError(error));
+      err.code = error.code;
+      err.details = error.details;
+      err.constraint = error.constraint;
+      throw err;
+    }
     setClientes(prev => prev
       .map(cliente => (Number(cliente.id) === Number(clienteId) ? { ...cliente, ...actualizado } : cliente))
       .sort((a, b) => (a.nombre || '').localeCompare(b.nombre || ''))
@@ -137,7 +149,13 @@ const useMarketing = () => {
       .insert([{ ...data, user_id: user.id, empresa_id: empresaId, fecha: data.fecha || data.fecha_inicio || new Date().toISOString().split('T')[0] }])
       .select()
       .single();
-    if (error) throw new Error(traducirError(error));
+    if (error) {
+      const err = new Error(traducirError(error));
+      err.code = error.code;
+      err.details = error.details;
+      err.constraint = error.constraint;
+      throw err;
+    }
     setCotizaciones(prev => [...prev, nueva]);
     return nueva;
   };
@@ -252,7 +270,13 @@ const useMarketing = () => {
       .select()
       .single();
 
-    if (error) throw new Error(traducirError(error));
+    if (error) {
+      const err = new Error(traducirError(error));
+      err.code = error.code;
+      err.details = error.details;
+      err.constraint = error.constraint;
+      throw err;
+    }
     setCotizaciones(prev => prev.map(c => (
       Number(c.id) === Number(cotizacionId) ? { ...c, ...actualizada } : c
     )));

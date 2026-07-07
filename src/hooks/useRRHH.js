@@ -109,7 +109,13 @@ const useRRHH = () => {
       }])
       .select()
       .single();
-    if (error) throw new Error(traducirError(error));
+    if (error) {
+      const err = new Error(traducirError(error));
+      err.code = error.code;
+      err.details = error.details;
+      err.constraint = error.constraint;
+      throw err;
+    }
     setEmpleados(prev => [...prev, nuevo]);
     return nuevo;
   };
@@ -125,7 +131,13 @@ const useRRHH = () => {
       .select()
       .single();
 
-    if (error) throw new Error(traducirError(error));
+    if (error) {
+      const err = new Error(traducirError(error));
+      err.code = error.code;
+      err.details = error.details;
+      err.constraint = error.constraint;
+      throw err;
+    }
     setEmpleados(prev => prev.map(empleado => (Number(empleado.id) === Number(empleadoId) ? { ...empleado, ...actualizado } : empleado)));
     return actualizado;
   };

@@ -64,7 +64,17 @@ const CRMView = () => {
       alert('Cliente guardado. Tambien queda disponible para crear cotizaciones.');
     } catch (submitError) {
       console.error('Error al guardar cliente:', submitError);
-      alert(submitError.message || 'No se pudo guardar el cliente');
+      if (submitError?.code === '23505') {
+        const match = submitError.details?.match(/Key\s+\((\w+)\)\s*=\s*\((.+?)\)/);
+        if (match) {
+          const campo = match[1] === 'dni_ruc' ? 'DNI/RUC' : match[1];
+          alert(`El ${campo} "${match[2]}" ya está registrado en otro cliente.`);
+        } else {
+          alert('Error: el DNI/RUC ya está registrado en otro cliente.');
+        }
+      } else {
+        alert(submitError.message || 'No se pudo guardar el cliente');
+      }
     } finally {
       setSaving(false);
     }
