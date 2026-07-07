@@ -348,6 +348,13 @@ body {
   background-color: var(--surface-elevated) !important;
 }
 
+.data-table tfoot td {
+  padding: 16px 20px;
+  border-top: 2px solid var(--border-color);
+  font-size: 14px;
+  vertical-align: middle;
+}
+
 .simple-form,
 .form-grid,
 .content-area > form {
