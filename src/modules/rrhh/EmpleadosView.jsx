@@ -302,7 +302,7 @@ const EmpleadosView = () => {
             </select>
           </div>
           <div className="form-field">
-            <label htmlFor="emp-salario">Monto de pago</label>
+            <label htmlFor="emp-salario">Monto de pago *</label>
             <input id="emp-salario" name="salario" type="number" min="0" step="0.01" placeholder="Monto segun modalidad" required value={formData.salario} onChange={handleChange} />
           </div>
           <div className="form-field">
