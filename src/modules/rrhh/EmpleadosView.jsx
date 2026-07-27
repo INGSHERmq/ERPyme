@@ -3,6 +3,7 @@ import useRRHH from '../../hooks/useRRHH';
 import { supabase } from '../../lib/supabase';
 import { uploadPrivateFile } from '../../lib/storage';
 import { useAuth } from '../../context/auth/useAuth';
+import DataTable from '../../components/DataTable';
 import './EmpleadosView.css';
 
 const EMPTY_FORM = {
@@ -21,6 +22,7 @@ const EMPTY_FORM = {
   estado: 'Activo',
   estado_laboral: 'Activo',
   tipo_contrato: 'Indefinido',
+  fecha_ingreso: '',
   fecha_fin_contrato: '',
   puede_subir_documentos: false
 };
@@ -198,6 +200,7 @@ const EmpleadosView = () => {
       estado: empleado.estado || 'Activo',
       estado_laboral: empleado.estado_laboral || 'Activo',
       tipo_contrato: empleado.tipo_contrato || 'Indefinido',
+      fecha_ingreso: empleado.fecha_ingreso || '',
       fecha_fin_contrato: empleado.fecha_fin_contrato || '',
       puede_subir_documentos: Boolean(empleado.puede_subir_documentos)
     });
@@ -328,6 +331,10 @@ const EmpleadosView = () => {
               <option>Activo</option><option>Inactivo</option><option>Suspendido</option><option>Cesado</option>
             </select>
           </div>
+          <div className="form-field">
+            <label htmlFor="emp-fecha-ingreso">Fecha de inicio</label>
+            <input id="emp-fecha-ingreso" name="fecha_ingreso" type="date" value={formData.fecha_ingreso} onChange={handleChange} />
+          </div>
           {formData.tipo_contrato === 'Temporal' && (
             <div className="form-field">
               <label htmlFor="emp-fecha-fin-contrato">Fin de contrato *</label>
@@ -389,69 +396,57 @@ const EmpleadosView = () => {
         </form>
       )}
 
-      <div className="table-responsive">
-        <table className="data-table">
-          <thead>
-            <tr>
-              <th>Nombre</th>
-              <th>Cargo</th>
-              <th>Departamento</th>
-              <th>Salario</th>
-              <th>Modalidad</th>
-              <th>Proyectos Asignados</th>
-              <th>Estado laboral</th>
-              <th>Usuario</th>
-              <th>Documentos</th>
-              <th>Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            {empleados.map((empleado) => {
-              const documentosEmpleado = documentosPorEmpleado[empleado.id] || [];
-              const ultimaSolicitud = solicitudesPorEmpleado[empleado.id];
-              const ultimoDocumento = documentosEmpleado[0];
+      <DataTable
+        data={empleados}
+        searchKeys={['nombre', 'apellidos', 'cargo', 'departamento', 'email']}
+        searchPlaceholder="Buscar empleado por nombre, cargo, departamento..."
+        pageSize={10}
+        columns={['Nombre', 'Cargo', 'Departamento', 'Inicio', 'Fin contrato', 'Salario', 'Modalidad', 'Estado laboral', 'Usuario', 'Documentos', 'Acciones']}
+        renderRow={(empleado) => {
+          const documentosEmpleado = documentosPorEmpleado[empleado.id] || [];
+          const ultimaSolicitud = solicitudesPorEmpleado[empleado.id];
+          const ultimoDocumento = documentosEmpleado[0];
 
-              return (
-                <tr key={empleado.id}>
-                  <td className="cell-bold">{[empleado.nombre, empleado.apellidos].filter(Boolean).join(' ')}</td>
-                  <td>{empleado.cargo || '-'}</td>
-                  <td>{empleado.departamento || '-'}</td>
-                  <td>S/ {empleado.salario?.toLocaleString('en-US') || 0}</td>
-                  <td>{{ mensual: 'Mensual', diario: 'Por día', hora: 'Por hora', proyecto: 'Por proyecto' }[empleado.salario_periodo] || '-'}</td>
-                  <td><span className="badge badge-blue">{empleado.proyectos_asignados || 0}</span></td>
-                  <td><span className={`badge ${empleado.estado_laboral === 'Activo' ? 'badge-green' : 'badge-gray'}`}>{empleado.estado_laboral || empleado.estado}</span></td>
-                  <td>{empleado.linked_user_id ? 'Vinculado' : 'Sin acceso'}</td>
-                  <td>
-                    {documentosEmpleado.length > 0 ? (
-                      <div className="document-status">
-                        <span className="badge badge-green">Entregado ({documentosEmpleado.length})</span>
-                        {ultimoDocumento?.storage_path && (
-                          <a href={ultimoDocumento.storage_path} target="_blank" rel="noreferrer">Ver</a>
-                        )}
-                      </div>
-                    ) : empleado.puede_subir_documentos && empleado.linked_user_id ? (
-                      <div className="document-status">
-                        {ultimaSolicitud && <span className="badge badge-yellow">{ultimaSolicitud.estado}</span>}
-                        <button type="button" className="btn-action" onClick={() => setSolicitudEmpleadoId(empleado.id)}>
-                          Solicitar documentos
-                        </button>
-                      </div>
-                    ) : empleado.puede_subir_documentos ? 'Sin usuario vinculado' : 'No habilitado'}
-                  </td>
-                  <td>
-                    <div className="document-status">
-                      <button type="button" className="btn-action" onClick={() => handleEdit(empleado)}>Editar</button>
-                      {empleado.estado_laboral !== 'Inactivo' && (
-                        <button type="button" className="btn-action" onClick={() => handleDesactivar(empleado)}>Desactivar</button>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+          return (
+            <tr key={empleado.id}>
+              <td className="cell-bold">{[empleado.nombre, empleado.apellidos].filter(Boolean).join(' ')}</td>
+              <td>{empleado.cargo || '-'}</td>
+              <td>{empleado.departamento || '-'}</td>
+              <td className="cell-date">{empleado.fecha_ingreso || '-'}</td>
+              <td className="cell-date">{empleado.fecha_fin_contrato || '-'}</td>
+              <td>S/ {empleado.salario?.toLocaleString('en-US') || 0}</td>
+              <td>{{ mensual: 'Mensual', diario: 'Por día', hora: 'Por hora', proyecto: 'Por proyecto' }[empleado.salario_periodo] || '-'}</td>
+              <td><span className={`badge ${empleado.estado_laboral === 'Activo' ? 'badge-green' : 'badge-gray'}`}>{empleado.estado_laboral || empleado.estado}</span></td>
+              <td>{empleado.linked_user_id ? 'Vinculado' : 'Sin acceso'}</td>
+              <td>
+                {documentosEmpleado.length > 0 ? (
+                  <div className="document-status">
+                    <span className="badge badge-green">Entregado ({documentosEmpleado.length})</span>
+                    {ultimoDocumento?.storage_path && (
+                      <a href={ultimoDocumento.storage_path} target="_blank" rel="noreferrer">Ver</a>
+                    )}
+                  </div>
+                ) : empleado.puede_subir_documentos && empleado.linked_user_id ? (
+                  <div className="document-status">
+                    {ultimaSolicitud && <span className="badge badge-yellow">{ultimaSolicitud.estado}</span>}
+                    <button type="button" className="btn-action" onClick={() => setSolicitudEmpleadoId(empleado.id)}>
+                      Solicitar documentos
+                    </button>
+                  </div>
+                ) : empleado.puede_subir_documentos ? 'Sin usuario vinculado' : 'No habilitado'}
+              </td>
+              <td>
+                <div className="document-status">
+                  <button type="button" className="btn-action" onClick={() => handleEdit(empleado)}>Editar</button>
+                  {empleado.estado_laboral !== 'Inactivo' && (
+                    <button type="button" className="btn-action" onClick={() => handleDesactivar(empleado)}>Desactivar</button>
+                  )}
+                </div>
+              </td>
+            </tr>
+          );
+        }}
+      />
     </div>
   );
 };

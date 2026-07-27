@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import DataTable from '../../components/DataTable';
 import useMarketing from '../../hooks/useMarketing';
 import { classifyOpportunity, scoreQuotationAcceptance } from '../assistant/executiveSummary';
 import './LeadScoringView.css';
@@ -136,39 +137,30 @@ const LeadScoringView = () => {
             </div>
           </div>
         ) : (
-          <div className="table-responsive">
-            <table className="data-table scoring-table">
-              <thead>
-                <tr>
-                  <th>Cotizacion</th>
-                  <th>Cliente / Lead</th>
-                  <th>Monto</th>
-                  <th>Estado</th>
-                  <th>Probabilidad de aceptación</th>
-                  <th>Señales</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map(row => (
-                  <tr key={row.id}>
-                    <td className="cell-bold">{row.titulo}</td>
-                    <td>{row.cliente_nombre || row.customer?.nombre || row.lead?.nombre || 'Sin cliente'}</td>
-                    <td>S/ {formatCurrency(Number(row.precio_total || row.monto || 0))}</td>
-                    <td>{statusLabel[(row.estado || '').toLowerCase()] || row.estado || 'Pendiente'}</td>
-                    <td>
-                      <div className="score-cell">
-                        <span className={`score-badge score-${row.label.toLowerCase()}`}>{row.score}%</span>
-                        <div className="score-track" aria-hidden="true">
-                          <span style={{ width: `${row.score}%` }} />
-                        </div>
-                      </div>
-                    </td>
-                    <td>{row.explanation}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <DataTable
+            data={rows}
+            searchKeys={['titulo', 'cliente_nombre', 'label', 'explanation']}
+            searchPlaceholder="Buscar por cotización, cliente o señal..."
+            pageSize={10}
+            columns={['Cotizacion', 'Cliente / Lead', 'Monto', 'Estado', 'Probabilidad de aceptación', 'Señales']}
+            renderRow={(row) => (
+              <tr key={row.id}>
+                <td className="cell-bold">{row.titulo}</td>
+                <td>{row.cliente_nombre || row.customer?.nombre || row.lead?.nombre || 'Sin cliente'}</td>
+                <td>S/ {formatCurrency(Number(row.precio_total || row.monto || 0))}</td>
+                <td>{statusLabel[(row.estado || '').toLowerCase()] || row.estado || 'Pendiente'}</td>
+                <td>
+                  <div className="score-cell">
+                    <span className={`score-badge score-${row.label.toLowerCase()}`}>{row.score}%</span>
+                    <div className="score-track" aria-hidden="true">
+                      <span style={{ width: `${row.score}%` }} />
+                    </div>
+                  </div>
+                </td>
+                <td>{row.explanation}</td>
+              </tr>
+            )}
+          />
         )}
       </section>
     </div>

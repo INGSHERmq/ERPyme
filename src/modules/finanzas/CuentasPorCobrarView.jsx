@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import DataTable from '../../components/DataTable';
 import useFinanzas from '../../hooks/useFinanzas';
 import { useNotification } from '../../context/NotificationContext';
 import './CuentasPorCobrarView.css';
@@ -78,36 +79,27 @@ const CuentasPorCobrarView = () => {
         </form>
       )}
 
-      <div className="table-responsive">
-        <table className="data-table">
-          <thead>
-            <tr>
-              <th>Cliente</th>
-              <th>Concepto</th>
-              <th>Monto</th>
-              <th>Vencimiento</th>
-              <th>Estado</th>
-              <th>Accion</th>
-            </tr>
-          </thead>
-          <tbody>
-            {cuentasPorCobrar.map(c => (
-              <tr key={c.id}>
-                <td className="cell-bold">{c.clienteNombre}</td>
-                <td>{c.concepto}</td>
-                <td><strong>S/ {Number(c.monto || 0).toLocaleString('en-US')}</strong></td>
-                <td>{c.fechaVencimiento}</td>
-                <td><span className={`badge ${c.estado === 'Cobrada' ? 'badge-green' : 'badge-yellow'}`}>{c.estado}</span></td>
-                <td>
-                  {c.estado === 'Pendiente' && (
-                    <button className="btn-action btn-cobrar" onClick={() => handleCobrar(c.id)}>Cobrar</button>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <DataTable
+        data={cuentasPorCobrar}
+        searchKeys={['clienteNombre', 'concepto', 'estado']}
+        searchPlaceholder="Buscar por cliente, concepto o estado..."
+        pageSize={10}
+        columns={['Cliente', 'Concepto', 'Monto', 'Vencimiento', 'Estado', 'Accion']}
+        renderRow={(c) => (
+          <tr key={c.id}>
+            <td className="cell-bold">{c.clienteNombre}</td>
+            <td>{c.concepto}</td>
+            <td><strong>S/ {Number(c.monto || 0).toLocaleString('en-US')}</strong></td>
+            <td>{c.fechaVencimiento}</td>
+            <td><span className={`badge ${c.estado === 'Cobrada' ? 'badge-green' : 'badge-yellow'}`}>{c.estado}</span></td>
+            <td>
+              {c.estado === 'Pendiente' && (
+                <button className="btn-action btn-cobrar" onClick={() => handleCobrar(c.id)}>Cobrar</button>
+              )}
+            </td>
+          </tr>
+        )}
+      />
     </div>
   );
 };

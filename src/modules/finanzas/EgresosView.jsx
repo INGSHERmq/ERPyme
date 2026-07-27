@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import DataTable from '../../components/DataTable';
 import useFinanzas from '../../hooks/useFinanzas';
 import './EgresosView.css';
 
@@ -40,23 +41,23 @@ const EgresosView = () => {
         </form>
       )}
 
-      <div className="table-responsive">
-        <table className="data-table">
-          <thead><tr><th>Concepto</th><th>Categoría</th><th>Monto</th><th>Fecha</th><th>Tipo</th><th>Método</th></tr></thead>
-          <tbody>
-            {egresos.map(e => (
-              <tr key={e.id}>
-                <td className="cell-bold">{e.concepto}</td>
-                <td>{e.categoria}</td>
-                <td><strong className="text-red">-S/ {e.monto.toLocaleString('en-US')}</strong></td>
-                <td>{e.fecha}</td>
-                <td>{e.tipo}</td>
-                <td>{e.metodo}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <DataTable
+        data={egresos}
+        searchKeys={['concepto', 'categoria', 'tipo', 'metodo']}
+        searchPlaceholder="Buscar por concepto, categoría, tipo o método..."
+        pageSize={10}
+        columns={['Concepto', 'Categoría', 'Monto', 'Fecha', 'Tipo', 'Método']}
+        renderRow={(e) => (
+          <tr key={e.id}>
+            <td className="cell-bold">{e.concepto}</td>
+            <td>{e.categoria}</td>
+            <td><strong className="text-red">-S/ {e.monto.toLocaleString('en-US')}</strong></td>
+            <td>{e.fecha}</td>
+            <td>{e.tipo}</td>
+            <td>{e.metodo}</td>
+          </tr>
+        )}
+      />
     </div>
   );
 };

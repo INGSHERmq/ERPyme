@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import DataTable from '../../components/DataTable';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../context/auth/useAuth';
 import useLogistica from '../../hooks/useLogistica';
@@ -175,44 +176,34 @@ const MantenimientoView = () => {
         </form>
       )}
 
-      <div className="table-responsive">
-        <table className="data-table">
-          <thead>
-            <tr>
-              <th>Activo</th>
-              <th>Tipo</th>
-              <th>Descripción</th>
-              <th>Costo</th>
-              <th>Técnico</th>
-              <th>Estado</th>
-              <th>Acción</th>
-            </tr>
-          </thead>
-          <tbody>
-            {mantenimientos.map(m => (
-              <tr key={m.id}>
-                <td className="cell-bold">{m.activoNombre || '—'}</td>
-                <td>{m.tipo}</td>
-                <td>{m.descripcion}</td>
-                <td>S/ {m.costo?.toLocaleString('en-US') || 0}</td>
-                <td>{m.tecnico || '—'}</td>
-                <td>
-                  <span className={`badge badge-${m.estado === 'Completado' ? 'green' : 'yellow'}`}>
-                    {m.estado}
-                  </span>
-                </td>
-                <td>
-                  {m.estado === 'Pendiente' && (
-                    <button className="btn-action btn-cobrar" onClick={() => handleCompletar(m)}>
-                      Completar
-                    </button>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <DataTable
+        data={mantenimientos}
+        searchKeys={['activoNombre', 'tipo', 'descripcion', 'tecnico', 'estado']}
+        searchPlaceholder="Buscar por activo, tipo, técnico o estado..."
+        pageSize={10}
+        columns={['Activo', 'Tipo', 'Descripción', 'Costo', 'Técnico', 'Estado', 'Acción']}
+        renderRow={(m) => (
+          <tr key={m.id}>
+            <td className="cell-bold">{m.activoNombre || '—'}</td>
+            <td>{m.tipo}</td>
+            <td>{m.descripcion}</td>
+            <td>S/ {m.costo?.toLocaleString('en-US') || 0}</td>
+            <td>{m.tecnico || '—'}</td>
+            <td>
+              <span className={`badge badge-${m.estado === 'Completado' ? 'green' : 'yellow'}`}>
+                {m.estado}
+              </span>
+            </td>
+            <td>
+              {m.estado === 'Pendiente' && (
+                <button className="btn-action btn-cobrar" onClick={() => handleCompletar(m)}>
+                  Completar
+                </button>
+              )}
+            </td>
+          </tr>
+        )}
+      />
     </div>
   );
 };

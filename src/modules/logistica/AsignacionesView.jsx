@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import DataTable from '../../components/DataTable';
 import useLogistica from '../../hooks/useLogistica';
 import useProjects from '../../hooks/useProjects';
 import useRRHH from '../../hooks/useRRHH';
@@ -114,30 +115,22 @@ const AsignacionesView = () => {
         </form>
       )}
 
-      <div className="table-responsive">
-        <table className="data-table">
-          <thead>
-            <tr>
-              <th>Activo</th>
-              <th>Asignado A</th>
-              <th>Tipo</th>
-              <th>Fecha Asignación</th>
-              <th>Estado</th>
-            </tr>
-          </thead>
-          <tbody>
-            {asignacionesConDetalles.map(a => (
-              <tr key={a.id}>
-                <td className="cell-bold">{a.activo_nombre}</td>
-                <td>{a.destino_nombre}</td>
-                <td><span className="badge badge-blue">{a.tipo_asignacion}</span></td>
-                <td>{a.fecha_asignacion}</td>
-                <td><span className={`badge badge-${a.estado === 'Activa' ? 'green' : 'gray'}`}>{a.estado}</span></td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <DataTable
+        data={asignacionesConDetalles}
+        searchKeys={['activo_nombre', 'destino_nombre', 'tipo_asignacion', 'estado']}
+        searchPlaceholder="Buscar por activo, asignado, tipo o estado..."
+        pageSize={10}
+        columns={['Activo', 'Asignado A', 'Tipo', 'Fecha Asignación', 'Estado']}
+        renderRow={(a) => (
+          <tr key={a.id}>
+            <td className="cell-bold">{a.activo_nombre}</td>
+            <td>{a.destino_nombre}</td>
+            <td><span className="badge badge-blue">{a.tipo_asignacion}</span></td>
+            <td>{a.fecha_asignacion}</td>
+            <td><span className={`badge badge-${a.estado === 'Activa' ? 'green' : 'gray'}`}>{a.estado}</span></td>
+          </tr>
+        )}
+      />
     </div>
   );
 };

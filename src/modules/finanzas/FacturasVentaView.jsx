@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import DataTable from '../../components/DataTable';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../context/auth/useAuth';
 import { traducirError } from '../../lib/errores';
@@ -155,53 +156,42 @@ const FacturasVentaView = () => {
         </form>
       )}
 
-      <div className="table-responsive">
-        <table className="data-table">
-          <thead>
-            <tr>
-              <th>Número</th>
-              <th>Cotización</th>
-              <th>Cliente</th>
-              <th>Estado factura</th>
-              <th>Fecha emisión</th>
-              <th>Total</th>
-              <th>Evidencia de pago</th>
-              <th>Acción</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row) => (
-              <tr key={row.id}>
-                <td className="cell-bold">{row.numero}</td>
-                <td>{cotizaciones.find((cot) => cot.id === row.cotizacion_id)?.titulo || '-'}</td>
-                <td>{clientes.find((c) => c.id === row.cliente_id)?.nombre || '-'}</td>
-                <td>{row.estado === 'emitida' ? 'en proceso' : row.estado}</td>
-                <td>{row.fecha_emision}</td>
-                <td>S/ {Number(row.total || 0).toLocaleString('en-US')}</td>
-                <td>
-                  {row.evidencia_pago_path ? <a href={row.evidencia_pago_path} target="_blank" rel="noreferrer">Ver evidencia</a> : row.estado !== 'cobrada' && (
-                    <input type="file" accept="image/*,.pdf" onChange={(e) => setEvidencias((prev) => ({ ...prev, [row.id]: e.target.files?.[0] }))} />
-                  )}
-                </td>
-                <td>
-                  {row.estado === 'cobrada' ? (
-                    <span className="badge badge-green">Cobrada</span>
-                  ) : (
-                    <button
-                      type="button"
-                      className="btn-action btn-cobrar"
-                      disabled={collectingId === row.id}
-                      onClick={() => handleCobrar(row.id)}
-                    >
-                      {collectingId === row.id ? 'Cobrando...' : 'Cobrar'}
-                    </button>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <DataTable
+        data={rows}
+        searchKeys={['numero', 'estado']}
+        searchPlaceholder="Buscar por número o estado..."
+        pageSize={10}
+        columns={['Número', 'Cotización', 'Cliente', 'Estado factura', 'Fecha emisión', 'Total', 'Evidencia de pago', 'Acción']}
+        renderRow={(row) => (
+          <tr key={row.id}>
+            <td className="cell-bold">{row.numero}</td>
+            <td>{cotizaciones.find((cot) => cot.id === row.cotizacion_id)?.titulo || '-'}</td>
+            <td>{clientes.find((c) => c.id === row.cliente_id)?.nombre || '-'}</td>
+            <td>{row.estado === 'emitida' ? 'en proceso' : row.estado}</td>
+            <td>{row.fecha_emision}</td>
+            <td>S/ {Number(row.total || 0).toLocaleString('en-US')}</td>
+            <td>
+              {row.evidencia_pago_path ? <a href={row.evidencia_pago_path} target="_blank" rel="noreferrer">Ver evidencia</a> : row.estado !== 'cobrada' && (
+                <input type="file" accept="image/*,.pdf" onChange={(e) => setEvidencias((prev) => ({ ...prev, [row.id]: e.target.files?.[0] }))} />
+              )}
+            </td>
+            <td>
+              {row.estado === 'cobrada' ? (
+                <span className="badge badge-green">Cobrada</span>
+              ) : (
+                <button
+                  type="button"
+                  className="btn-action btn-cobrar"
+                  disabled={collectingId === row.id}
+                  onClick={() => handleCobrar(row.id)}
+                >
+                  {collectingId === row.id ? 'Cobrando...' : 'Cobrar'}
+                </button>
+              )}
+            </td>
+          </tr>
+        )}
+      />
     </div>
   );
 };

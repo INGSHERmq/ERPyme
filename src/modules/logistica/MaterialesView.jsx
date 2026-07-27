@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import DataTable from '../../components/DataTable';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../context/auth/useAuth';
 import useProjects from '../../hooks/useProjects';
@@ -134,55 +135,44 @@ const MaterialesView = () => {
       <div className="view-header">
         <h2>Materiales (en espera de aprobacion)</h2>
       </div>
-      <div className="table-responsive">
-        <table className="data-table">
-          <thead>
-            <tr>
-              <th>Orden compra</th>
-              <th>Descripcion</th>
-              <th>Proyecto</th>
-              <th>Cantidad</th>
-              <th>Costo unitario</th>
-              <th>Estado</th>
-              <th>Evidencia</th>
-              <th>Accion</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row) => (
-              <tr key={row.id}>
-                <td>{row.orden_compra_id}</td>
-                <td className="cell-bold">{row.descripcion}</td>
-                <td>{proyectos.find((p) => Number(p.id) === Number(row.proyecto_id || ordenes.find((orden) => orden.id === row.orden_compra_id)?.proyecto_id))?.nombre_mostrar || proyectos.find((p) => Number(p.id) === Number(row.proyecto_id || ordenes.find((orden) => orden.id === row.orden_compra_id)?.proyecto_id))?.nombre || '-'}</td>
-                <td>{row.cantidad}</td>
-                <td>S/ {Number(row.costo_unitario || 0).toLocaleString('en-US')}</td>
-                <td>{row.estado}</td>
-                <td>
-                  {row.evidencia_recepcion_path ? <a href={row.evidencia_recepcion_path} target="_blank" rel="noreferrer">Ver evidencia</a> : row.estado === 'aceptada' && (
-                    <input type="file" accept="image/*,.pdf" onChange={(e) => setEvidencias((prev) => ({ ...prev, [row.id]: e.target.files?.[0] }))} />
-                  )}
-                </td>
-                <td>
-                  {row.estado === 'aceptada' ? (
-                    <button
-                      type="button"
-                      className="btn-action btn-cobrar"
-                      disabled={receivingId === row.id}
-                      onClick={() => handleRecibido(row)}
-                    >
-                      {receivingId === row.id ? 'Recibiendo...' : 'Recibido'}
-                    </button>
-                  ) : row.estado === 'ingresado_inventario' ? (
-                    <span className="badge badge-green">Ingresado</span>
-                  ) : (
-                    <span className="badge badge-gray">Pendiente pago</span>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <DataTable
+        data={rows}
+        searchKeys={['descripcion', 'estado']}
+        searchPlaceholder="Buscar por descripción o estado..."
+        pageSize={10}
+        columns={['Orden compra', 'Descripcion', 'Proyecto', 'Cantidad', 'Costo unitario', 'Estado', 'Evidencia', 'Accion']}
+        renderRow={(row) => (
+          <tr key={row.id}>
+            <td>{row.orden_compra_id}</td>
+            <td className="cell-bold">{row.descripcion}</td>
+            <td>{proyectos.find((p) => Number(p.id) === Number(row.proyecto_id || ordenes.find((orden) => orden.id === row.orden_compra_id)?.proyecto_id))?.nombre_mostrar || proyectos.find((p) => Number(p.id) === Number(row.proyecto_id || ordenes.find((orden) => orden.id === row.orden_compra_id)?.proyecto_id))?.nombre || '-'}</td>
+            <td>{row.cantidad}</td>
+            <td>S/ {Number(row.costo_unitario || 0).toLocaleString('en-US')}</td>
+            <td>{row.estado}</td>
+            <td>
+              {row.evidencia_recepcion_path ? <a href={row.evidencia_recepcion_path} target="_blank" rel="noreferrer">Ver evidencia</a> : row.estado === 'aceptada' && (
+                <input type="file" accept="image/*,.pdf" onChange={(e) => setEvidencias((prev) => ({ ...prev, [row.id]: e.target.files?.[0] }))} />
+              )}
+            </td>
+            <td>
+              {row.estado === 'aceptada' ? (
+                <button
+                  type="button"
+                  className="btn-action btn-cobrar"
+                  disabled={receivingId === row.id}
+                  onClick={() => handleRecibido(row)}
+                >
+                  {receivingId === row.id ? 'Recibiendo...' : 'Recibido'}
+                </button>
+              ) : row.estado === 'ingresado_inventario' ? (
+                <span className="badge badge-green">Ingresado</span>
+              ) : (
+                <span className="badge badge-gray">Pendiente pago</span>
+              )}
+            </td>
+          </tr>
+        )}
+      />
     </div>
   );
 };

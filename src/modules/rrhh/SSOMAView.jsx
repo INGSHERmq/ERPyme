@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import DataTable from '../../components/DataTable';
 import useRRHH from '../../hooks/useRRHH';
 import './SSOMAView.css';
 
@@ -54,23 +55,23 @@ const SSOMAView = () => {
         </form>
       )}
 
-      <div className="table-responsive">
-        <table className="data-table">
-          <thead><tr><th>Empleado</th><th>Tipo</th><th>Gravedad</th><th>Fecha</th><th>Estado</th><th>Acciones</th></tr></thead>
-          <tbody>
-            {incidentes.map(i => (
-              <tr key={i.id}>
-                <td className="cell-bold">{i.empleadoNombre}</td>
-                <td>{i.tipo}</td>
-                <td><span className={`badge ${i.gravedad === 'Alta' ? 'badge-red' : i.gravedad === 'Media' ? 'badge-yellow' : 'badge-green'}`}>{i.gravedad}</span></td>
-                <td>{i.fecha}</td>
-                <td><span className={`badge ${i.estado === 'Cerrado' ? 'badge-green' : 'badge-blue'}`}>{i.estado}</span></td>
-                <td className="text-muted">{i.accionesTomadas || '-'}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <DataTable
+        data={incidentes}
+        searchKeys={['empleadoNombre', 'tipo', 'gravedad', 'estado']}
+        searchPlaceholder="Buscar por empleado, tipo, gravedad o estado..."
+        pageSize={10}
+        columns={['Empleado', 'Tipo', 'Gravedad', 'Fecha', 'Estado', 'Acciones']}
+        renderRow={(i) => (
+          <tr key={i.id}>
+            <td className="cell-bold">{i.empleadoNombre}</td>
+            <td>{i.tipo}</td>
+            <td><span className={`badge ${i.gravedad === 'Alta' ? 'badge-red' : i.gravedad === 'Media' ? 'badge-yellow' : 'badge-green'}`}>{i.gravedad}</span></td>
+            <td>{i.fecha}</td>
+            <td><span className={`badge ${i.estado === 'Cerrado' ? 'badge-green' : 'badge-blue'}`}>{i.estado}</span></td>
+            <td className="text-muted">{i.accionesTomadas || '-'}</td>
+          </tr>
+        )}
+      />
     </div>
   );
 };

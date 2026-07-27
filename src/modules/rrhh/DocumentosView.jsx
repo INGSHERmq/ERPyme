@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import DataTable from '../../components/DataTable';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../context/auth/useAuth';
 import { uploadPrivateFile } from '../../lib/storage';
@@ -163,65 +164,42 @@ const DocumentosView = () => {
       )}
 
       {activeSection === 'empresa' ? (
-        documentosEmpresa.length > 0 ? (
-          <div className="table-responsive">
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>Nombre</th>
-                  <th>Tipo</th>
-                  <th>Vence</th>
-                  <th>Archivo</th>
-                </tr>
-              </thead>
-              <tbody>
-                {documentosEmpresa.map((doc) => (
-                  <tr key={doc.id}>
-                    <td className="cell-bold">{doc.nombre}</td>
-                    <td>{doc.tipo}</td>
-                    <td>{doc.fecha_vencimiento || '-'}</td>
-                    <td>{doc.storage_path ? <a href={doc.storage_path} target="_blank" rel="noreferrer">Ver</a> : '-'}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <div className="empty-state">Aun no hay documentos generales de la empresa.</div>
-        )
+        <DataTable
+          data={documentosEmpresa}
+          searchKeys={['nombre', 'tipo']}
+          searchPlaceholder="Buscar por nombre o tipo..."
+          pageSize={10}
+          columns={['Nombre', 'Tipo', 'Vence', 'Archivo']}
+          renderRow={(doc) => (
+            <tr key={doc.id}>
+              <td className="cell-bold">{doc.nombre}</td>
+              <td>{doc.tipo}</td>
+              <td>{doc.fecha_vencimiento || '-'}</td>
+              <td>{doc.storage_path ? <a href={doc.storage_path} target="_blank" rel="noreferrer">Ver</a> : '-'}</td>
+            </tr>
+          )}
+        />
       ) : (
         <>
           <div className="documents-guidance">
             Los documentos de trabajadores se registran desde la ficha de empleados o cuando el trabajador atiende una solicitud de RRHH.
           </div>
-          {documentosEmpleados.length > 0 ? (
-            <div className="table-responsive">
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    <th>Nombre</th>
-                    <th>Empleado</th>
-                    <th>Tipo</th>
-                    <th>Vence</th>
-                    <th>Archivo</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {documentosEmpleados.map((doc) => (
-                    <tr key={doc.id}>
-                      <td className="cell-bold">{doc.nombre}</td>
-                      <td>{[doc.empleados?.nombre, doc.empleados?.apellidos].filter(Boolean).join(' ') || 'Empleado no disponible'}</td>
-                      <td>{doc.tipo}</td>
-                      <td>{doc.fecha_vencimiento || '-'}</td>
-                      <td>{doc.storage_path ? <a href={doc.storage_path} target="_blank" rel="noreferrer">Ver</a> : '-'}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <div className="empty-state">Aun no hay documentos cargados por empleados.</div>
-          )}
+          <DataTable
+            data={documentosEmpleados}
+            searchKeys={['nombre', 'empleados.nombre', 'tipo']}
+            searchPlaceholder="Buscar por nombre, empleado o tipo..."
+            pageSize={10}
+            columns={['Nombre', 'Empleado', 'Tipo', 'Vence', 'Archivo']}
+            renderRow={(doc) => (
+              <tr key={doc.id}>
+                <td className="cell-bold">{doc.nombre}</td>
+                <td>{[doc.empleados?.nombre, doc.empleados?.apellidos].filter(Boolean).join(' ') || 'Empleado no disponible'}</td>
+                <td>{doc.tipo}</td>
+                <td>{doc.fecha_vencimiento || '-'}</td>
+                <td>{doc.storage_path ? <a href={doc.storage_path} target="_blank" rel="noreferrer">Ver</a> : '-'}</td>
+              </tr>
+            )}
+          />
         </>
       )}
     </div>

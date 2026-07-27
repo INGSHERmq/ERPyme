@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import DataTable from '../../components/DataTable';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../context/auth/useAuth';
 import { traducirError } from '../../lib/errores';
@@ -98,44 +99,43 @@ const AnaliticaProyectoView = () => {
       <div className="view-header">
         <h2>Analítica por proyecto</h2>
       </div>
-      <div className="table-responsive">
-        <table className="data-table">
-          <thead>
-            <tr>
-              <th>Proyecto</th>
-              <th>Ingresos cobrados</th>
-              <th>Egresos</th>
-              <th>Utilidad/Pérdida</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((r) => (
-              <tr key={r.proyecto_id}>
-                <td className="cell-bold">{r.proyecto_nombre}</td>
-                <td>S/ {Number(r.ingresos_cobrados || 0).toLocaleString('en-US')}</td>
-                <td>S/ {Number(r.egresos || 0).toLocaleString('en-US')}</td>
+      <DataTable
+        data={rows}
+        searchKeys={['proyecto_nombre']}
+        searchPlaceholder="Buscar por proyecto..."
+        pageSize={10}
+        columns={['Proyecto', 'Ingresos cobrados', 'Egresos', 'Utilidad/Pérdida']}
+        renderRow={(r) => (
+          <tr key={r.proyecto_id}>
+            <td className="cell-bold">{r.proyecto_nombre}</td>
+            <td>S/ {Number(r.ingresos_cobrados || 0).toLocaleString('en-US')}</td>
+            <td>S/ {Number(r.egresos || 0).toLocaleString('en-US')}</td>
+            <td>
+              <span className={`badge ${Number(r.utilidad || 0) >= 0 ? 'badge-green' : 'badge-red'}`}>
+                S/ {Number(r.utilidad || 0).toLocaleString('en-US')}
+              </span>
+            </td>
+          </tr>
+        )}
+      />
+      {rows.length > 0 && (
+        <div className="table-total-row">
+          <table className="data-table">
+            <tfoot>
+              <tr className="total-row">
+                <td className="cell-bold">TOTAL</td>
+                <td className="cell-bold">S/ {rows.reduce((s, r) => s + Number(r.ingresos_cobrados || 0), 0).toLocaleString('en-US')}</td>
+                <td className="cell-bold">S/ {rows.reduce((s, r) => s + Number(r.egresos || 0), 0).toLocaleString('en-US')}</td>
                 <td>
-                  <span className={`badge ${Number(r.utilidad || 0) >= 0 ? 'badge-green' : 'badge-red'}`}>
-                    S/ {Number(r.utilidad || 0).toLocaleString('en-US')}
+                  <span className={`badge ${rows.reduce((s, r) => s + Number(r.utilidad || 0), 0) >= 0 ? 'badge-green' : 'badge-red'}`}>
+                    S/ {rows.reduce((s, r) => s + Number(r.utilidad || 0), 0).toLocaleString('en-US')}
                   </span>
                 </td>
               </tr>
-            ))}
-          </tbody>
-          <tfoot>
-            <tr className="total-row">
-              <td className="cell-bold">TOTAL</td>
-              <td className="cell-bold">S/ {rows.reduce((s, r) => s + Number(r.ingresos_cobrados || 0), 0).toLocaleString('en-US')}</td>
-              <td className="cell-bold">S/ {rows.reduce((s, r) => s + Number(r.egresos || 0), 0).toLocaleString('en-US')}</td>
-              <td>
-                <span className={`badge ${rows.reduce((s, r) => s + Number(r.utilidad || 0), 0) >= 0 ? 'badge-green' : 'badge-red'}`}>
-                  S/ {rows.reduce((s, r) => s + Number(r.utilidad || 0), 0).toLocaleString('en-US')}
-                </span>
-              </td>
-            </tr>
-          </tfoot>
-        </table>
-      </div>
+            </tfoot>
+          </table>
+        </div>
+      )}
     </div>
   );
 };

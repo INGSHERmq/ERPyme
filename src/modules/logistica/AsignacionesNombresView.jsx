@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import DataTable from '../../components/DataTable';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../context/auth/useAuth';
 
@@ -120,36 +121,26 @@ const AsignacionesNombresView = () => {
         </form>
       )}
 
-      <div className="table-responsive">
-        <table className="data-table">
-          <thead>
-            <tr>
-              <th>Objeto</th>
-              <th>Proyecto</th>
-              <th>Empleado</th>
-              <th>Cantidad</th>
-              <th>Fecha y Hora</th>
-              <th>Estado</th>
-              <th>Acción</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row) => (
-              <tr key={row.id}>
-                <td>{objetos.find((o) => o.id === row.inventario_objeto_id)?.nombre || '-'}</td>
-                <td>{proyectos.find((p) => p.id === row.proyecto_id)?.nombre_mostrar || '-'}</td>
-                <td>{empleados.find((e) => e.id === row.empleado_id)?.nombre || '-'}</td>
-                <td>{row.cantidad}</td>
-                <td>{new Date(row.created_at).toLocaleString()}</td>
-                <td>{row.estado}</td>
-                <td>{row.estado === 'devolucion_solicitada' ? (
-                  <button type="button" className="btn-action btn-cobrar" onClick={() => confirmarDevolucion(row)}>Confirmar devolución</button>
-                ) : '-'}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <DataTable
+        data={rows}
+        searchKeys={['estado']}
+        searchPlaceholder="Buscar por estado..."
+        pageSize={10}
+        columns={['Objeto', 'Proyecto', 'Empleado', 'Cantidad', 'Fecha y Hora', 'Estado', 'Acción']}
+        renderRow={(row) => (
+          <tr key={row.id}>
+            <td>{objetos.find((o) => o.id === row.inventario_objeto_id)?.nombre || '-'}</td>
+            <td>{proyectos.find((p) => p.id === row.proyecto_id)?.nombre_mostrar || '-'}</td>
+            <td>{empleados.find((e) => e.id === row.empleado_id)?.nombre || '-'}</td>
+            <td>{row.cantidad}</td>
+            <td>{new Date(row.created_at).toLocaleString()}</td>
+            <td>{row.estado}</td>
+            <td>{row.estado === 'devolucion_solicitada' ? (
+              <button type="button" className="btn-action btn-cobrar" onClick={() => confirmarDevolucion(row)}>Confirmar devolución</button>
+            ) : '-'}</td>
+          </tr>
+        )}
+      />
     </div>
   );
 };

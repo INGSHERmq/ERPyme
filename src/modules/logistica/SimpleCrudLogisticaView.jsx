@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../context/auth/useAuth';
 import useProjects from '../../hooks/useProjects';
+import DataTable from '../../components/DataTable';
 
 const SimpleCrudLogisticaView = ({ title, table, fields }) => {
   const { user, membership, profile } = useAuth();
@@ -156,29 +157,25 @@ const SimpleCrudLogisticaView = ({ title, table, fields }) => {
         </form>
       )}
 
-      <div className="table-responsive">
-        <table className="data-table">
-          <thead>
-            <tr>
-              {fields.slice(0, 6).map((field) => <th key={field.name}>{field.label}</th>)}
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row) => (
-              <tr key={row.id}>
-                {fields.slice(0, 6).map((field) => (
-                  <td key={field.name}>
-                    {field.type === 'project'
-                      ? proyectos.find((proyecto) => Number(proyecto.id) === Number(row[field.name]))?.nombre_mostrar || proyectos.find((proyecto) => Number(proyecto.id) === Number(row[field.name]))?.nombre || '-'
-                      : String(row[field.name] ?? '-')}
-                  </td>
-                ))}
-              </tr>
+      <DataTable
+        data={rows}
+        searchKeys={fields.slice(0, 6).map((f) => f.name)}
+        searchPlaceholder={`Buscar en ${title.toLowerCase()}...`}
+        pageSize={10}
+        columns={fields.slice(0, 6).map((f) => f.label)}
+        renderRow={(row) => (
+          <tr key={row.id}>
+            {fields.slice(0, 6).map((field) => (
+              <td key={field.name}>
+                {field.type === 'project'
+                  ? proyectos.find((proyecto) => Number(proyecto.id) === Number(row[field.name]))?.nombre_mostrar || proyectos.find((proyecto) => Number(proyecto.id) === Number(row[field.name]))?.nombre || '-'
+                  : String(row[field.name] ?? '-')}
+              </td>
             ))}
-          </tbody>
-        </table>
-        {rows.length === 0 && <p className="empty-state">Sin registros.</p>}
-      </div>
+          </tr>
+        )}
+        emptyMessage="Sin registros."
+      />
     </div>
   );
 };

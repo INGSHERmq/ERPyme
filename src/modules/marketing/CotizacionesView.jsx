@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import DataTable from '../../components/DataTable';
 import useMarketing from '../../hooks/useMarketing';
 import { useAuth } from '../../context/auth/useAuth';
 import { uploadPrivateFile } from '../../lib/storage';
@@ -220,75 +221,61 @@ const CotizaciónesView = () => {
         </form>
       )}
 
-      <div className="table-responsive">
-        <table className="data-table">
-          <thead>
-            <tr>
-              <th>Lead / Cliente</th>
-              <th>Título</th>
-              <th>Cantidad</th>
-              <th>Unidad</th>
-              <th>Precio unit.</th>
-              <th>Precio total</th>
-              <th>Estado</th>
-              <th>Inicio</th>
-              <th>Fin</th>
-              <th>Adjunto</th>
-              <th>Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            {cotizaciónes.map(c => (
-              <tr key={c.id}>
-                <td className="cell-bold">{c.clienteNombre || c.cliente_nombre || '-'}</td>
-                <td>{c.titulo}</td>
-                <td>{c.cantidad || '-'}</td>
-                <td>{c.periodo_servicio || c.unidad || '-'}</td>
-                <td>S/ {Number(c.precio_unitario || 0).toLocaleString('en-US')}</td>
-                <td><strong>S/ {Number(c.precio_total || c.monto || 0).toLocaleString('en-US')}</strong></td>
-                <td>
-                  <span className={`badge badge-${
-                    c.estado === 'aprobada' ? 'green' : c.estado === 'rechazada' || c.estado === 'vencida' ? 'red' : 'yellow'
-                  }`}
-                  >
-                    {c.estado === 'rechazada' ? 'anulada' : c.estado}
-                  </span>
-                </td>
-                <td>{c.fecha_inicio || c.fecha}</td>
-                <td>{c.fecha_fin || '-'}</td>
-                <td>
-                  {c.archivos_adjuntos && c.archivos_adjuntos.length > 0 ? (
-                    <div className="adjuntos-list">
-                      {c.archivos_adjuntos.map((url, idx) => (
-                        <a key={idx} href={url} target="_blank" rel="noreferrer" className="adjunto-link">
-                          Ver {idx + 1}
-                        </a>
-                      ))}
-                    </div>
-                  ) : c.archivo_adjunto_path ? (
-                    <a href={c.archivo_adjunto_path} target="_blank" rel="noreferrer">Ver</a>
-                  ) : '-'}
-                </td>
-                <td>
-                  <div className="cell-actions">
-                    <button className="btn-action" type="button" onClick={() => handleEdit(c)}>Editar</button>
-                    {c.estado === 'borrador' && (
-                      <button className="btn-action btn-convert" type="button" onClick={() => handleConvertir(c)}>
-                        Aprobar
-                      </button>
-                    )}
-                    {c.estado !== 'rechazada' && (
-                      <button className="btn-action btn-danger" type="button" onClick={() => handleAnular(c)}>
-                        Anular
-                      </button>
-                    )}
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <DataTable
+        data={cotizaciónes}
+        searchKeys={['titulo', 'estado', 'clienteNombre', 'cliente_nombre', 'periodo_servicio']}
+        searchPlaceholder="Buscar por título, cliente o estado..."
+        pageSize={10}
+        columns={['Lead / Cliente', 'Título', 'Cantidad', 'Unidad', 'Precio unit.', 'Precio total', 'Estado', 'Inicio', 'Fin', 'Adjunto', 'Acciones']}
+        renderRow={(c) => (
+          <tr key={c.id}>
+            <td className="cell-bold">{c.clienteNombre || c.cliente_nombre || '-'}</td>
+            <td>{c.titulo}</td>
+            <td>{c.cantidad || '-'}</td>
+            <td>{c.periodo_servicio || c.unidad || '-'}</td>
+            <td>S/ {Number(c.precio_unitario || 0).toLocaleString('en-US')}</td>
+            <td><strong>S/ {Number(c.precio_total || c.monto || 0).toLocaleString('en-US')}</strong></td>
+            <td>
+              <span className={`badge badge-${
+                c.estado === 'aprobada' ? 'green' : c.estado === 'rechazada' || c.estado === 'vencida' ? 'red' : 'yellow'
+              }`}
+              >
+                {c.estado === 'rechazada' ? 'anulada' : c.estado}
+              </span>
+            </td>
+            <td>{c.fecha_inicio || c.fecha}</td>
+            <td>{c.fecha_fin || '-'}</td>
+            <td>
+              {c.archivos_adjuntos && c.archivos_adjuntos.length > 0 ? (
+                <div className="adjuntos-list">
+                  {c.archivos_adjuntos.map((url, idx) => (
+                    <a key={idx} href={url} target="_blank" rel="noreferrer" className="adjunto-link">
+                      Ver {idx + 1}
+                    </a>
+                  ))}
+                </div>
+              ) : c.archivo_adjunto_path ? (
+                <a href={c.archivo_adjunto_path} target="_blank" rel="noreferrer">Ver</a>
+              ) : '-'}
+            </td>
+            <td>
+              <div className="cell-actions">
+                <button className="btn-action" type="button" onClick={() => handleEdit(c)}>Editar</button>
+                {c.estado === 'borrador' && (
+                  <button className="btn-action btn-convert" type="button" onClick={() => handleConvertir(c)}>
+                    Aprobar
+                  </button>
+                )}
+                {c.estado !== 'rechazada' && (
+                  <button className="btn-action btn-danger" type="button" onClick={() => handleAnular(c)}>
+                    Anular
+                  </button>
+                )}
+              </div>
+            </td>
+          </tr>
+        )}
+      />
     </div>
   );
 };

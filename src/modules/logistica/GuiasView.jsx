@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import DataTable from '../../components/DataTable';
 import useLogistica from '../../hooks/useLogistica';
 import './GuiasView.css';
 
@@ -40,23 +41,23 @@ const GuiasView = () => {
         </form>
       )}
 
-      <div className="table-responsive">
-        <table className="data-table">
-          <thead><tr><th>Activo</th><th>Destino</th><th>Salida</th><th>Regreso</th><th>Responsable</th><th>Estado</th></tr></thead>
-          <tbody>
-            {guias.map(g => (
-              <tr key={g.id}>
-                <td className="cell-bold">{g.activoNombre}</td>
-                <td>{g.destino}</td>
-                <td>{g.fechaSalida}</td>
-                <td>{g.fechaRegreso || 'Pendiente'}</td>
-                <td>{g.responsable}</td>
-                <td><span className={`badge ${g.estado === 'En tránsito' ? 'badge-blue' : 'badge-green'}`}>{g.estado}</span></td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <DataTable
+        data={guias}
+        searchKeys={['activoNombre', 'destino', 'responsable', 'estado']}
+        searchPlaceholder="Buscar por activo, destino, responsable o estado..."
+        pageSize={10}
+        columns={['Activo', 'Destino', 'Salida', 'Regreso', 'Responsable', 'Estado']}
+        renderRow={(g) => (
+          <tr key={g.id}>
+            <td className="cell-bold">{g.activoNombre}</td>
+            <td>{g.destino}</td>
+            <td>{g.fechaSalida}</td>
+            <td>{g.fechaRegreso || 'Pendiente'}</td>
+            <td>{g.responsable}</td>
+            <td><span className={`badge ${g.estado === 'En tránsito' ? 'badge-blue' : 'badge-green'}`}>{g.estado}</span></td>
+          </tr>
+        )}
+      />
     </div>
   );
 };

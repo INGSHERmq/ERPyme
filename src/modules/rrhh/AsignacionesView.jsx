@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
+import DataTable from '../../components/DataTable';
 import useRRHH from '../../hooks/useRRHH';
 import useProjects from '../../hooks/useProjects';
 import './AsignacionesView.css';
@@ -212,43 +213,32 @@ const AsignacionesView = () => {
         </form>
       )}
 
-      <div className="table-responsive">
-        <table className="data-table">
-          <thead>
-            <tr>
-              <th>Empleado</th>
-              <th>Proyecto</th>
-              <th>Rol</th>
-              <th>Inicio</th>
-              <th>Fin</th>
-              <th>Horas</th>
-              <th>Estado</th>
-              <th>Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            {asignacionesConNombres.map(a => (
-              <tr key={a.id}>
-                <td className="cell-bold">{a.empleado_nombre}</td>
-                <td>{a.proyecto_nombre}</td>
-                <td>{a.rol}</td>
-                <td>{a.fecha_inicio ? new Date(a.fecha_inicio).toLocaleDateString('es-ES') : '-'}</td>
-                <td>{a.fecha_fin ? new Date(a.fecha_fin).toLocaleDateString('es-ES') : 'Indefinido'}</td>
-                <td>{a.horas_semanales}h {a.tipo_asignacion === 'horas_día' ? '/ día' : '/ sem'}</td>
-                <td><span className={`badge badge-${a.estado === 'Activo' ? 'green' : 'gray'}`}>{a.estado}</span></td>
-                <td>
-                  <div className="document-status">
-                    <button type="button" className="btn-action" onClick={() => handleEdit(a)}>Editar</button>
-                    {a.estado === 'Activo' && (
-                      <button type="button" className="btn-action" onClick={() => handleDesactivar(a)}>Desactivar</button>
-                    )}
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <DataTable
+        data={asignacionesConNombres}
+        searchKeys={['empleado_nombre', 'proyecto_nombre', 'rol', 'estado']}
+        searchPlaceholder="Buscar por empleado, proyecto, rol o estado..."
+        pageSize={10}
+        columns={['Empleado', 'Proyecto', 'Rol', 'Inicio', 'Fin', 'Horas', 'Estado', 'Acciones']}
+        renderRow={(a) => (
+          <tr key={a.id}>
+            <td className="cell-bold">{a.empleado_nombre}</td>
+            <td>{a.proyecto_nombre}</td>
+            <td>{a.rol}</td>
+            <td>{a.fecha_inicio ? new Date(a.fecha_inicio).toLocaleDateString('es-ES') : '-'}</td>
+            <td>{a.fecha_fin ? new Date(a.fecha_fin).toLocaleDateString('es-ES') : 'Indefinido'}</td>
+            <td>{a.horas_semanales}h {a.tipo_asignacion === 'horas_día' ? '/ día' : '/ sem'}</td>
+            <td><span className={`badge badge-${a.estado === 'Activo' ? 'green' : 'gray'}`}>{a.estado}</span></td>
+            <td>
+              <div className="document-status">
+                <button type="button" className="btn-action" onClick={() => handleEdit(a)}>Editar</button>
+                {a.estado === 'Activo' && (
+                  <button type="button" className="btn-action" onClick={() => handleDesactivar(a)}>Desactivar</button>
+                )}
+              </div>
+            </td>
+          </tr>
+        )}
+      />
     </div>
   );
 };

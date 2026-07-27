@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import DataTable from '../../../components/DataTable';
 import {
   DndContext,
   PointerSensor,
@@ -264,35 +265,27 @@ const Actividades = ({ proyectoId }) => {
           </div>
         ) : (
           <div className="lista-vista">
-            <table className="tareas-table">
-              <thead>
-                <tr>
-                  <th>Tarea</th>
-                  <th>Estado</th>
-                  <th>Prioridad</th>
-                  <th>Asignado a</th>
-                  <th>Fecha Fin</th>
-                  <th>Duración</th>
-                  <th>Acciones</th>
+            <DataTable
+              data={tareas}
+              searchKeys={['titulo', 'estado', 'prioridad', 'empleado_nombre']}
+              searchPlaceholder="Buscar por título, estado, prioridad o asignado..."
+              pageSize={10}
+              columns={['Tarea', 'Estado', 'Prioridad', 'Asignado a', 'Fecha Fin', 'Duración', 'Acciones']}
+              renderRow={(t) => (
+                <tr key={t.id}>
+                  <td className="bold">{t.titulo}</td>
+                  <td><span className={`badge badge-${t.estado === 'En Progreso' ? 'blue' : t.estado === 'Completado' ? 'green' : 'gray'}`}>{t.estado}</span></td>
+                  <td><span className={`badge badge-${t.prioridad === 'Alta' ? 'red' : t.prioridad === 'Media' ? 'yellow' : 'green'}`}>{t.prioridad}</span></td>
+                  <td>{t.empleado_nombre || 'Sin asignar'}</td>
+                  <td>{t.fecha_fin ? formatDateOnlyInAppTimeZone(t.fecha_fin) : '-'}</td>
+                  <td>{t.duracion_horas ? `${Number(t.duracion_horas).toLocaleString('es-PE')} h` : '-'}</td>
+                  <td>
+                    <button type="button" className="btn-action" onClick={() => openModal(t)}>Editar</button>
+                    <button type="button" className="btn-action" onClick={() => handleDeleteTarea(t.id)}>Eliminar</button>
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {tareas.map(t => (
-                  <tr key={t.id}>
-                    <td className="bold">{t.titulo}</td>
-                    <td><span className={`badge badge-${t.estado === 'En Progreso' ? 'blue' : t.estado === 'Completado' ? 'green' : 'gray'}`}>{t.estado}</span></td>
-                    <td><span className={`badge badge-${t.prioridad === 'Alta' ? 'red' : t.prioridad === 'Media' ? 'yellow' : 'green'}`}>{t.prioridad}</span></td>
-                    <td>{t.empleado_nombre || 'Sin asignar'}</td>
-                    <td>{t.fecha_fin ? formatDateOnlyInAppTimeZone(t.fecha_fin) : '-'}</td>
-                    <td>{t.duracion_horas ? `${Number(t.duracion_horas).toLocaleString('es-PE')} h` : '-'}</td>
-                    <td>
-                      <button type="button" className="btn-action" onClick={() => openModal(t)}>Editar</button>
-                      <button type="button" className="btn-action" onClick={() => handleDeleteTarea(t.id)}>Eliminar</button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+              )}
+            />
           </div>
         )}
 

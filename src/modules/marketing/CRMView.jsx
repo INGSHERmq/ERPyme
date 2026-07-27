@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import DataTable from '../../components/DataTable';
 import useMarketing from '../../hooks/useMarketing';
 import './CRMView.css';
 
@@ -161,57 +162,40 @@ const CRMView = () => {
           <h2>Clientes registrados</h2>
           <span>{leads.length} clientes</span>
         </div>
-        <div className="table-responsive">
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>Tipo</th>
-                <th>DNI / RUC</th>
-                <th>Cliente</th>
-                <th>Contacto</th>
-                <th>Email</th>
-                <th>Industria</th>
-                <th>Estado</th>
-                <th>Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {leads.length === 0 ? (
-                <tr>
-                  <td colSpan="8" className="empty-table-cell">Aun no hay clientes registrados.</td>
-                </tr>
-              ) : (
-                leads.map(lead => (
-                  <tr key={lead.id}>
-                    <td>
-                      <span className={`badge ${lead.tipo_identificacion === 'RUC' ? 'badge-teal' : 'badge-blue'}`}>
-                        {lead.tipo_identificacion || '-'}
-                      </span>
-                    </td>
-                    <td>{lead.dni_ruc || '-'}</td>
-                    <td className="cell-bold">{lead.nombre}</td>
-                    <td>{lead.contacto || '-'}</td>
-                    <td>{lead.email ? <a href={`mailto:${lead.email}`}>{lead.email}</a> : '-'}</td>
-                    <td>{lead.industria || '-'}</td>
-                    <td>
-                      <span className={`badge ${lead.estado === 'Activo' ? 'badge-green' : 'badge-gray'}`}>
-                        {lead.estado || 'Activo'}
-                      </span>
-                    </td>
-                    <td>
-                      <div className="cell-actions">
-                        <button type="button" className="btn-action" onClick={() => handleEdit(lead)}>Editar</button>
-                        <button type="button" className="btn-action" onClick={() => handleToggleEstado(lead)}>
-                          {lead.estado === 'Activo' ? 'Desactivar' : 'Activar'}
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+        <DataTable
+          data={leads}
+          searchKeys={['nombre', 'contacto', 'email', 'dni_ruc', 'industria', 'estado']}
+          searchPlaceholder="Buscar por nombre, contacto, email, DNI/RUC o industria..."
+          pageSize={10}
+          columns={['Tipo', 'DNI / RUC', 'Cliente', 'Contacto', 'Email', 'Industria', 'Estado', 'Acciones']}
+          renderRow={(lead) => (
+            <tr key={lead.id}>
+              <td>
+                <span className={`badge ${lead.tipo_identificacion === 'RUC' ? 'badge-teal' : 'badge-blue'}`}>
+                  {lead.tipo_identificacion || '-'}
+                </span>
+              </td>
+              <td>{lead.dni_ruc || '-'}</td>
+              <td className="cell-bold">{lead.nombre}</td>
+              <td>{lead.contacto || '-'}</td>
+              <td>{lead.email ? <a href={`mailto:${lead.email}`}>{lead.email}</a> : '-'}</td>
+              <td>{lead.industria || '-'}</td>
+              <td>
+                <span className={`badge ${lead.estado === 'Activo' ? 'badge-green' : 'badge-gray'}`}>
+                  {lead.estado || 'Activo'}
+                </span>
+              </td>
+              <td>
+                <div className="cell-actions">
+                  <button type="button" className="btn-action" onClick={() => handleEdit(lead)}>Editar</button>
+                  <button type="button" className="btn-action" onClick={() => handleToggleEstado(lead)}>
+                    {lead.estado === 'Activo' ? 'Desactivar' : 'Activar'}
+                  </button>
+                </div>
+              </td>
+            </tr>
+          )}
+        />
       </section>
     </div>
   );

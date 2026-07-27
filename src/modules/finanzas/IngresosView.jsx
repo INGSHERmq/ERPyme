@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import DataTable from '../../components/DataTable';
 import useFinanzas from '../../hooks/useFinanzas';
 import './IngresosView.css';
 
@@ -59,23 +60,23 @@ const IngresosView = () => {
         </form>
       )}
 
-      <div className="table-responsive">
-        <table className="data-table">
-          <thead><tr><th>Concepto</th><th>Tipo</th><th>Monto</th><th>Fecha</th><th>Estado</th><th>Metodo</th></tr></thead>
-          <tbody>
-            {ingresos.map(i => (
-              <tr key={i.id}>
-                <td className="cell-bold">{i.concepto}</td>
-                <td>{i.tipo}</td>
-                <td><strong>S/ {Number(i.monto || 0).toLocaleString('en-US')}</strong></td>
-                <td>{i.fecha}</td>
-                <td><span className={`badge ${i.estado === 'Cobrado' ? 'badge-green' : 'badge-yellow'}`}>{i.estado}</span></td>
-                <td>{i.metodo}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <DataTable
+        data={ingresos}
+        searchKeys={['concepto', 'tipo', 'estado', 'metodo']}
+        searchPlaceholder="Buscar por concepto, tipo, estado o método..."
+        pageSize={10}
+        columns={['Concepto', 'Tipo', 'Monto', 'Fecha', 'Estado', 'Metodo']}
+        renderRow={(i) => (
+          <tr key={i.id}>
+            <td className="cell-bold">{i.concepto}</td>
+            <td>{i.tipo}</td>
+            <td><strong>S/ {Number(i.monto || 0).toLocaleString('en-US')}</strong></td>
+            <td>{i.fecha}</td>
+            <td><span className={`badge ${i.estado === 'Cobrado' ? 'badge-green' : 'badge-yellow'}`}>{i.estado}</span></td>
+            <td>{i.metodo}</td>
+          </tr>
+        )}
+      />
     </div>
   );
 };

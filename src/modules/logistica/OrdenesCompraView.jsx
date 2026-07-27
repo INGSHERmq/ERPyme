@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import DataTable from '../../components/DataTable';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../context/auth/useAuth';
 import useProjects from '../../hooks/useProjects';
@@ -304,69 +305,54 @@ const OrdenesCompraView = () => {
         </form>
       )}
 
-      <div className="table-responsive">
-        <table className="data-table">
-          <thead>
-            <tr>
-              <th>Tipo</th>
-              <th>Serie</th>
-              <th>Correlativo</th>
-              <th>Compra</th>
-              <th>Proveedor</th>
-              <th>Proyecto</th>
-              <th>Fecha</th>
-              <th>Vencimiento</th>
-              <th>Cantidad</th>
-              <th>Costo unitario</th>
-              <th>Estado</th>
-              <th>Contabilidad</th>
-            </tr>
-          </thead>
-          <tbody>
-            {ordenes.map((orden) => (
-              <tr key={orden.id}>
-                <td className="cell-bold">{orden.tipo_comprobante || '-'}</td>
-                <td>{orden.serie || '-'}</td>
-                <td>{orden.correlativo || '-'}</td>
-                <td>{orden.nombre_compra}</td>
-                <td>{proveedores.find((p) => p.id === orden.proveedor_id)?.nombre || '-'}</td>
-                <td>{proyectos.find((p) => Number(p.id) === Number(orden.proyecto_id))?.nombre_mostrar || proyectos.find((p) => Number(p.id) === Number(orden.proyecto_id))?.nombre || '-'}</td>
-                <td>{orden.fecha}</td>
-                <td>{formatDateTimeInAppTimeZone(orden.fecha_vencimiento)}</td>
-                <td>{materialesPorOrden[orden.id]?.cantidad ?? '-'}</td>
-                <td>S/ {Number(materialesPorOrden[orden.id]?.costo_unitario || 0).toLocaleString('en-US')}</td>
-                <td>
-                  <span className={`estado-badge ${
-                    orden.estado === 'Pagado' ? 'estado-pagado' : 
-                    orden.estado === 'Anulado' ? 'estado-anulado' :
-                    orden.estado === 'Borrador' ? 'estado-borrador' :
-                    orden.estado === 'Enviada' ? 'estado-enviada' : ''
-                  }`}>
-                    {orden.estado || 'Borrador'}
-                  </span>
-                </td>
-                <td>
-                  {!facturasPorOrden[orden.id] && (
-                    <button type="button" className="btn-action" onClick={() => handleEdit(orden)}>Editar</button>
-                  )}
-                  {facturasPorOrden[orden.id] ? (
-                    <span className="badge badge-green">Enviada</span>
-                  ) : (
-                    <button
-                      type="button"
-                      className="btn-action btn-cobrar"
-                      disabled={enviandoOrdenId === orden.id}
-                      onClick={() => handleEnviarContabilidad(orden)}
-                    >
-                      {enviandoOrdenId === orden.id ? 'Enviando...' : 'Enviar a contabilidad'}
-                    </button>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <DataTable
+        data={ordenes}
+        searchKeys={['nombre_compra', 'serie', 'correlativo', 'estado', 'tipo_comprobante']}
+        searchPlaceholder="Buscar por compra, serie, correlativo o estado..."
+        pageSize={10}
+        columns={['Tipo', 'Serie', 'Correlativo', 'Compra', 'Proveedor', 'Proyecto', 'Fecha', 'Vencimiento', 'Cantidad', 'Costo unitario', 'Estado', 'Contabilidad']}
+        renderRow={(orden) => (
+          <tr key={orden.id}>
+            <td className="cell-bold">{orden.tipo_comprobante || '-'}</td>
+            <td>{orden.serie || '-'}</td>
+            <td>{orden.correlativo || '-'}</td>
+            <td>{orden.nombre_compra}</td>
+            <td>{proveedores.find((p) => p.id === orden.proveedor_id)?.nombre || '-'}</td>
+            <td>{proyectos.find((p) => Number(p.id) === Number(orden.proyecto_id))?.nombre_mostrar || proyectos.find((p) => Number(p.id) === Number(orden.proyecto_id))?.nombre || '-'}</td>
+            <td>{orden.fecha}</td>
+            <td>{formatDateTimeInAppTimeZone(orden.fecha_vencimiento)}</td>
+            <td>{materialesPorOrden[orden.id]?.cantidad ?? '-'}</td>
+            <td>S/ {Number(materialesPorOrden[orden.id]?.costo_unitario || 0).toLocaleString('en-US')}</td>
+            <td>
+              <span className={`estado-badge ${
+                orden.estado === 'Pagado' ? 'estado-pagado' : 
+                orden.estado === 'Anulado' ? 'estado-anulado' :
+                orden.estado === 'Borrador' ? 'estado-borrador' :
+                orden.estado === 'Enviada' ? 'estado-enviada' : ''
+              }`}>
+                {orden.estado || 'Borrador'}
+              </span>
+            </td>
+            <td>
+              {!facturasPorOrden[orden.id] && (
+                <button type="button" className="btn-action" onClick={() => handleEdit(orden)}>Editar</button>
+              )}
+              {facturasPorOrden[orden.id] ? (
+                <span className="badge badge-green">Enviada</span>
+              ) : (
+                <button
+                  type="button"
+                  className="btn-action btn-cobrar"
+                  disabled={enviandoOrdenId === orden.id}
+                  onClick={() => handleEnviarContabilidad(orden)}
+                >
+                  {enviandoOrdenId === orden.id ? 'Enviando...' : 'Enviar a contabilidad'}
+                </button>
+              )}
+            </td>
+          </tr>
+        )}
+      />
 
       {convertingOrden && (
         <div className="profile-modal-backdrop" onClick={() => setConvertingOrden(null)}>

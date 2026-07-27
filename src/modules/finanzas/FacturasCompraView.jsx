@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import DataTable from '../../components/DataTable';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../context/auth/useAuth';
 import useProjects from '../../hooks/useProjects';
@@ -250,101 +251,85 @@ const FacturasCompraView = () => {
         </form>
       )}
 
-      <div className="table-responsive">
-        <table className="data-table">
-          <thead>
-            <tr>
-              <th>Tipo</th>
-              <th>Serie</th>
-              <th>Correlativo</th>
-              <th>Orden compra</th>
-              <th>Proveedor</th>
-              <th>Proyecto</th>
-              <th>Estado orden</th>
-              <th>Estado factura</th>
-              <th>Fecha emisión</th>
-              <th>Vencimiento</th>
-              <th>Total</th>
-              <th>Evidencia de pago</th>
-              <th>Acción</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row) => (
-              <tr key={row.id}>
-                <td className="cell-bold">{row.tipo_comprobante || '-'}</td>
-                <td>{row.serie || '-'}</td>
-                <td>{row.correlativo || '-'}</td>
-                <td>{ordenes.find((oc) => oc.id === row.orden_compra_id)?.numero || '-'}</td>
-                <td>{proveedores.find((p) => p.id === row.proveedor_id)?.nombre || '-'}</td>
-                <td>{proyectos.find((p) => Number(p.id) === Number(row.proyecto_id))?.nombre_mostrar || proyectos.find((p) => Number(p.id) === Number(row.proyecto_id))?.nombre || '-'}</td>
-                <td>{ordenes.find((oc) => oc.id === row.orden_compra_id)?.estado || '-'}</td>
-                <td>{row.estado === 'registrada' ? 'en proceso' : row.estado}</td>
-                <td>{row.fecha_emision}</td>
-                <td>{formatDateTimeInAppTimeZone(row.fecha_vencimiento)}</td>
-                <td>S/ {Number(row.total || 0).toLocaleString('en-US')}</td>
-                <td>
-                  {row.evidencia_pago_path ? <a href={row.evidencia_pago_path} target="_blank" rel="noreferrer">Ver evidencia</a> : row.estado !== 'pagada' && (
-                    <input type="file" accept="image/*,.pdf" onChange={(e) => setEvidencias((prev) => ({ ...prev, [row.id]: e.target.files?.[0] }))} />
-                  )}
-                </td>
-                 <td>
-                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                    {row.estado === 'pagada' ? (
-                      <span className="badge badge-green">Pagada</span>
-                    ) : row.estado === 'anulada' ? (
-                      <span className="badge badge-red" style={{ color: 'red' }}>Anulada</span>
-                    ) : (
-                      <>
-                        <button
-                          type="button"
-                          className="btn-action btn-cobrar"
-                          disabled={payingId === row.id}
-                          onClick={() => handlePagar(row)}
-                        >
-                          {payingId === row.id ? 'Pagando...' : 'Pagar'}
-                        </button>
-                        <button
-                          type="button"
-                          className="btn-action btn-eliminar"
-                          style={{ backgroundColor: '#ff4444', color: 'white' }}
-                          disabled={payingId === row.id}
-                          onClick={() => handleCancelar(row)}
-                        >
-                          Anular
-                        </button>
-                      </>
-                    )}
-                    {row.estado !== 'anulada' && proveedores.find((p) => p.id === row.proveedor_id)?.ruc && (
-                      <button
-                        type="button"
-                        className="btn-action"
-                        style={{ 
-                          backgroundColor: 'rgba(252, 213, 53, 0.1)', 
-                          color: 'var(--binance-yellow)', 
-                          border: '1px solid var(--binance-yellow)',
-                          padding: '6px 12px',
-                          borderRadius: 'var(--radius-sm)',
-                          cursor: 'pointer',
-                          fontWeight: '700',
-                          fontSize: '13px',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '6px',
-                          transition: '0.2s'
-                        }}
-                        onClick={() => setValidatingInvoice(row)}
-                      >
-                        Validar SUNAT
-                      </button>
-                    )}
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <DataTable
+        data={rows}
+        searchKeys={['tipo_comprobante', 'serie', 'correlativo', 'estado']}
+        searchPlaceholder="Buscar por tipo, serie, correlativo o estado..."
+        pageSize={10}
+        columns={['Tipo', 'Serie', 'Correlativo', 'Orden compra', 'Proveedor', 'Proyecto', 'Estado orden', 'Estado factura', 'Fecha emisión', 'Vencimiento', 'Total', 'Evidencia de pago', 'Acción']}
+        renderRow={(row) => (
+          <tr key={row.id}>
+            <td className="cell-bold">{row.tipo_comprobante || '-'}</td>
+            <td>{row.serie || '-'}</td>
+            <td>{row.correlativo || '-'}</td>
+            <td>{ordenes.find((oc) => oc.id === row.orden_compra_id)?.numero || '-'}</td>
+            <td>{proveedores.find((p) => p.id === row.proveedor_id)?.nombre || '-'}</td>
+            <td>{proyectos.find((p) => Number(p.id) === Number(row.proyecto_id))?.nombre_mostrar || proyectos.find((p) => Number(p.id) === Number(row.proyecto_id))?.nombre || '-'}</td>
+            <td>{ordenes.find((oc) => oc.id === row.orden_compra_id)?.estado || '-'}</td>
+            <td>{row.estado === 'registrada' ? 'en proceso' : row.estado}</td>
+            <td>{row.fecha_emision}</td>
+            <td>{formatDateTimeInAppTimeZone(row.fecha_vencimiento)}</td>
+            <td>S/ {Number(row.total || 0).toLocaleString('en-US')}</td>
+            <td>
+              {row.evidencia_pago_path ? <a href={row.evidencia_pago_path} target="_blank" rel="noreferrer">Ver evidencia</a> : row.estado !== 'pagada' && (
+                <input type="file" accept="image/*,.pdf" onChange={(e) => setEvidencias((prev) => ({ ...prev, [row.id]: e.target.files?.[0] }))} />
+              )}
+            </td>
+            <td>
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                {row.estado === 'pagada' ? (
+                  <span className="badge badge-green">Pagada</span>
+                ) : row.estado === 'anulada' ? (
+                  <span className="badge badge-red" style={{ color: 'red' }}>Anulada</span>
+                ) : (
+                  <>
+                    <button
+                      type="button"
+                      className="btn-action btn-cobrar"
+                      disabled={payingId === row.id}
+                      onClick={() => handlePagar(row)}
+                    >
+                      {payingId === row.id ? 'Pagando...' : 'Pagar'}
+                    </button>
+                    <button
+                      type="button"
+                      className="btn-action btn-eliminar"
+                      style={{ backgroundColor: '#ff4444', color: 'white' }}
+                      disabled={payingId === row.id}
+                      onClick={() => handleCancelar(row)}
+                    >
+                      Anular
+                    </button>
+                  </>
+                )}
+                {row.estado !== 'anulada' && proveedores.find((p) => p.id === row.proveedor_id)?.ruc && (
+                  <button
+                    type="button"
+                    className="btn-action"
+                    style={{ 
+                      backgroundColor: 'rgba(252, 213, 53, 0.1)', 
+                      color: 'var(--binance-yellow)', 
+                      border: '1px solid var(--binance-yellow)',
+                      padding: '6px 12px',
+                      borderRadius: 'var(--radius-sm)',
+                      cursor: 'pointer',
+                      fontWeight: '700',
+                      fontSize: '13px',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      transition: '0.2s'
+                    }}
+                    onClick={() => setValidatingInvoice(row)}
+                  >
+                    Validar SUNAT
+                  </button>
+                )}
+              </div>
+            </td>
+          </tr>
+        )}
+      />
 
       <SunatValidationModal 
         isOpen={!!validatingInvoice}
