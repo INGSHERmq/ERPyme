@@ -10,6 +10,7 @@ const SimpleCrudLogisticaView = ({ title, table, fields }) => {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [asignaciones, setAsignaciones] = useState([]);
+  const [mostrarAlertaStock, setMostrarAlertaStock] = useState(true);
   const [formData, setFormData] = useState(() => Object.fromEntries(fields.map((f) => [f.name, f.defaultValue || ''])));
 
   const fetchRows = async () => {
@@ -89,8 +90,9 @@ const SimpleCrudLogisticaView = ({ title, table, fields }) => {
         </button>
       </div>
 
-      {agotados.length > 0 && (
-        <div className="empty-state" style={{ border: '1px solid #f6465d', marginBottom: '16px' }}>
+      {agotados.length > 0 && mostrarAlertaStock && (
+        <div role="alert" className="empty-state" style={{ border: '1px solid #f6465d', marginBottom: '16px', position: 'relative', padding: '18px 48px 18px 20px' }}>
+          <button type="button" aria-label="Cerrar alerta" onClick={() => setMostrarAlertaStock(false)} style={{ position: 'absolute', top: '10px', right: '12px', border: 0, background: 'transparent', color: 'var(--text-main)', fontSize: '22px', cursor: 'pointer' }}>×</button>
           <strong>Stock agotado ({agotados.length})</strong>
           {agotados.map((item) => {
             const destinos = asignaciones.filter((a) => Number(a.inventario_objeto_id) === Number(item.id)).map((a) =>
