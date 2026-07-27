@@ -18,7 +18,7 @@ const statusLabel = {
 
 const explainScore = (quotation, customer, lead, score) => {
   const status = (quotation.estado || '').toLowerCase();
-  if (status === 'aprobada' || status === 'aceptada') return 'aceptada por boton Aprobar';
+  if (status === 'aprobada' || status === 'aceptada') return 'Aprobado';
   if (status === 'rechazada') return 'marcada como rechazada';
   if (status === 'vencida') return 'cotización vencida';
 

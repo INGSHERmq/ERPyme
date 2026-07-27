@@ -5,7 +5,7 @@ import ProyectoDetalle from './Detalle/ProyectoDetalle';
 import LoadingScreen from '../../components/LoadingScreen';
 
 const ProjectsView = ({ onBack }) => {
-  const { proyectos, loading } = useProjects();
+  const { proyectos, loading, updateProyecto } = useProjects();
   const [proyectoSeleccionado, setProyectoSeleccionado] = useState(null);
 
   if (loading) return <LoadingScreen message="Cargando proyectos..." />;
@@ -26,6 +26,11 @@ const ProjectsView = ({ onBack }) => {
         <ListaProyectos 
           proyectos={proyectos} 
           onSelect={setProyectoSeleccionado} 
+          onComplete={async (proyecto) => {
+            const ok = await updateProyecto(proyecto.id, { estado: 'Completado', progreso: 100 });
+            if (ok) setProyectoSeleccionado(null);
+            return ok;
+          }}
         />
       )}
     </div>

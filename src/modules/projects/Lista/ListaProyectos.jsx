@@ -68,7 +68,7 @@ const getProjectDates = (proyecto, quotes) => {
   };
 };
 
-const ListaProyectos = ({ proyectos, onSelect }) => {
+const ListaProyectos = ({ proyectos, onSelect, onComplete }) => {
   const { user } = useAuth();
   const [search, setSearch] = useState('');
   const [filterEstado, setFilterEstado] = useState('Todos');
@@ -137,9 +137,10 @@ const ListaProyectos = ({ proyectos, onSelect }) => {
             {filteredProjects.length > 0 ? (
               filteredProjects.map((p, index) => {
                 const dates = getProjectDates(p, quotes);
+                const isDue = dates.end && dates.end <= toDateString(new Date());
                 return (
                   <tr key={p.id}>
-                    <td className="text-muted">#{index + 1}</td>
+                    <td className="text-muted">#{p.numero_empresa || index + 1}</td>
                     <td className="cell-bold">{p.nombre}</td>
                     <td>{p.cliente_nombre || '—'}</td>
                     <td>
@@ -159,6 +160,14 @@ const ListaProyectos = ({ proyectos, onSelect }) => {
                       <button className="btn-ver" onClick={() => onSelect(p)}>
                         Ver
                       </button>
+                      {p.estado !== 'Completado' && isDue && (
+                        <button className="btn-finalizar" onClick={async () => {
+                          if (window.confirm(`¿Finalizar el proyecto "${p.nombre}"?`)) {
+                            const ok = await onComplete?.(p);
+                            if (!ok) alert('No se pudo finalizar el proyecto.');
+                          }
+                        }}>Finalizar</button>
+                      )}
                     </td>
                   </tr>
                 );

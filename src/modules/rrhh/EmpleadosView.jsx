@@ -21,6 +21,7 @@ const EMPTY_FORM = {
   estado: 'Activo',
   estado_laboral: 'Activo',
   tipo_contrato: 'Indefinido',
+  fecha_fin_contrato: '',
   puede_subir_documentos: false
 };
 
@@ -124,6 +125,7 @@ const EmpleadosView = () => {
         ...formData,
         linked_user_id: formData.linked_user_id || null,
         fecha_nacimiento: formData.fecha_nacimiento || null,
+        fecha_fin_contrato: formData.tipo_contrato === 'Temporal' ? (formData.fecha_fin_contrato || null) : null,
         salario: Number(formData.salario || 0)
       };
       const nuevoEmpleado = editingId
@@ -196,6 +198,7 @@ const EmpleadosView = () => {
       estado: empleado.estado || 'Activo',
       estado_laboral: empleado.estado_laboral || 'Activo',
       tipo_contrato: empleado.tipo_contrato || 'Indefinido',
+      fecha_fin_contrato: empleado.fecha_fin_contrato || '',
       puede_subir_documentos: Boolean(empleado.puede_subir_documentos)
     });
   };
@@ -325,6 +328,12 @@ const EmpleadosView = () => {
               <option>Activo</option><option>Inactivo</option><option>Suspendido</option><option>Cesado</option>
             </select>
           </div>
+          {formData.tipo_contrato === 'Temporal' && (
+            <div className="form-field">
+              <label htmlFor="emp-fecha-fin-contrato">Fin de contrato *</label>
+              <input id="emp-fecha-fin-contrato" name="fecha_fin_contrato" type="date" required value={formData.fecha_fin_contrato} onChange={handleChange} />
+            </div>
+          )}
           <div className="form-field">
             <label htmlFor="emp-puede-subir-documentos">Habilitar subida de documentos</label>
             <select
@@ -408,7 +417,7 @@ const EmpleadosView = () => {
                   <td>{empleado.cargo || '-'}</td>
                   <td>{empleado.departamento || '-'}</td>
                   <td>S/ {empleado.salario?.toLocaleString('en-US') || 0}</td>
-                  <td>{empleado.salario_periodo || 'mensual'}</td>
+                  <td>{{ mensual: 'Mensual', diario: 'Por día', hora: 'Por hora', proyecto: 'Por proyecto' }[empleado.salario_periodo] || '-'}</td>
                   <td><span className="badge badge-blue">{empleado.proyectos_asignados || 0}</span></td>
                   <td><span className={`badge ${empleado.estado_laboral === 'Activo' ? 'badge-green' : 'badge-gray'}`}>{empleado.estado_laboral || empleado.estado}</span></td>
                   <td>{empleado.linked_user_id ? 'Vinculado' : 'Sin acceso'}</td>

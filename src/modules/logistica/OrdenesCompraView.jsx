@@ -19,6 +19,7 @@ const OrdenesCompraView = () => {
   const [facturasPorOrden, setFacturasPorOrden] = useState({});
   const [enviandoOrdenId, setEnviandoOrdenId] = useState(null);
   const [showForm, setShowForm] = useState(false);
+  const [editingOrdenId, setEditingOrdenId] = useState(null);
   const [formData, setFormData] = useState({
     tipo_comprobante: '01',
     serie: '',
@@ -103,7 +104,7 @@ const OrdenesCompraView = () => {
     const cleanCorrelativo = formData.correlativo.trim();
     const numeroOrden = `${cleanSerie}-${cleanCorrelativo}`;
 
-    const { data: orden, error: ordenError } = await supabase.from('ordenes_compra').insert([{
+    const ordenPayload = {
       user_id: user?.id,
       empresa_id: empresaId,
       numero: numeroOrden,
@@ -117,22 +118,27 @@ const OrdenesCompraView = () => {
       tipo_comprobante: formData.tipo_comprobante,
       serie: cleanSerie,
       correlativo: cleanCorrelativo
-    }]).select().single();
+    };
+    const orderQuery = editingOrdenId
+      ? supabase.from('ordenes_compra').update(ordenPayload).eq('id', editingOrdenId)
+      : supabase.from('ordenes_compra').insert([ordenPayload]);
+    const { data: orden, error: ordenError } = await orderQuery.select().single();
 
     if (ordenError) {
       alert(traducirError(ordenError));
       return;
     }
 
-    const { error: materialError } = await supabase.from('logistica_materiales').insert([{
-      empresa_id: empresaId,
-      orden_compra_id: orden.id,
+    const materialPayload = {
+      empresa_id: empresaId, orden_compra_id: orden.id,
       proyecto_id: formData.proyecto_id ? Number(formData.proyecto_id) : null,
-      descripcion: formData.nombre_compra,
-      cantidad: Number(formData.cantidad || 0),
-      costo_unitario: Number(formData.costo_unitario || 0),
-      estado: 'pendiente_contabilidad'
-    }]);
+      descripcion: formData.nombre_compra, cantidad: Number(formData.cantidad || 0),
+      costo_unitario: Number(formData.costo_unitario || 0), estado: 'pendiente_contabilidad'
+    };
+    const materialQuery = editingOrdenId
+      ? supabase.from('logistica_materiales').update(materialPayload).eq('orden_compra_id', editingOrdenId)
+      : supabase.from('logistica_materiales').insert([materialPayload]);
+    const { error: materialError } = await materialQuery;
 
     if (materialError) {
       alert(traducirError(materialError));
@@ -140,6 +146,7 @@ const OrdenesCompraView = () => {
 
     setFormData({ tipo_comprobante: '01', serie: '', correlativo: '', nombre_compra: '', proveedor_id: '', proyecto_id: '', fecha: getTodayInAppTimeZone(), fecha_vencimiento: '', cantidad: '1', costo_unitario: '0' });
     setShowForm(false);
+    setEditingOrdenId(null);
     await fetchData();
   };
 
@@ -199,11 +206,25 @@ const OrdenesCompraView = () => {
     event.preventDefault();
   };
 
+  const handleEdit = (orden) => {
+    const material = materialesPorOrden[orden.id] || {};
+    setEditingOrdenId(orden.id);
+    setFormData({
+      tipo_comprobante: orden.tipo_comprobante || '01', serie: orden.serie || '', correlativo: orden.correlativo || '',
+      nombre_compra: orden.nombre_compra || '', proveedor_id: String(orden.proveedor_id || ''), proyecto_id: String(orden.proyecto_id || ''),
+      fecha: orden.fecha || getTodayInAppTimeZone(), fecha_vencimiento: '', cantidad: String(material.cantidad || 1), costo_unitario: String(material.costo_unitario || 0)
+    });
+    setShowForm(true);
+  };
+
   return (
     <div className="logistica-view">
       <div className="view-header">
         <h2>Órdenes de compra</h2>
-        <button type="button" className="btn-primary" onClick={() => setShowForm(!showForm)}>
+        <button type="button" className="btn-primary" onClick={() => {
+          if (showForm) setEditingOrdenId(null);
+          setShowForm(!showForm);
+        }}>
           {showForm ? 'Cancelar' : '+ Nueva orden'}
         </button>
       </div>
@@ -278,7 +299,7 @@ const OrdenesCompraView = () => {
           <div></div>
 
           <div className="form-actions">
-            <button type="submit" className="btn-primary">Guardar orden</button>
+            <button type="submit" className="btn-primary">{editingOrdenId ? 'Actualizar orden' : 'Guardar orden'}</button>
           </div>
         </form>
       )}
@@ -325,6 +346,9 @@ const OrdenesCompraView = () => {
                   </span>
                 </td>
                 <td>
+                  {!facturasPorOrden[orden.id] && (
+                    <button type="button" className="btn-action" onClick={() => handleEdit(orden)}>Editar</button>
+                  )}
                   {facturasPorOrden[orden.id] ? (
                     <span className="badge badge-green">Enviada</span>
                   ) : (

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../context/auth/useAuth';
 import useProjects from '../../hooks/useProjects';
+import { uploadPrivateFile } from '../../lib/storage';
 
 const MaterialesView = () => {
   const { user, membership, profile } = useAuth();
@@ -10,6 +11,7 @@ const MaterialesView = () => {
   const [ordenes, setOrdenes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [receivingId, setReceivingId] = useState(null);
+  const [evidencias, setEvidencias] = useState({});
 
   const fetchData = async () => {
     if (!user?.id) return;
@@ -42,6 +44,17 @@ const MaterialesView = () => {
 
   const handleRecibido = async (row) => {
     setReceivingId(row.id);
+    let evidencia_recepcion_path = row.evidencia_recepcion_path || null;
+    const file = evidencias[row.id];
+    if (file) {
+      try {
+        evidencia_recepcion_path = (await uploadPrivateFile({ file, folder: 'evidencias-recepcion-material', userId: user?.id })).publicUrl;
+      } catch (error) {
+        setReceivingId(null);
+        alert(error.message || 'No se pudo subir la evidencia de recepción');
+        return;
+      }
+    }
 
     const cantidad = Number(row.cantidad || 0);
     const costoUnitario = Number(row.costo_unitario || 0);
@@ -100,7 +113,8 @@ const MaterialesView = () => {
       .from('logistica_materiales')
       .update({
         estado: 'ingresado_inventario',
-        recepcionado_at: new Date().toISOString()
+        recepcionado_at: new Date().toISOString(),
+        evidencia_recepcion_path
       })
       .eq('id', row.id);
     setReceivingId(null);
@@ -130,6 +144,7 @@ const MaterialesView = () => {
               <th>Cantidad</th>
               <th>Costo unitario</th>
               <th>Estado</th>
+              <th>Evidencia</th>
               <th>Accion</th>
             </tr>
           </thead>
@@ -142,6 +157,11 @@ const MaterialesView = () => {
                 <td>{row.cantidad}</td>
                 <td>S/ {Number(row.costo_unitario || 0).toLocaleString('en-US')}</td>
                 <td>{row.estado}</td>
+                <td>
+                  {row.evidencia_recepcion_path ? <a href={row.evidencia_recepcion_path} target="_blank" rel="noreferrer">Ver evidencia</a> : row.estado === 'aceptada' && (
+                    <input type="file" accept="image/*,.pdf" onChange={(e) => setEvidencias((prev) => ({ ...prev, [row.id]: e.target.files?.[0] }))} />
+                  )}
+                </td>
                 <td>
                   {row.estado === 'aceptada' ? (
                     <button

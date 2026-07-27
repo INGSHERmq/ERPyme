@@ -32,7 +32,9 @@ const useRRHH = () => {
       const empresaId = empresaIdActual;
       const ownerFilter = empresaId ? `empresa_id.eq.${empresaId},user_id.eq.${user.id}` : `user_id.eq.${user.id}`;
       const [empRes, asistRes, asigRes, incRes] = await Promise.all([
-        supabase.from('v_empleados_stats').select('*').or(ownerFilter).order('nombre'),
+        // Read the base table so recently added fields (such as payment period)
+        // are never hidden by a stale reporting view.
+        supabase.from('empleados').select('*').or(ownerFilter).order('nombre'),
         supabase.from('asistencias').select('*').or(ownerFilter).order('fecha', { ascending: false }).limit(50),
         supabase.from('asignaciones_proyecto').select('*').or(ownerFilter),
         supabase.from('registro_accidentes').select('*').or(ownerFilter).order('fecha', { ascending: false }).limit(20)
