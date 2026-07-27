@@ -101,7 +101,12 @@ Deno.serve(async (req) => {
       return json({ error: 'No se encontro la empresa activa.' }, 404);
     }
 
-    const planLimit = PLAN_LIMITS[company.plan || 'basic_free'] ?? PLAN_LIMITS.basic_free;
+    // `advanced` intentionally maps to null (unlimited). Do not use `??`
+    // here: it would turn that valid null into the basic plan limit of 1.
+    const planKey = company.plan || 'basic_free';
+    const planLimit = Object.prototype.hasOwnProperty.call(PLAN_LIMITS, planKey)
+      ? PLAN_LIMITS[planKey]
+      : PLAN_LIMITS.basic_free;
     if (planLimit !== null) {
       const { data: companyUsers, error: usersError } = await adminClient
         .from('empresa_usuarios')

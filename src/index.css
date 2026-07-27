@@ -314,11 +314,14 @@ body {
   border-radius: var(--radius-lg) !important;
   padding: 0 !important;
   overflow-x: auto;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
   margin-top: var(--spacing-md);
 }
 
 .data-table {
-  width: 100%;
+  width: max-content;
+  min-width: 100%;
   border-collapse: collapse;
   background-color: transparent;
 }
@@ -333,6 +336,7 @@ body {
   letter-spacing: 0.05em;
   background-color: var(--surface-bg);
   border-bottom: 1px solid var(--border-color);
+  white-space: nowrap;
 }
 
 .data-table td {
@@ -342,6 +346,19 @@ body {
   font-size: 14px;
   background-color: transparent;
   vertical-align: middle;
+  min-width: 96px;
+  line-height: 1.45;
+}
+
+.data-table td:first-child,
+.data-table th:first-child { padding-left: 24px; }
+.data-table td:last-child,
+.data-table th:last-child { padding-right: 24px; }
+
+@media (max-width: 768px) {
+  .table-responsive { border-radius: var(--radius-md) !important; }
+  .data-table th, .data-table td { padding: 12px 14px; }
+  .data-table td { min-width: 120px; }
 }
 
 .data-table tbody tr:hover {

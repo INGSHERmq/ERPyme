@@ -7,11 +7,14 @@ import SearchSection from './components/SearchSection';
 import ModuleCard from './components/ModuleCard';
 import SubscriptionLock from './components/SubscriptionLock';
 
-const Home = ({ onNavigate, enabledModules = [], profile = {}, canAccessFeature = () => false }) => {
+const Home = ({ onNavigate, enabledModules = [], profile = {}, canAccessFeature = () => false, isAdmin = false }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [lockedModule, setLockedModule] = useState(null);
 
-  const visibleModules = ERP_MODULES;
+  const visibleModules = isAdmin
+    ? ERP_MODULES
+    : ERP_MODULES.filter((module) => enabledModules.includes(module.id));
+
   const filteredModules = useModuleFilter(visibleModules, searchTerm);
 
   return (
@@ -26,7 +29,7 @@ const Home = ({ onNavigate, enabledModules = [], profile = {}, canAccessFeature 
         onNavigate={onNavigate}
       />
 
-      {lockedModule && (
+      {isAdmin && lockedModule && (
         <div className="home-lock-panel">
           <SubscriptionLock
             title={`${lockedModule.title} está disponible en un plan superior`}
@@ -37,7 +40,7 @@ const Home = ({ onNavigate, enabledModules = [], profile = {}, canAccessFeature 
 
       <main className="modules-grid">
         {filteredModules.map((mod) => {
-          const isLocked = !enabledModules?.includes(mod.id);
+          const isLocked = isAdmin && !enabledModules?.includes(mod.id);
 
           return (
             <ModuleCard

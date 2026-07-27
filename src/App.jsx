@@ -176,6 +176,7 @@ function App() {
               signOut={signOut}
               enabledModules={enabledModules}
               canAccessFeature={canAccessFeature}
+              isAdmin={canAccessAdminPanel}
             />
           )}
           {module === 'projects' && enabledModules?.includes('projects') && <ProjectsView onBack={back} initialTab={moduleTab} />}

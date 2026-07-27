@@ -616,11 +616,23 @@ export default function AuthProvider({ children }) {
       metadata: rpcPayload.p_metadata
     };
 
-    const { error } = await supabase.functions.invoke('admin-create-managed-user', {
+    const { data: functionData, error } = await supabase.functions.invoke('admin-create-managed-user', {
       body: functionPayload
     });
 
     if (!error) return;
+
+    // Edge Functions return their useful validation message in the response body.
+    // Surface it in the form instead of exposing only an opaque HTTP 400.
+    if (functionData?.error) throw new Error(functionData.error);
+    if (error.context && typeof error.context.json === 'function') {
+      try {
+        const body = await error.context.json();
+        if (body?.error) throw new Error(body.error);
+      } catch (responseError) {
+        if (responseError instanceof Error && responseError.message !== 'Unexpected end of JSON input') throw responseError;
+      }
+    }
 
     const functionUnavailable = String(error.message || '').toLowerCase().includes('function not found');
     if (!functionUnavailable) throw error;
