@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import useFinanzas from '../../hooks/useFinanzas';
+import { useNotification } from '../../context/NotificationContext';
 import './CuentasPorCobrarView.css';
 
 const initialFormData = () => ({
@@ -21,6 +22,7 @@ const CuentasPorCobrarView = () => {
     refetch,
     loading
   } = useFinanzas();
+  const { showConfirm } = useNotification();
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState(initialFormData);
 
@@ -43,7 +45,8 @@ const CuentasPorCobrarView = () => {
   };
 
   const handleCobrar = async (id) => {
-    if (!window.confirm('Marcar como cobrada?')) return;
+    const confirmed = await showConfirm('¿Marcar como cobrada?', 'Confirmar Cobro');
+    if (!confirmed) return;
     await marcarCuentaComoCobrada(id);
     refetch();
   };
@@ -92,7 +95,7 @@ const CuentasPorCobrarView = () => {
               <tr key={c.id}>
                 <td className="cell-bold">{c.clienteNombre}</td>
                 <td>{c.concepto}</td>
-                <td><strong>${Number(c.monto || 0).toLocaleString()}</strong></td>
+                <td><strong>S/ {Number(c.monto || 0).toLocaleString('en-US')}</strong></td>
                 <td>{c.fechaVencimiento}</td>
                 <td><span className={`badge ${c.estado === 'Cobrada' ? 'badge-green' : 'badge-yellow'}`}>{c.estado}</span></td>
                 <td>

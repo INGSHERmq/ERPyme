@@ -1,0 +1,415 @@
+.summary-panel-home {
+  background: var(--surface-bg);
+  border: 1px solid var(--hairline);
+  border-radius: 16px;
+  padding: 24px;
+  margin: 32px auto;
+  max-width: calc(1280px - 48px);
+  width: calc(100% - 48px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  animation: slideDown 0.5s ease-out;
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.summary-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+}
+
+.summary-kicker {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  color: var(--primary);
+  text-transform: uppercase;
+  margin-bottom: 4px;
+  display: block;
+}
+
+.summary-panel-home h2 {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-main);
+  margin: 0;
+}
+
+.summary-date {
+  font-size: 14px;
+  color: var(--text-muted);
+  text-transform: capitalize;
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.summary-card {
+  background: var(--surface-elevated);
+  border: 1px solid var(--hairline);
+  border-radius: 12px;
+  padding: 20px;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.2s, background 0.2s;
+}
+
+.summary-card:hover {
+  transform: translateY(-2px);
+  background: var(--surface-soft);
+}
+
+.card-inner {
+  display: flex;
+  flex-direction: column;
+}
+
+.summary-card strong {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--text-main);
+  line-height: 1.2;
+}
+
+.summary-card span {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+.card-accent {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: var(--primary);
+}
+
+.card-accent.danger { background: var(--trading-down); }
+.card-accent.warning { background: #f3ba2f; }
+.card-accent.success { background: var(--trading-up); }
+
+.summary-footer {
+  border-top: 1px solid var(--hairline);
+  padding-top: 20px;
+}
+
+.summary-actions {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.summary-actions li {
+  font-size: 14px;
+  color: var(--text-main);
+  padding-left: 24px;
+  position: relative;
+}
+
+.summary-actions li::before {
+  content: '•';
+  position: absolute;
+  left: 8px;
+  color: var(--primary);
+  font-weight: bold;
+}
+
+.summary-skeleton {
+  background: var(--surface-bg);
+  height: 180px;
+  border-radius: 16px;
+  margin: 32px auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  font-size: 14px;
+  font-weight: 500;
+  border: 1px solid var(--hairline);
+}
+
+.summary-skeleton.compact {
+  height: 60px;
+  width: 120px;
+  margin: 0;
+  border-radius: 8px;
+}
+
+/* Diseño Compacto para Toolbar */
+.summary-compact-row {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding: 4px 0 12px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.summary-compact-row::-webkit-scrollbar {
+  display: none;
+}
+
+.summary-card.compact {
+  min-width: 160px;
+  padding: 16px 20px;
+  background: var(--surface-elevated);
+  border: 1px solid var(--hairline);
+}
+
+.summary-card.compact strong {
+  font-size: 28px;
+  color: var(--text-main);
+}
+
+.summary-card.compact span {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+/* Interactividad en tarjetas con riesgo */
+.interactive-risk-card {
+  cursor: pointer !important;
+  border-color: rgba(243, 186, 47, 0.4) !important;
+}
+
+.interactive-risk-card:hover {
+  border-color: #f3ba2f !important;
+  box-shadow: 0 0 16px rgba(243, 186, 47, 0.25), 0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: translateY(-3px) !important;
+}
+
+/* Interactividad en tarjetas de facturas vencidas */
+.interactive-overdue-card {
+  cursor: pointer !important;
+  border-color: rgba(246, 70, 93, 0.4) !important;
+}
+
+.interactive-overdue-card:hover {
+  border-color: #ff4d6a !important;
+  box-shadow: 0 0 16px rgba(246, 70, 93, 0.25), 0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: translateY(-3px) !important;
+}
+
+/* Modal / Popover de Detalles de Riesgos */
+.risks-popover-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
+  z-index: 9999;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  animation: fadeIn 0.25s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.risks-popover-card {
+  background: var(--surface-bg, #1e1e22);
+  border: 1px solid var(--hairline, #333);
+  border-radius: 16px;
+  width: 90%;
+  max-width: 580px;
+  max-height: 85vh;
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.4);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: zoomUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes zoomUp {
+  from { transform: scale(0.92) translateY(20px); opacity: 0; }
+  to { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+.risks-popover-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--hairline, #333);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.risks-popover-header h5 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-main, #fff);
+  display: flex;
+  align-items: center;
+}
+
+.popover-badge-danger {
+  background: rgba(246, 70, 93, 0.2);
+  color: #ff4d6a;
+  border: 1px solid #ff4d6a;
+  font-size: 9px;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-right: 8px;
+  text-transform: uppercase;
+}
+
+.btn-close-popover {
+  background: transparent;
+  border: none;
+  color: var(--text-muted, #888);
+  font-size: 24px;
+  cursor: pointer;
+  line-height: 1;
+  padding: 4px;
+  transition: color 0.2s;
+}
+
+.btn-close-popover:hover {
+  color: #ff4d6a;
+}
+
+.risks-popover-body {
+  padding: 20px 24px;
+  overflow-y: auto;
+  flex: 1;
+  text-align: left;
+}
+
+.popover-intro {
+  margin: 0 0 16px 0;
+  font-size: 14px;
+  color: var(--text-muted, #aaa);
+}
+
+.popover-projects-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.popover-project-item {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--hairline, #333);
+  border-radius: 10px;
+  padding: 16px;
+}
+
+.popover-project-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  border-bottom: 1px dashed rgba(255, 255, 255, 0.06);
+  padding-bottom: 8px;
+}
+
+.popover-project-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-main, #fff);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.popover-project-progress {
+  font-size: 12px;
+  color: #f3ba2f;
+  background: rgba(243, 186, 47, 0.1);
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-weight: 600;
+}
+
+.popover-delayed-tasks {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.popover-task-item {
+  background: rgba(0, 0, 0, 0.25);
+  border-left: 3px solid #ff4d6a;
+  padding: 10px 12px;
+  border-radius: 4px;
+  font-size: 13px;
+}
+
+.popover-task-title {
+  display: block;
+  font-weight: 700;
+  color: var(--text-main, #fff);
+  margin-bottom: 4px;
+}
+
+.popover-task-info {
+  display: block;
+  font-size: 12px;
+  color: var(--text-muted, #888);
+  margin-bottom: 6px;
+}
+
+.popover-ai-tip {
+  font-size: 12px;
+  color: #fcd535;
+  background: rgba(252, 213, 53, 0.04);
+  padding: 6px 8px;
+  border-radius: 4px;
+  border: 1px dashed rgba(252, 213, 53, 0.12);
+  line-height: 1.4;
+}
+
+.popover-no-tasks {
+  font-size: 13px;
+  color: var(--text-muted, #888);
+  font-style: italic;
+}
+
+.risks-popover-footer {
+  padding: 16px 24px;
+  border-top: 1px solid var(--hairline, #333);
+  display: flex;
+  justify-content: flex-end;
+}
+
+.btn-popover-action {
+  background: #f3ba2f;
+  color: #000;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  transition: transform 0.15s, background-color 0.2s;
+}
+
+.btn-popover-action:hover {
+  background: #ffd858;
+  transform: translateY(-1px);
+}
+
+.btn-popover-action:active {
+  transform: translateY(0);
+}
+

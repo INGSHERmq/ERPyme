@@ -1,0 +1,11 @@
+.module-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  font-weight: bold;
+  font-size: 20px;
+  transition: all 0.2s ease;
+}

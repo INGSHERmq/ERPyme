@@ -1,15 +1,18 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../context/auth/useAuth';
+import { traducirError } from '../../lib/errores';
+import { uploadPrivateFile } from '../../lib/storage';
 
 const getToday = () => new Date().toISOString().split('T')[0];
 
 const FacturasVentaView = () => {
-  const { user } = useAuth();
+  const { user, membership, profile } = useAuth();
   const [cotizaciones, setCotizaciones] = useState([]);
   const [clientes, setClientes] = useState([]);
   const [rows, setRows] = useState([]);
   const [collectingId, setCollectingId] = useState(null);
+  const [evidencias, setEvidencias] = useState({});
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
     numero: '',
@@ -24,7 +27,7 @@ const FacturasVentaView = () => {
     const [cotiRes, cliRes, facRes] = await Promise.all([
       supabase.from('cotizaciones').select('id,titulo,cliente_id,monto').eq('user_id', user.id).order('created_at', { ascending: false }),
       supabase.from('clientes').select('id,nombre').eq('user_id', user.id).order('nombre'),
-      supabase.from('facturas_venta').select('*').order('created_at', { ascending: false })
+      supabase.from('facturas_venta').select('*').eq('empresa_id', membership?.empresa_id || profile?.empresa_actual_id).order('created_at', { ascending: false })
     ]);
     setCotizaciones(cotiRes.data || []);
     setClientes(cliRes.data || []);
@@ -41,14 +44,25 @@ const FacturasVentaView = () => {
     
     const factura = rows.find(r => r.id === rowId);
 
+    let evidencia_pago_path = factura?.evidencia_pago_path || null;
+    const file = evidencias[rowId];
+    if (file) {
+      try {
+        evidencia_pago_path = (await uploadPrivateFile({ file, folder: 'evidencias-pago-venta', userId: user?.id })).publicUrl;
+      } catch (uploadError) {
+        setCollectingId(null);
+        alert(uploadError.message || 'No se pudo subir la evidencia de pago');
+        return;
+      }
+    }
     const { error } = await supabase
       .from('facturas_venta')
-      .update({ estado: 'cobrada' })
+      .update({ estado: 'cobrada', evidencia_pago_path })
       .eq('id', rowId);
 
     if (error) {
       setCollectingId(null);
-      alert(error.message || 'No se pudo registrar el cobro');
+      alert(traducirError(error));
       return;
     }
 
@@ -75,6 +89,7 @@ const FacturasVentaView = () => {
   const handleSubmit = async (event) => {
     event.preventDefault();
     const { error } = await supabase.from('facturas_venta').insert([{
+      empresa_id: membership?.empresa_id || profile?.empresa_actual_id,
       numero: formData.numero,
       cotizacion_id: formData.cotizacion_id ? Number(formData.cotizacion_id) : null,
       cliente_id: formData.cliente_id ? Number(formData.cliente_id) : null,
@@ -82,7 +97,7 @@ const FacturasVentaView = () => {
       total: Number(formData.total || 0)
     }]);
     if (error) {
-      alert(error.message || 'No se pudo registrar');
+      alert(traducirError(error));
       return;
     }
     setFormData({ numero: '', cotizacion_id: '', cliente_id: '', fecha_emision: getToday(), total: '0' });
@@ -102,11 +117,11 @@ const FacturasVentaView = () => {
       {showForm && (
         <form className="simple-form" onSubmit={handleSubmit}>
           <div className="form-field">
-            <label htmlFor="fv-numero">Numero de factura</label>
-            <input id="fv-numero" placeholder="Numero factura" required value={formData.numero} onChange={(e) => setFormData((p) => ({ ...p, numero: e.target.value }))} />
+            <label htmlFor="fv-numero">Número de factura</label>
+            <input id="fv-numero" placeholder="Número factura" required value={formData.numero} onChange={(e) => setFormData((p) => ({ ...p, numero: e.target.value }))} />
           </div>
           <div className="form-field">
-            <label htmlFor="fv-cotizacion">Cotizacion</label>
+            <label htmlFor="fv-cotizacion">Cotización</label>
             <select id="fv-cotizacion" value={formData.cotizacion_id} onChange={(e) => {
               const cotId = e.target.value;
               const coti = cotizaciones.find((item) => String(item.id) === String(cotId));
@@ -117,7 +132,7 @@ const FacturasVentaView = () => {
                 total: coti?.monto ? String(coti.monto) : p.total
               }));
             }}>
-              <option value="">Seleccionar cotizacion</option>
+              <option value="">Seleccionar cotización</option>
               {cotizaciones.map((cot) => <option key={cot.id} value={cot.id}>{cot.titulo}</option>)}
             </select>
           </div>
@@ -129,7 +144,7 @@ const FacturasVentaView = () => {
             </select>
           </div>
           <div className="form-field">
-            <label htmlFor="fv-fecha">Fecha de emision</label>
+            <label htmlFor="fv-fecha">Fecha de emisión</label>
             <input id="fv-fecha" type="date" required value={formData.fecha_emision} onChange={(e) => setFormData((p) => ({ ...p, fecha_emision: e.target.value }))} />
           </div>
           <div className="form-field">
@@ -144,13 +159,14 @@ const FacturasVentaView = () => {
         <table className="data-table">
           <thead>
             <tr>
-              <th>Numero</th>
-              <th>Cotizacion</th>
+              <th>Número</th>
+              <th>Cotización</th>
               <th>Cliente</th>
               <th>Estado factura</th>
-              <th>Fecha emision</th>
+              <th>Fecha emisión</th>
               <th>Total</th>
-              <th>Accion</th>
+              <th>Evidencia de pago</th>
+              <th>Acción</th>
             </tr>
           </thead>
           <tbody>
@@ -161,7 +177,12 @@ const FacturasVentaView = () => {
                 <td>{clientes.find((c) => c.id === row.cliente_id)?.nombre || '-'}</td>
                 <td>{row.estado === 'emitida' ? 'en proceso' : row.estado}</td>
                 <td>{row.fecha_emision}</td>
-                <td>S/ {Number(row.total || 0).toLocaleString()}</td>
+                <td>S/ {Number(row.total || 0).toLocaleString('en-US')}</td>
+                <td>
+                  {row.evidencia_pago_path ? <a href={row.evidencia_pago_path} target="_blank" rel="noreferrer">Ver evidencia</a> : row.estado !== 'cobrada' && (
+                    <input type="file" accept="image/*,.pdf" onChange={(e) => setEvidencias((prev) => ({ ...prev, [row.id]: e.target.files?.[0] }))} />
+                  )}
+                </td>
                 <td>
                   {row.estado === 'cobrada' ? (
                     <span className="badge badge-green">Cobrada</span>

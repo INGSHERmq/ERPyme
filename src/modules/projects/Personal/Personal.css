@@ -10,7 +10,7 @@
 .vista-personal h3 {
   margin: 0 0 16px 0;
   font-size: 18px;
-  color: #212529;
+  color: var(--color-ink);
   font-weight: 600;
 }
 
@@ -18,10 +18,10 @@
 .empty-msg {
   text-align: center;
   padding: 50px;
-  color: #6c757d;
-  background: #f8f9fa;
+  color: var(--color-muted);
+  background: var(--color-surface-card);
   border-radius: 12px;
-  border: 2px dashed #e9ecef; /* Borde punteado para indicar vacío */
+  border: 2px dashed var(--color-hairline);
   font-size: 14px;
 }
 
@@ -35,8 +35,8 @@
 
 /* Diseño de la Tarjeta Individual */
 .card-miembro {
-  background: white;
-  border: 1px solid #e9ecef;
+  background: var(--color-surface-card);
+  border: 1px solid var(--color-hairline);
   border-radius: 12px;
   padding: 20px;
   display: flex;
@@ -49,22 +49,22 @@
 .card-miembro:hover {
   transform: translateY(-2px);
   box-shadow: 0 6px 16px rgba(0,0,0,0.08);
-  border-color: #0052cc; /* Resalta al pasar el mouse */
+  border-color: var(--color-primary);
 }
 
 /* Avatar (Letra inicial) */
 .avatar {
   width: 48px;
   height: 48px;
-  background: #e3f2fd; /* Fondo azul claro */
-  color: #0052cc;      /* Texto azul fuerte */
+  background: rgba(59, 130, 246, 0.14);
+  color: var(--info);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 20px;
   font-weight: 700;
-  flex-shrink: 0; /* Evita que se aplaste */
+  flex-shrink: 0;
 }
 
 /* Información del Empleado */
@@ -77,19 +77,19 @@
 
 .info strong {
   font-size: 15px;
-  color: #212529;
+  color: var(--color-ink);
   font-weight: 600;
 }
 
 .info span {
   font-size: 13px;
-  color: #6c757d;
+  color: var(--color-muted);
 }
 
 /* Badge del Rol en el Proyecto */
 .rol-badge {
-  background: #f1f3f5;
-  color: #495057;
+  background: var(--surface-elevated);
+  color: var(--color-ink);
   padding: 4px 10px;
   border-radius: 20px;
   font-size: 11px;
@@ -106,4 +106,20 @@
   .card-miembro {
     padding: 16px;
   }
+}
+
+html[data-theme="dark"] .vista-personal h3,
+html[data-theme="dark"] .info strong {
+  color: var(--body);
+}
+
+html[data-theme="dark"] .card-miembro,
+html[data-theme="dark"] .empty-msg {
+  background: var(--surface-card);
+  border-color: var(--hairline);
+}
+
+html[data-theme="dark"] .rol-badge {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--body);
 }

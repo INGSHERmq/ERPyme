@@ -1,42 +1,74 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../context/auth/useAuth';
+import useProjects from '../../hooks/useProjects';
+import { uploadPrivateFile } from '../../lib/storage';
 
 const MaterialesView = () => {
-  const { user } = useAuth();
+  const { user, membership, profile } = useAuth();
+  const { proyectos } = useProjects();
   const [rows, setRows] = useState([]);
+  const [ordenes, setOrdenes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [receivingId, setReceivingId] = useState(null);
+  const [evidencias, setEvidencias] = useState({});
 
   const fetchData = async () => {
     if (!user?.id) return;
     setLoading(true);
-    const { data } = await supabase
+    const empresaId = membership?.empresa_id || profile?.empresa_actual_id;
+    const materialesQuery = supabase
       .from('logistica_materiales')
       .select('*')
+      .neq('estado', 'anulado')
       .order('created_at', { ascending: false });
-    setRows(data || []);
+    const ordenesQuery = supabase
+      .from('ordenes_compra')
+      .select('id,numero,proyecto_id,estado');
+
+    const [{ data }, ordenesRes] = await Promise.all([
+      empresaId ? materialesQuery.eq('empresa_id', empresaId) : materialesQuery,
+      empresaId ? ordenesQuery.eq('empresa_id', empresaId) : ordenesQuery.eq('user_id', user.id)
+    ]);
+    const ordenesActivas = (ordenesRes.data || []).filter((orden) => !['Anulado', 'Cancelada'].includes(orden.estado));
+    const ordenesActivasIds = new Set(ordenesActivas.map((orden) => Number(orden.id)));
+    setRows((data || []).filter((row) => ordenesActivasIds.has(Number(row.orden_compra_id))));
+    setOrdenes(ordenesActivas);
     setLoading(false);
   };
 
   useEffect(() => {
-    fetchData();
+    (async () => { await fetchData(); })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
 
   const handleRecibido = async (row) => {
     setReceivingId(row.id);
+    let evidencia_recepcion_path = row.evidencia_recepcion_path || null;
+    const file = evidencias[row.id];
+    if (file) {
+      try {
+        evidencia_recepcion_path = (await uploadPrivateFile({ file, folder: 'evidencias-recepcion-material', userId: user?.id })).publicUrl;
+      } catch (error) {
+        setReceivingId(null);
+        alert(error.message || 'No se pudo subir la evidencia de recepción');
+        return;
+      }
+    }
 
     const cantidad = Number(row.cantidad || 0);
     const costoUnitario = Number(row.costo_unitario || 0);
+    const proyectoId = row.proyecto_id || ordenes.find((orden) => orden.id === row.orden_compra_id)?.proyecto_id || null;
 
-    const { data: existente, error: existenteError } = await supabase
+    let inventarioQuery = supabase
       .from('inventario_objetos')
       .select('id,stock_actual')
       .eq('nombre', row.descripcion)
       .eq('tipo_inventario', 'consumible')
-      .limit(1)
-      .maybeSingle();
+      .limit(1);
+
+    inventarioQuery = proyectoId ? inventarioQuery.eq('proyecto_id', proyectoId) : inventarioQuery.is('proyecto_id', null);
+    const { data: existente, error: existenteError } = await inventarioQuery.maybeSingle();
 
     if (existenteError) {
       setReceivingId(null);
@@ -49,7 +81,8 @@ const MaterialesView = () => {
         .from('inventario_objetos')
         .update({
           stock_actual: Number(existente.stock_actual || 0) + cantidad,
-          costo_unitario: costoUnitario
+          costo_unitario: costoUnitario,
+          proyecto_id: proyectoId
         })
         .eq('id', existente.id);
       if (updateInvError) {
@@ -61,8 +94,10 @@ const MaterialesView = () => {
       const { error: insertInvError } = await supabase
         .from('inventario_objetos')
         .insert([{
+          empresa_id: membership?.empresa_id || profile?.empresa_actual_id,
           codigo: `MAT-${row.id}`,
           nombre: row.descripcion,
+          proyecto_id: proyectoId,
           tipo_inventario: 'consumible',
           stock_actual: cantidad,
           costo_unitario: costoUnitario
@@ -78,7 +113,8 @@ const MaterialesView = () => {
       .from('logistica_materiales')
       .update({
         estado: 'ingresado_inventario',
-        recepcionado_at: new Date().toISOString()
+        recepcionado_at: new Date().toISOString(),
+        evidencia_recepcion_path
       })
       .eq('id', row.id);
     setReceivingId(null);
@@ -104,9 +140,11 @@ const MaterialesView = () => {
             <tr>
               <th>Orden compra</th>
               <th>Descripcion</th>
+              <th>Proyecto</th>
               <th>Cantidad</th>
               <th>Costo unitario</th>
               <th>Estado</th>
+              <th>Evidencia</th>
               <th>Accion</th>
             </tr>
           </thead>
@@ -115,9 +153,15 @@ const MaterialesView = () => {
               <tr key={row.id}>
                 <td>{row.orden_compra_id}</td>
                 <td className="cell-bold">{row.descripcion}</td>
+                <td>{proyectos.find((p) => Number(p.id) === Number(row.proyecto_id || ordenes.find((orden) => orden.id === row.orden_compra_id)?.proyecto_id))?.nombre_mostrar || proyectos.find((p) => Number(p.id) === Number(row.proyecto_id || ordenes.find((orden) => orden.id === row.orden_compra_id)?.proyecto_id))?.nombre || '-'}</td>
                 <td>{row.cantidad}</td>
-                <td>S/ {Number(row.costo_unitario || 0).toLocaleString()}</td>
+                <td>S/ {Number(row.costo_unitario || 0).toLocaleString('en-US')}</td>
                 <td>{row.estado}</td>
+                <td>
+                  {row.evidencia_recepcion_path ? <a href={row.evidencia_recepcion_path} target="_blank" rel="noreferrer">Ver evidencia</a> : row.estado === 'aceptada' && (
+                    <input type="file" accept="image/*,.pdf" onChange={(e) => setEvidencias((prev) => ({ ...prev, [row.id]: e.target.files?.[0] }))} />
+                  )}
+                </td>
                 <td>
                   {row.estado === 'aceptada' ? (
                     <button

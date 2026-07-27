@@ -9,7 +9,9 @@ import {
 } from '@dnd-kit/core';
 import useRRHH from '../../../hooks/useRRHH';
 import useTareas from '../../../hooks/useTareas';
+import { formatDateOnlyInAppTimeZone, getTodayInAppTimeZone } from '../../../lib/dates';
 import TareaModal from '../TareaModal/TareaModal';
+import { useNotification } from '../../../context/NotificationContext';
 import './Actividades.css';
 
 const TareaCard = ({ tarea, onEdit, onDelete }) => {
@@ -25,6 +27,15 @@ const TareaCard = ({ tarea, onEdit, onDelete }) => {
   };
 
   const isCompletada = tarea.estado === 'Completado';
+  const todayStr = getTodayInAppTimeZone();
+  const isAtrasada = !isCompletada && tarea.fecha_fin && (tarea.fecha_fin.slice(0, 10) < todayStr);
+
+  const retrasoDays = useMemo(() => {
+    if (!isAtrasada || !tarea.fecha_fin) return 0;
+    const diffTime = Math.abs(new Date(todayStr) - new Date(tarea.fecha_fin.slice(0, 10)));
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  }, [isAtrasada, tarea.fecha_fin, todayStr]);
+
   const cardStyle = {
     borderLeft: `5px solid ${tarea.color || '#ff4d8b'}`,
     opacity: isCompletada ? 0.7 : 1,
@@ -34,16 +45,23 @@ const TareaCard = ({ tarea, onEdit, onDelete }) => {
   return (
     <article
       ref={setNodeRef}
-      className={`tarea-card ${isDragging ? 'dragging' : ''} ${isCompletada ? 'completada' : ''}`}
+      className={`tarea-card ${isDragging ? 'dragging' : ''} ${isCompletada ? 'completada' : ''} ${isAtrasada ? 'atrasada' : ''}`}
       style={cardStyle}
       onDoubleClick={() => onEdit(tarea)}
       {...listeners}
       {...attributes}
     >
       <div className="card-header">
-        <span className={`badge ${prioridadColors[tarea.prioridad] || 'badge-gray'}`}>
-          {tarea.prioridad}
-        </span>
+        <div className="header-badges" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+          <span className={`badge ${prioridadColors[tarea.prioridad] || 'badge-gray'}`}>
+            {tarea.prioridad}
+          </span>
+          {isAtrasada && (
+            <span className="badge badge-delayed">
+              Retrasada: {retrasoDays}d
+            </span>
+          )}
+        </div>
         <div className="card-actions">
           <button type="button" className="btn-icon" onClick={() => onEdit(tarea)} aria-label="Editar tarea">
             Editar
@@ -54,7 +72,7 @@ const TareaCard = ({ tarea, onEdit, onDelete }) => {
         </div>
       </div>
       <h4 className={isCompletada ? 'tachado' : ''}>{tarea.titulo}</h4>
-      <p className="descripcion">{tarea.descripcion || 'Sin descripcion'}</p>
+      <p className="descripcion">{tarea.descripcion || 'Sin descripción'}</p>
 
       {tarea.empleado_nombre && (
         <div className="asignado">
@@ -63,12 +81,21 @@ const TareaCard = ({ tarea, onEdit, onDelete }) => {
         </div>
       )}
 
+      {isAtrasada && (
+        <div className="ai-recommendation-badge">
+          <span>Sugerencia IA: Reasignar apoyo o contactar a {tarea.empleado_nombre || 'el responsable'} para asistirle con esta tarea.</span>
+        </div>
+      )}
+
       <div className="card-footer">
         {tarea.fecha_inicio && (
-          <span className="fecha">Inicio: {new Date(tarea.fecha_inicio).toLocaleDateString('es-ES')}</span>
+          <span className="fecha">Inicio: {formatDateOnlyInAppTimeZone(tarea.fecha_inicio)}</span>
         )}
         {tarea.fecha_fin && (
-          <span className="fecha">Fin: {new Date(tarea.fecha_fin).toLocaleDateString('es-ES')}</span>
+          <span className={`fecha ${isAtrasada ? 'fecha-danger' : ''}`}>Fin: {formatDateOnlyInAppTimeZone(tarea.fecha_fin)}</span>
+        )}
+        {tarea.duracion_horas !== null && tarea.duracion_horas !== undefined && tarea.duracion_horas !== '' && (
+          <span className={`fecha ${isAtrasada ? 'fecha-danger' : ''}`}>Duración: {Number(tarea.duracion_horas).toLocaleString('es-PE')} h</span>
         )}
       </div>
     </article>
@@ -98,6 +125,7 @@ const Columna = ({ titulo, estado, tareas, onEditTarea, onDeleteTarea }) => {
 const Actividades = ({ proyectoId }) => {
   const { asignaciones, empleados } = useRRHH();
   const { tareas, createTarea, updateTarea, deleteTarea, loading, refetch } = useTareas(proyectoId);
+  const { showConfirm } = useNotification();
 
   const [vista, setVista] = useState('scrum');
   const [modalShow, setModalShow] = useState(false);
@@ -147,6 +175,7 @@ const Actividades = ({ proyectoId }) => {
   const handleCreateTarea = async (tareaData) => {
     try {
       await createTarea(tareaData);
+      setModalShow(false);
       await refetch();
       alert('Tarea creada correctamente');
     } catch (error) {
@@ -159,6 +188,7 @@ const Actividades = ({ proyectoId }) => {
     try {
       await updateTarea(tareaEditando.id, tareaData);
       setTareaEditando(null);
+      setModalShow(false);
       await refetch();
       alert('Tarea actualizada correctamente');
     } catch (error) {
@@ -168,7 +198,8 @@ const Actividades = ({ proyectoId }) => {
   };
 
   const handleDeleteTarea = async (id) => {
-    if (window.confirm('Eliminar esta tarea?')) {
+    const confirmed = await showConfirm('¿Eliminar esta tarea?', 'Confirmar Eliminación');
+    if (confirmed) {
       try {
         await deleteTarea(id);
         alert('Tarea eliminada correctamente');
@@ -241,6 +272,7 @@ const Actividades = ({ proyectoId }) => {
                   <th>Prioridad</th>
                   <th>Asignado a</th>
                   <th>Fecha Fin</th>
+                  <th>Duración</th>
                   <th>Acciones</th>
                 </tr>
               </thead>
@@ -251,7 +283,8 @@ const Actividades = ({ proyectoId }) => {
                     <td><span className={`badge badge-${t.estado === 'En Progreso' ? 'blue' : t.estado === 'Completado' ? 'green' : 'gray'}`}>{t.estado}</span></td>
                     <td><span className={`badge badge-${t.prioridad === 'Alta' ? 'red' : t.prioridad === 'Media' ? 'yellow' : 'green'}`}>{t.prioridad}</span></td>
                     <td>{t.empleado_nombre || 'Sin asignar'}</td>
-                    <td>{t.fecha_fin ? new Date(t.fecha_fin).toLocaleDateString('es-ES') : '-'}</td>
+                    <td>{t.fecha_fin ? formatDateOnlyInAppTimeZone(t.fecha_fin) : '-'}</td>
+                    <td>{t.duracion_horas ? `${Number(t.duracion_horas).toLocaleString('es-PE')} h` : '-'}</td>
                     <td>
                       <button type="button" className="btn-action" onClick={() => openModal(t)}>Editar</button>
                       <button type="button" className="btn-action" onClick={() => handleDeleteTarea(t.id)}>Eliminar</button>

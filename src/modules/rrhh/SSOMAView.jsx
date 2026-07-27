@@ -45,7 +45,7 @@ const SSOMAView = () => {
           <select name="gravedad" value={formData.gravedad} onChange={handleChange}>
             <option>Baja</option><option>Media</option><option>Alta</option>
           </select>
-          <input name="descripcion" placeholder="Descripcion del caso *" required value={formData.descripcion} onChange={handleChange} />
+          <input name="descripcion" placeholder="Descripción del caso *" required value={formData.descripcion} onChange={handleChange} />
           <input name="accionesTomadas" placeholder="Acciones tomadas" value={formData.accionesTomadas} onChange={handleChange} />
           <select name="estado" value={formData.estado} onChange={handleChange}>
             <option>Abierto</option><option>En Seguimiento</option><option>Cerrado</option>

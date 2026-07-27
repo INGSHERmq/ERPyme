@@ -1,17 +1,34 @@
 import { useState } from 'react';
+import { useAuth } from '../../context/auth/useAuth';
 import DashboardMarketing from './DashboardMarketing';
-import ClientesView from './ClientesView';
 import CotizacionesView from './CotizacionesView';
+import CRMView from './CRMView';
+import LeadScoringView from './LeadScoringView';
+import SubscriptionLock from '../../components/SubscriptionLock';
 import './MarketingView.css';
 
-const MarketingView = ({ onBack }) => {
-  const [tab, setTab] = useState('dashboard');
+const MarketingView = ({ onBack, initialTab }) => {
+  const { canAccessFeature } = useAuth();
+  const [tab, setTab] = useState(initialTab || 'dashboard');
+  const tabs = [
+    { id: 'dashboard', feature: 'ventas.summary', label: 'Resumen' },
+    { id: 'crm', feature: 'ventas.leads', label: 'Clientes' },
+    { id: 'cotizaciones', feature: 'ventas.quotes', label: 'Cotizaciones' },
+    { id: 'scoring', feature: 'ventas.scoring', label: 'Scoring cotizaciones' }
+  ].map((item) => ({ ...item, locked: !canAccessFeature(item.feature) }));
+  const activeTab = tabs.some((item) => item.id === tab) ? tab : tabs[0]?.id;
+  const activeTabConfig = tabs.find((item) => item.id === activeTab);
 
   const renderTab = () => {
-    switch (tab) {
+    if (activeTabConfig?.locked) {
+      return <SubscriptionLock title={`${activeTabConfig.label} está bloqueado`} />;
+    }
+
+    switch (activeTab) {
       case 'dashboard': return <DashboardMarketing />;
-      case 'clientes': return <ClientesView />;
       case 'cotizaciones': return <CotizacionesView />;
+      case 'crm': return <CRMView />;
+      case 'scoring': return <LeadScoringView />;
       default: return <DashboardMarketing />;
     }
   };
@@ -23,19 +40,22 @@ const MarketingView = ({ onBack }) => {
           Volver al inicio
         </button>
         <h1>Ventas</h1>
-        <p>Gestiona clientes, cotizaciones y su conversion automatica a proyectos aprobados.</p>
+        <p>Gestiona tus clientes, cotizaciones y su conversión automática a proyectos aprobados.</p>
       </section>
 
       <nav className="tabs-nav" role="tablist">
-        <button role="tab" aria-selected={tab === 'dashboard'} className={tab === 'dashboard' ? 'active' : ''} onClick={() => setTab('dashboard')}>
-          Resumen
-        </button>
-        <button role="tab" aria-selected={tab === 'clientes'} className={tab === 'clientes' ? 'active' : ''} onClick={() => setTab('clientes')}>
-          Clientes
-        </button>
-        <button role="tab" aria-selected={tab === 'cotizaciones'} className={tab === 'cotizaciones' ? 'active' : ''} onClick={() => setTab('cotizaciones')}>
-          Cotizaciones
-        </button>
+        {tabs.map((item) => (
+          <button
+            key={item.id}
+            role="tab"
+            aria-selected={activeTab === item.id}
+            aria-disabled={item.locked}
+            className={`${activeTab === item.id ? 'active' : ''} ${item.locked ? 'locked' : ''}`}
+            onClick={() => setTab(item.id)}
+          >
+            {item.label}
+          </button>
+        ))}
       </nav>
 
       <main className="content-area" role="tabpanel">

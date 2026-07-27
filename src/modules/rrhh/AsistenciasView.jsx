@@ -3,7 +3,7 @@ import useRRHH from '../../hooks/useRRHH';
 import './AsistenciasView.css';
 
 const AsistenciasView = () => {
-  // ✅ Cambiamos addAsistencia por registrarAsistencia (nombre real en el hook)
+  // Cambiamos addAsistencia por registrarAsistencia (nombre real en el hook)
   const { empleados, asistencias, registrarAsistencia, refetch, loading } = useRRHH();
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({ 
@@ -18,7 +18,7 @@ const AsistenciasView = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      // ✅ Usamos el nombre correcto + campos en snake_case
+      // Usamos el nombre correcto + campos en snake_case
       await registrarAsistencia({ 
         ...formData, 
         empleado_id: Number(formData.empleado_id) 
@@ -33,10 +33,10 @@ const AsistenciasView = () => {
         observaciones: '' 
       });
       refetch();
-      alert('✅ Asistencia registrada correctamente');
+      alert('Asistencia registrada correctamente');
     } catch (error) {
       console.error('Error al registrar asistencia:', error);
-      alert('❌ Error: ' + (error.message || 'No se pudo registrar la asistencia'));
+      alert('Error: ' + (error.message || 'No se pudo registrar la asistencia'));
     }
   };
 
@@ -47,7 +47,7 @@ const AsistenciasView = () => {
   return (
     <div className="rrhh-view">
       <div className="view-header">
-        <h2>📅 Control de Asistencia</h2>
+        <h2>Control de Asistencia</h2>
         <button className="btn-primary" onClick={() => setShowForm(!showForm)}>
           {showForm ? 'Cancelar' : '+ Registrar'}
         </button>

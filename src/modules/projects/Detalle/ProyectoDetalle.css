@@ -11,100 +11,93 @@
 }
 
 .detalle-header {
-  background: var(--color-brand-teal);
-  color: #fff;
+  background: var(--surface-bg);
   padding: 24px;
   border-radius: var(--radius-xl);
-  border: 1px solid var(--color-brand-teal);
-  box-shadow: none;
+  border: 1px solid var(--border-color);
 }
 
 .btn-volver-lista {
-  background: var(--color-canvas);
-  border: 1px solid var(--color-canvas);
-  color: var(--color-ink);
+  background: var(--surface-elevated);
+  border: 1px solid var(--border-color);
+  color: var(--on-surface);
   font-weight: 600;
   cursor: pointer;
   margin-bottom: 18px;
-  font-size: 14px;
-  min-height: 44px;
-  padding: 12px 18px;
+  font-size: 13px;
+  padding: 8px 16px;
   border-radius: var(--radius-md);
+  transition: 0.2s;
 }
 
 .btn-volver-lista:hover {
-  background: var(--color-brand-ochre);
-  border-color: var(--color-brand-ochre);
+  background: var(--binance-yellow);
+  color: var(--on-primary);
+  border-color: var(--binance-yellow);
 }
 
 .proyecto-info h1 {
   margin: 0 0 8px 0;
-  font-size: clamp(28px, 4vw, 44px);
-  color: #fff;
-  font-weight: 500;
-  letter-spacing: -0.04em;
-  line-height: 1.05;
+  font-size: 32px;
+  color: var(--on-surface);
+  font-weight: 700;
 }
 
 .proyecto-info p {
   margin: 0;
-  color: rgba(255, 255, 255, 0.78);
-  font-size: 15px;
-  line-height: 1.6;
+  color: var(--text-muted);
+  font-size: 14px;
 }
 
 .detalle-tabs {
   display: flex;
-  gap: 10px;
-  background: var(--color-surface-soft);
-  padding: 12px;
-  border-radius: var(--radius-xl);
-  border: 1px solid var(--color-hairline);
-  box-shadow: none;
+  gap: 8px;
+  background: var(--surface-bg);
+  padding: 4px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  width: fit-content;
+  max-width: 100%;
   overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.detalle-tabs::-webkit-scrollbar {
+  display: none;
 }
 
 .detalle-tabs button {
+  flex-shrink: 0;
+  white-space: nowrap;
   background: transparent;
   border: none;
-  padding: 12px 20px;
+  padding: 10px 20px;
   cursor: pointer;
   font-size: 14px;
   font-weight: 600;
-  color: var(--color-muted);
-  border-radius: 9999px;
-  white-space: nowrap;
+  color: var(--text-muted);
+  border-radius: var(--radius-sm);
+  transition: 0.2s;
 }
 
 .detalle-tabs button.active {
-  background: var(--color-brand-pink);
-  color: #fff;
+  background: var(--binance-yellow);
+  color: var(--on-primary);
 }
 
 .detalle-tabs button:hover:not(.active) {
-  background: var(--color-surface-card);
-  color: var(--color-ink);
+  background: var(--surface-elevated);
+  color: var(--on-surface);
 }
 
 .detalle-content {
-  background: var(--color-canvas);
+  background: transparent;
   padding: 0;
-  border-radius: var(--radius-xl);
   min-height: 400px;
 }
 
 @media (max-width: 768px) {
-  .detalle-header {
-    padding: 18px;
-  }
-
-  .detalle-tabs {
-    padding: 8px;
-    gap: 6px;
-  }
-
-  .detalle-tabs button {
-    padding: 10px 16px;
-    font-size: 13px;
-  }
+  .detalle-header { padding: 18px; }
 }

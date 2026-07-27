@@ -1,7 +1,7 @@
 import { supabase } from '../../lib/supabase';
+import { generateExecutiveSummary, scoreOpportunity } from './executiveSummary';
 
-const DEFAULT_MODEL = import.meta.env.VITE_GROQ_MODEL || 'llama-3.3-70b-versatile';
-const GROQ_CHAT_URL = import.meta.env.VITE_GROQ_URL || '/groq/openai/v1/chat/completions';
+const DEFAULT_MODEL = import.meta.env.VITE_GROQ_MODEL || 'llama3-70b-8192';
 
 const MODULE_TABLES = {
   marketing: ['clientes', 'cotizaciones'],
@@ -16,7 +16,7 @@ const MODULE_TABLES = {
   sistema: ['notificaciones', 'adjuntos']
 };
 
-const TABLES_WITHOUT_USER_FILTER = new Set(['cuentas_bancarias', 'almacenes']);
+const TABLES_WITHOUT_USER_FILTER = new Set(['cuentas_bancarias', 'almacenes', 'facturas_compra', 'facturas_venta']);
 
 const READ_TARGETS = [
   { table: 'clientes', label: 'clientes', patterns: ['cliente', 'clientes'] },
@@ -45,11 +45,11 @@ const READ_TARGETS = [
 const CREATE_SCHEMAS = {
   clientes: {
     required: ['nombre'],
-    fields: ['nombre', 'contacto', 'email', 'telefono', 'estado', 'industria']
+    fields: ['nombre', 'contacto', 'email', 'telefono', 'tipo_identificacion', 'dni_ruc', 'estado', 'industria']
   },
   cotizaciones: {
-    required: ['titulo', 'monto'],
-    fields: ['cliente_id', 'proyecto_id', 'titulo', 'monto', 'estado', 'fecha', 'descripcion', 'validez']
+    required: ['titulo'],
+    fields: ['cliente_id', 'proyecto_id', 'titulo', 'cantidad', 'unidad', 'precio_unitario', 'monto', 'estado', 'fecha', 'descripcion', 'validez']
   },
   proveedores: {
     required: ['nombre'],
@@ -57,11 +57,11 @@ const CREATE_SCHEMAS = {
   },
   ordenes_compra: {
     required: ['nombre_compra', 'numero'],
-    fields: ['proveedor_id', 'nombre_compra', 'numero', 'fecha', 'estado', 'subtotal', 'impuesto', 'total', 'observaciones']
+    fields: ['proveedor_id', 'proyecto_id', 'nombre_compra', 'numero', 'fecha', 'fecha_vencimiento', 'cantidad', 'costo_unitario', 'total', 'estado', 'observaciones']
   },
   facturas: {
-    required: ['asunto', 'numero'],
-    fields: ['cliente_id', 'proyecto_id', 'asunto', 'serie', 'numero', 'tipo_comprobante', 'fecha_emision', 'fecha_vencimiento', 'estado', 'subtotal', 'impuesto', 'total', 'moneda', 'observaciones']
+    required: ['numero'],
+    fields: ['numero', 'cotizacion_id', 'cliente_id', 'fecha_emision', 'total']
   },
   productos_servicios: {
     required: ['nombre'],
@@ -109,11 +109,11 @@ const CREATE_SCHEMAS = {
   },
   leads: {
     required: ['nombre'],
-    fields: ['nombre', 'contacto', 'email', 'telefono', 'origen', 'estado']
+    fields: ['nombre', 'contacto', 'email', 'telefono', 'origen', 'industria', 'cargo_contacto', 'empleados_estimados', 'tiempo_respuesta_horas', 'ultimo_contacto', 'estado']
   },
   oportunidades: {
     required: ['titulo'],
-    fields: ['lead_id', 'cliente_id', 'titulo', 'cliente_potencial', 'monto_estimado', 'etapa', 'fecha_cierre_estimada']
+    fields: ['lead_id', 'cliente_id', 'titulo', 'cliente_potencial', 'monto_estimado', 'etapa', 'origen', 'industria', 'tiempo_respuesta_horas', 'fecha_cierre_estimada']
   },
   pedidos_venta: {
     required: ['numero'],
@@ -176,27 +176,37 @@ const FIELD_ALIASES = {
   entidadId: 'entidad_id',
   referenciaTipo: 'referencia_tipo',
   referenciaId: 'referencia_id',
-  saldoInicial: 'saldo_inicial'
+  saldoInicial: 'saldo_inicial',
+  cargoContacto: 'cargo_contacto',
+  empleadosEstimados: 'empleados_estimados',
+  tiempoRespuestaHoras: 'tiempo_respuesta_horas',
+  ultimoContacto: 'ultimo_contacto',
+  tipoIdentificacion: 'tipo_identificacion',
+  dniRuc: 'dni_ruc',
+  precioUnitario: 'precio_unitario',
+  costoUnitario: 'costo_unitario'
 };
 
 const tools = [
-  {
-    type: 'function',
-    function: {
-      name: 'get_erp_context',
-      description: 'Lee datos actuales de uno o varios modulos del ERP. Usalo antes de responder sobre informacion existente.',
-      parameters: {
-        type: 'object',
-        properties: {
-          module: {
-            type: 'string',
-            description: 'Modulo a consultar. Valores: marketing, proyectos, finanzas, rrhh, logistica, compras, facturacion, caja, ventas, sistema o all.'
-          },
-          limit: { type: 'number', description: 'Cantidad maxima de registros por tabla, hasta 50.' }
+    {
+      type: 'function',
+      function: {
+        name: 'get_erp_context',
+        description: 'Lee datos actuales de uno o varios modulos del ERP. Usalo antes de responder sobre informacion existente.',
+        parameters: {
+          type: 'object',
+          required: ['module'],
+          properties: {
+            module: {
+              type: 'string',
+              enum: ['marketing', 'proyectos', 'finanzas', 'rrhh', 'logistica', 'compras', 'facturacion', 'caja', 'ventas', 'sistema', 'all'],
+              description: 'Modulo a consultar.'
+            },
+            limit: { type: 'number', description: 'Cantidad maxima de registros por tabla, hasta 50.', minimum: 1, maximum: 50 }
+          }
         }
       }
-    }
-  },
+    },
   {
     type: 'function',
     function: {
@@ -217,17 +227,114 @@ const tools = [
         }
       }
     }
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'get_executive_briefing',
+      description: 'Genera un resumen ejecutivo proactivo con cobranzas, riesgos de proyectos y oportunidades comerciales priorizadas.',
+      parameters: {
+        type: 'object',
+        properties: {}
+      }
+    }
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'navigate_to_module',
+      description: 'Navega a un modulo o pestaña especifica del ERP para mostrarle al usuario donde realizar una accion.',
+      parameters: {
+        type: 'object',
+        required: ['module'],
+        properties: {
+          module: {
+            type: 'string',
+            description: 'Modulo destino. Valores: home, projects, ventas, contabilidad, rrhh, logistica, assistant, admin.'
+          },
+          tab: {
+            type: 'string',
+            description: 'Pestaña opcional dentro del modulo (ej: crm, clientes, cotizaciones, etc.)'
+          },
+          label: {
+            type: 'string',
+            description: 'Texto descriptivo para el boton de navegacion (ej: Ir a Clientes)'
+          }
+        }
+      }
+    }
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'request_form_filling',
+      description: 'Muestra un formulario interactivo en el chat para que el usuario ingrese datos de forma comoda.',
+      parameters: {
+        type: 'object',
+        required: ['table', 'title'],
+        properties: {
+          table: {
+            type: 'string',
+            description: 'Tabla del ERP para la que se requiere el formulario.'
+          },
+          title: {
+            type: 'string',
+            description: 'Titulo del formulario (ej: Nuevo Cliente)'
+          },
+          initialData: {
+            type: 'object',
+            description: 'Datos ya conocidos que deben aparecer pre-llenados.'
+          }
+        }
+      }
+    }
   }
 ];
 
 const systemPrompt = `
-Eres el asistente interno de ERPyme. Responde en espanol claro y breve.
-Tienes herramientas para leer datos y crear registros reales en Supabase.
-Antes de crear un registro valida que existan TODOS los campos del esquema de la tabla objetivo.
-Si falta uno o mas campos, no crees el registro y solicita explicitamente los campos faltantes.
-No inventes datos existentes: consulta el ERP cuando la pregunta dependa de registros.
-Si una herramienta devuelve error o no fue llamada, no digas que no existen registros. Informa que no pudiste verificar.
-Cuando crees algo, resume que tabla se afecto y los datos principales.
+Eres el Agente de Operaciones de ERPyme. Tu mision es ayudar al usuario a gestionar su empresa de forma proactiva.
+Tienes herramientas para:
+1. LEER datos: Consulta el ERP antes de responder sobre informacion existente.
+2. CREAR registros: Puedes llenar formularios por el usuario (clientes, proyectos, tareas, facturas, etc.).
+3. NAVEGAR: Si el usuario pregunta donde esta algo o como llegar a una seccion, usa 'navigate_to_module' para enviarle un acceso directo.
+4. FORMULARIOS: Si el usuario quiere crear un registro nuevo (un cliente, una tarea, una factura, etc.), USA OBLIGATORIAMENTE 'request_form_filling' para mostrarle un formulario limpio en el chat. ESTA PROHIBIDO pedir los datos uno por uno por texto.
+
+Reglas:
+- Responde en espanol claro y profesional.
+- Para crear cualquier registro, utiliza siempre 'request_form_filling'. 
+- Si el usuario te da algunos datos en su mensaje inicial, incluyelos en 'initialData' del formulario.
+- No inventes datos.
+- Si el usuario te pide "ir a" o "donde esta", USA la herramienta de navegacion ademas de tu respuesta de texto.
+- SEGURIDAD: Solo puedes ver y reportar datos del usuario actual (user_id). Nunca respondas con informacion que no este explícitamente en el contexto devuelto por tus herramientas para el ID de usuario activo.
+- PRIVACIDAD: Si el usuario pregunta por datos de terceros o de "otros usuarios", responde cortesmente que solo tienes acceso a su propia informacion empresarial.
+
+FORMATO DE RESPUESTA - Sigue estas reglas estrictamente:
+- NO uses markdown (##, ###, **, etc). El chat solo muestra texto plano.
+- Separa cada seccion con UNA linea en blanco.
+- Usa GUIONES (- ) para listas, no numeros ni asteriscos.
+- Los titulos de seccion escribelos en MAYUSCULA sin simbolos.
+- Cuando menciones modulos, usa iconos: 📊 Marketing, 📋 Proyectos, 💰 Finanzas, 👥 RRHH, 📦 Logistica, 🛒 Compras, 🧾 Facturacion, 💵 Caja, 📈 Ventas, ⚙️ Sistema.
+- Maximo 5 lineas por parrafo. Si necesitas mas, separa en parrafos.
+- No mezcles modulos diferentes en un mismo parrafo.
+- Datos numericos: "- Nombre: 5 registros" en lugar de texto corrido.
+- IMPORTANTE: usa \n (saltos de linea reales) entre secciones, no solo espacios.
+- NO agregues secciones de "Acciones sugeridas" ni recomendaciones genericas. Responde solo con la informacion solicitada.
+
+Mapeo de Navegacion (Usa estos valores exactos en 'navigate_to_module'):
+- Ventas > Clientes (antes leads): modulo='ventas', pestaña='crm'
+- Ventas > Tabla de clientes: modulo='ventas', pestaña='clientes'
+- Ventas > Cotizaciones: modulo='ventas', pestaña='cotizaciones'
+- Logistica > Proveedores: modulo='logistica', pestaña='proveedores'
+- Logistica > Orden de compra: modulo='logistica', pestaña='orden'
+- Logistica > Asignaciones: modulo='logistica', pestaña='asignaciones'
+- Finanzas > Facturas venta: modulo='contabilidad', pestaña='facturas-venta'
+- Finanzas > Facturas compra: modulo='contabilidad', pestaña='facturas-compra'
+- Finanzas > Analitica: modulo='contabilidad', pestaña='analitica'
+- RRHH > Empleados: modulo='rrhh', pestaña='empleados'
+- RRHH > Documentos: modulo='rrhh', pestaña='documentos'
+- RRHH > Personal en proyectos: modulo='rrhh', pestaña='asignaciones'
+- Proyectos > Lista: modulo='projects', pestaña=''
+- Mi Perfil / Salir: modulo='perfil', pestaña=''
 `;
 
 const normalizeData = (data) => {
@@ -293,6 +400,11 @@ const getErpContext = async ({ module = 'all', limit = 12 }) => {
   return { modules, results };
 };
 
+const getExecutiveSummary = async () => {
+  const user = await getCurrentUser();
+  return generateExecutiveSummary(user.id);
+};
+
 const isReadRequest = (content) => {
   const text = content.toLowerCase();
   return /(ver|mostrar|listar|lista|todos|registrados|actualmente|cuales|cuáles|cuantos|cuántos|consultar|dime|revisar)/.test(text);
@@ -353,6 +465,7 @@ const addDefaultValues = (table, payload, fields) => {
   if (table === 'cotizaciones' && !payload.estado) payload.estado = 'Pendiente';
   if (table === 'proveedores' && !payload.estado) payload.estado = 'Activo';
   if (table === 'clientes' && !payload.estado) payload.estado = 'Activo';
+  if (table === 'clientes' && !payload.tipo_identificacion) payload.tipo_identificacion = 'DNI';
   if (table === 'productos_servicios' && !payload.tipo) payload.tipo = 'Producto';
   if (table === 'productos_servicios' && !payload.unidad) payload.unidad = 'UND';
   if (table === 'facturas' && !payload.serie) payload.serie = 'F001';
@@ -362,6 +475,7 @@ const addDefaultValues = (table, payload, fields) => {
   if (table === 'tareas' && !payload.estado) payload.estado = 'Pendiente';
   if (table === 'tareas' && !payload.prioridad) payload.prioridad = 'Media';
   if (table === 'leads' && !payload.estado) payload.estado = 'Nuevo';
+  if (table === 'oportunidades' && !payload.etapa) payload.etapa = 'Prospeccion';
   if (table === 'pedidos_venta' && !payload.estado) payload.estado = 'Pendiente';
   if (table === 'movimientos_inventario' && !payload.tipo) payload.tipo = 'Entrada';
   if (table === 'notificaciones' && !payload.tipo) payload.tipo = 'Info';
@@ -369,7 +483,24 @@ const addDefaultValues = (table, payload, fields) => {
   return payload;
 };
 
-const createErpRecord = async ({ table, data }) => {
+export const getOptions = async (table, userId) => {
+  try {
+    let query = supabase.from(table).select('id, nombre, titulo, numero').limit(50);
+    if (userId && !TABLES_WITHOUT_USER_FILTER.has(table)) query = query.eq('user_id', userId);
+    
+    const { data, error } = await query;
+    if (error) throw error;
+    return data.map(item => ({
+      id: item.id,
+      label: item.nombre || item.titulo || item.numero || item.id
+    }));
+  } catch (err) {
+    console.error(`Error fetching options for ${table}:`, err);
+    return [];
+  }
+};
+
+export const createErpRecord = async ({ table, data }) => {
   const user = await getCurrentUser();
   const schema = CREATE_SCHEMAS[table];
   if (!schema) throw new Error(`No puedo crear registros en ${table}`);
@@ -381,8 +512,7 @@ const createErpRecord = async ({ table, data }) => {
     return false;
   };
 
-  // Regla estricta: para altas desde IA se exige completar todo el formulario del modulo.
-  const missing = schema.fields.filter(field => isEmpty(providedPayload[field]));
+  const missing = schema.required.filter(field => isEmpty(providedPayload[field]));
   if (missing.length > 0) {
     return {
       created: false,
@@ -410,34 +540,77 @@ const executeToolCall = async (toolCall) => {
   const args = typeof rawArgs === 'string' ? JSON.parse(rawArgs || '{}') : rawArgs;
   if (name === 'get_erp_context') return getErpContext(args);
   if (name === 'create_erp_record') return createErpRecord(args);
+  if (name === 'get_executive_briefing') return getExecutiveSummary();
+  if (name === 'navigate_to_module') return { status: 'ready_to_navigate', ...args };
+  if (name === 'request_form_filling') return { status: 'show_form', ...args, fields: CREATE_SCHEMAS[args.table] };
   throw new Error(`Herramienta no soportada: ${name}`);
 };
 
 const callGroq = async (messages) => {
-  const response = await fetch(GROQ_CHAT_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
+  const { data, error } = await supabase.functions.invoke('groq-chat', {
+    body: {
       model: DEFAULT_MODEL,
       messages,
       tools,
       tool_choice: 'auto',
       temperature: 0.2
-    })
+    }
   });
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`Groq no respondio correctamente: ${errorText || response.status}`);
+  if (error) {
+    console.error('Error invocando la función groq-chat de Supabase:', error);
+    let details = error.message || 'No se pudo invocar la Edge Function.';
+
+    if (error.context && typeof error.context.json === 'function') {
+      try {
+        const payload = await error.context.clone().json();
+        details = payload.error || payload.message || JSON.stringify(payload);
+      } catch {
+        try {
+          details = await error.context.clone().text();
+        } catch {
+          details = error.message || details;
+        }
+      }
+    } else if (error.context && typeof error.context === 'object') {
+      try {
+        details = JSON.stringify(error.context);
+      } catch {
+        details = error.message || details;
+      }
+    }
+
+    const fnMatch = details.match(/function=(\w+)\{([^}]+)\}/);
+    if (fnMatch) {
+      const name = fnMatch[1];
+      const rawArgs = '{' + fnMatch[2].replace(/\\(.)/g, '$1') + '}';
+      const args = JSON.parse(rawArgs);
+      return {
+        choices: [{
+          message: {
+            role: 'assistant',
+            content: null,
+            tool_calls: [{
+              id: `call_fallback_${Date.now()}`,
+              type: 'function',
+              function: { name, arguments: JSON.stringify(args) }
+            }]
+          }
+        }]
+      };
+    }
+
+    throw new Error(`Error en el asistente (Edge Function): ${details}`);
   }
 
-  return response.json();
+  return data;
 };
 
 export const sendAssistantMessage = async (history, userContent) => {
   const readTarget = findReadTarget(userContent);
   if (readTarget) {
-    return answerReadTarget(readTarget);
+    const content = await answerReadTarget(readTarget);
+    return { content };
   }
 
   const messages = [
@@ -448,12 +621,21 @@ export const sendAssistantMessage = async (history, userContent) => {
 
   let response = await callGroq(messages);
   let assistantMessage = response.choices?.[0]?.message;
+  let lastNavigation = null;
+  let lastForm = null;
 
   for (let round = 0; round < 3 && assistantMessage?.tool_calls?.length; round += 1) {
     messages.push(assistantMessage);
 
     for (const toolCall of assistantMessage.tool_calls) {
       const result = await executeToolCall(toolCall);
+      if (result?.status === 'ready_to_navigate') {
+        lastNavigation = { module: result.module, tab: result.tab, label: result.label };
+      }
+      if (result?.status === 'show_form') {
+        lastForm = { table: result.table, title: result.title, initialData: result.initialData, schema: result.fields };
+      }
+      
       messages.push({
         role: 'tool',
         tool_call_id: toolCall.id,
@@ -465,10 +647,15 @@ export const sendAssistantMessage = async (history, userContent) => {
     assistantMessage = response.choices?.[0]?.message;
   }
 
-  return assistantMessage?.content || 'Listo, procese la solicitud.';
+  return {
+    content: assistantMessage?.content || 'Listo, procese la solicitud.',
+    navigation: lastNavigation,
+    form: lastForm
+  };
 };
 
 export const assistantConfig = {
   model: DEFAULT_MODEL,
-  tables: MODULE_TABLES
+  tables: MODULE_TABLES,
+  scoreOpportunity
 };

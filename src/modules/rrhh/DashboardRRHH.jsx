@@ -4,9 +4,9 @@ import useRRHH from '../../hooks/useRRHH';
 import './DashboardRRHH.css';
 
 const DEPT_COLORS = {
-  Tecnologia: '#ff4d8b',
-  Diseno: '#b8a4ed',
-  Gestion: '#1a3a3a',
+  Tecnología: '#ff4d8b',
+  Diseño: '#b8a4ed',
+  Gestión: '#1a3a3a',
   Seguridad: '#ff6b5a',
   Ventas: '#e8b94a'
 };
@@ -26,7 +26,7 @@ const DashboardRRHH = () => {
   if (error) return <div className="empty-state">Error: {error}</div>;
   if (!dashboardData) return <div className="empty-state">No hay datos disponibles</div>;
 
-  const formatCurrency = (value) => `S/ ${(value || 0).toLocaleString()}`;
+  const formatCurrency = (value) => `S/ ${(value || 0).toLocaleString('en-US')}`;
 
   return (
     <div className="rrhh-dashboard">
@@ -50,7 +50,7 @@ const DashboardRRHH = () => {
       </div>
 
       <div className="chart-wrapper">
-        <h3>Empleados por area</h3>
+        <h3>Empleados por área</h3>
         {chartData.length > 0 ? (
           <ResponsiveContainer width="100%" height={300}>
             <PieChart>
@@ -71,7 +71,7 @@ const DashboardRRHH = () => {
             </PieChart>
           </ResponsiveContainer>
         ) : (
-          <div className="empty-chart">No hay datos de areas para mostrar</div>
+          <div className="empty-chart">No hay datos de áreas para mostrar</div>
         )}
       </div>
     </div>

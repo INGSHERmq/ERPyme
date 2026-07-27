@@ -28,7 +28,7 @@ const DashboardLogistica = () => {
   if (loading) return <div className="loading">Cargando resumen de equipos...</div>;
   if (!dashboardData) return <div className="empty-state">No hay datos disponibles</div>;
 
-  const formatCurrency = (value) => `S/ ${(value || 0).toLocaleString()}`;
+  const formatCurrency = (value) => `S/ ${(value || 0).toLocaleString('en-US')}`;
 
   return (
     <div className="logistica-dashboard">

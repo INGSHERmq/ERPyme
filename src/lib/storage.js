@@ -13,7 +13,9 @@ export const uploadPrivateFile = async ({ file, folder = 'general', userId }) =>
   if (!userId) throw new Error('Usuario no autenticado');
 
   const safeName = sanitizeName(file.name);
-  const path = `${folder}/${userId}/${Date.now()}-${safeName}`;
+  // Folder labels may contain accents, but Storage object keys must be URL-safe.
+  const safeFolder = String(folder).split('/').filter(Boolean).map(sanitizeName).join('/') || 'general';
+  const path = `${safeFolder}/${userId}/${Date.now()}-${safeName}`;
 
   const { error } = await supabase.storage
     .from(ERPYME_BUCKET)

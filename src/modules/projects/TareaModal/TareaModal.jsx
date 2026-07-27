@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
+import { datePickerDateToInputDate, parseDateInAppTimeZone } from '../../../lib/dates';
 import './TareaModal.css';
 
 const COLORS = [
@@ -17,8 +18,9 @@ const getInitialFormData = (t) => ({
   descripcion: t?.descripcion || '',
   estado: t?.estado || 'Pendiente',
   prioridad: t?.prioridad || 'Media',
-  fecha_inicio: t?.fecha_inicio ? new Date(t.fecha_inicio) : null,
-  fecha_fin: t?.fecha_fin ? new Date(t.fecha_fin) : null,
+  fecha_inicio: t?.fecha_inicio ? parseDateInAppTimeZone(t.fecha_inicio) : null,
+  fecha_fin: t?.fecha_fin ? parseDateInAppTimeZone(t.fecha_fin) : null,
+  duracion_horas: t?.duracion_horas ?? '',
   color: t?.color || '#0052cc',
   asignado_a: t?.asignado_a ? String(t.asignado_a) : ''
 });
@@ -38,8 +40,9 @@ const TareaModal = ({ show, onClose, onSave, tarea, empleadosProyecto }) => {
     e.preventDefault();
     onSave({
       ...formData,
-      fecha_inicio: formData.fecha_inicio?.toISOString().split('T')[0] || null,
-      fecha_fin: formData.fecha_fin?.toISOString().split('T')[0] || null,
+      fecha_inicio: datePickerDateToInputDate(formData.fecha_inicio),
+      fecha_fin: datePickerDateToInputDate(formData.fecha_fin),
+      duracion_horas: formData.duracion_horas === '' ? null : Number(formData.duracion_horas),
       asignado_a: formData.asignado_a ? Number(formData.asignado_a) : null
     });
   };
@@ -50,7 +53,7 @@ const TareaModal = ({ show, onClose, onSave, tarea, empleadosProyecto }) => {
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content" onClick={e => e.stopPropagation()}>
         <div className="modal-header">
-          <h2>{tarea ? '✏️ Editar Tarea' : '✅ Nueva Tarea'}</h2>
+          <h2>{tarea ? 'Editar Tarea' : 'Nueva Tarea'}</h2>
           <button className="btn-close" onClick={onClose}>×</button>
         </div>
 
@@ -142,6 +145,18 @@ const TareaModal = ({ show, onClose, onSave, tarea, empleadosProyecto }) => {
                 </option>
               ))}
             </select>
+          </div>
+
+          <div className="form-group">
+            <label>Duracion estimada (horas)</label>
+            <input
+              type="number"
+              min="0"
+              step="0.5"
+              value={formData.duracion_horas}
+              onChange={e => setFormData({ ...formData, duracion_horas: e.target.value })}
+              placeholder="Ej: 8"
+            />
           </div>
 
           <div className="form-group">

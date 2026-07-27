@@ -1,5 +1,7 @@
 import { createContext, useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
+import { traducirError } from '../lib/errores';
+import { validarCamposRequeridos } from '../lib/validacion';
 
 const LogisticaContext = createContext();
 
@@ -44,7 +46,7 @@ export const LogisticaProvider = ({ children }) => {
       });
     } catch (err) {
       console.error('Error cargando logística:', err);
-      setError(err.message);
+      setError(traducirError(err));
     } finally {
       setLoading(false);
     }
@@ -55,23 +57,37 @@ export const LogisticaProvider = ({ children }) => {
   }, []);
 
   const addActivo = async (data) => {
+    const errores = validarCamposRequeridos(data, [
+      { nombre: 'nombre', etiqueta: 'Nombre del activo' },
+    ]);
+    if (errores.length > 0) {
+      throw new Error(errores.join('\n'));
+    }
+
     const { data: nuevo, error } = await supabase
       .from('activos')
       .insert([{ ...data, fecha_compra: data.fecha_compra || new Date().toISOString().split('T')[0], estado: data.estado || 'Disponible' }])
       .select()
       .single();
-    if (error) throw error;
+    if (error) throw new Error(traducirError(error));
     setActivos(prev => [...prev, nuevo]);
     return nuevo;
   };
 
   const asignarActivo = async (data) => {
+    const errores = validarCamposRequeridos(data, [
+      { nombre: 'activo_id', etiqueta: 'Activo' },
+    ]);
+    if (errores.length > 0) {
+      throw new Error(errores.join('\n'));
+    }
+
     const { data: nueva, error } = await supabase
       .from('asignaciones_activos')
       .insert([{ ...data, fecha_asignacion: data.fecha_asignacion || new Date().toISOString().split('T')[0], estado: data.estado || 'Activa' }])
       .select()
       .single();
-    if (error) throw error;
+    if (error) throw new Error(traducirError(error));
     if (data.activo_id) {
       await supabase.from('activos').update({ estado: 'En uso' }).eq('id', data.activo_id);
       setActivos(prev => prev.map(a => a.id === data.activo_id ? { ...a, estado: 'En uso' } : a));
@@ -85,7 +101,7 @@ export const LogisticaProvider = ({ children }) => {
       .from('asignaciones_activos')
       .update({ estado: 'Devuelta', fecha_devolucion: new Date().toISOString().split('T')[0] })
       .eq('id', asignacionId);
-    if (error) throw error;
+    if (error) throw new Error(traducirError(error));
     if (activoId) {
       await supabase.from('activos').update({ estado: 'Disponible' }).eq('id', activoId);
       setActivos(prev => prev.map(a => a.id === activoId ? { ...a, estado: 'Disponible' } : a));
@@ -94,12 +110,20 @@ export const LogisticaProvider = ({ children }) => {
   };
 
   const programarMantenimiento = async (data) => {
+    const errores = validarCamposRequeridos(data, [
+      { nombre: 'activo_id', etiqueta: 'Activo' },
+      { nombre: 'descripcion', etiqueta: 'Descripción' },
+    ]);
+    if (errores.length > 0) {
+      throw new Error(errores.join('\n'));
+    }
+
     const { data: nuevo, error } = await supabase
       .from('mantenimientos')
       .insert([{ ...data, fecha: data.fecha || new Date().toISOString().split('T')[0], estado: data.estado || 'Pendiente' }])
       .select()
       .single();
-    if (error) throw error;
+    if (error) throw new Error(traducirError(error));
     if (data.activo_id) {
       await supabase.from('activos').update({ estado: 'En mantenimiento' }).eq('id', data.activo_id);
       setActivos(prev => prev.map(a => a.id === data.activo_id ? { ...a, estado: 'En mantenimiento' } : a));
@@ -113,7 +137,7 @@ export const LogisticaProvider = ({ children }) => {
       .from('mantenimientos')
       .update({ estado: 'Completado' })
       .eq('id', mantenimientoId);
-    if (error) throw error;
+    if (error) throw new Error(traducirError(error));
     if (activoId) {
       await supabase.from('activos').update({ estado: 'Disponible' }).eq('id', activoId);
       setActivos(prev => prev.map(a => a.id === activoId ? { ...a, estado: 'Disponible' } : a));

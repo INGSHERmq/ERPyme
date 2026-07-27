@@ -1,6 +1,8 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import useProjects from '../../../hooks/useProjects';
 import useTareas from '../../../hooks/useTareas';
+import { getTodayInAppTimeZone, toAppDateKey } from '../../../lib/dates';
+import { supabase } from '../../../lib/supabase';
 import './Calendario.css';
 
 const DAY_NAMES = ['Dom', 'Lun', 'Mar', 'Mie', 'Jue', 'Vie', 'Sab'];
@@ -9,43 +11,128 @@ const MONTH_NAMES = [
   'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
 ];
 
-const parseDate = (dateStr) => {
-  if (!dateStr) return null;
-  const date = new Date(dateStr);
-  if (Number.isNaN(date.getTime())) return null;
-  date.setHours(0, 0, 0, 0);
-  return date;
+const parseDate = (str) => {
+  if (!str) return null;
+  if (str instanceof Date) return str;
+  const parts = String(str).slice(0, 10).split('-');
+  if (parts.length !== 3) return null;
+  return new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10), 0, 0, 0, 0);
 };
 
-const endOfDay = (date) => {
-  const result = new Date(date);
-  result.setHours(23, 59, 59, 999);
+const toDateString = (date) => {
+  if (!date) return '';
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const formatLocalCleanDate = (date) => {
+  if (!date) return '-';
+  const day = date.getDate();
+  const month = date.getMonth() + 1;
+  const year = date.getFullYear();
+  return `${day}/${month}/${year}`;
+};
+
+const addProjectDuration = (startDate, days) => {
+  const result = new Date(startDate);
+  if (days > 0 && days % 30 === 0) {
+    const months = Math.round(days / 30);
+    result.setMonth(result.getMonth() + months);
+  } else {
+    result.setDate(result.getDate() + days);
+  }
   return result;
 };
 
-const resolveProjectStart = (proyecto) =>
-  parseDate(
-    proyecto?.inicio ||
-    proyecto?.fecha_inicio ||
-    proyecto?.fecha_inicio_plan ||
-    proyecto?.created_at
-  );
+const getTaskColor = (tarea, todayStr) => {
+  const isCompletada = tarea.estado === 'Completado';
+  const isAtrasada = !isCompletada && tarea.fecha_fin && (tarea.fecha_fin.slice(0, 10) < todayStr);
 
-const resolveProjectEnd = (proyecto) =>
-  parseDate(
-    proyecto?.fin ||
-    proyecto?.fecha_fin ||
-    proyecto?.fecha_fin_plan
-  );
+  if (isAtrasada) {
+    return '#dc3545'; // Rojo
+  }
+
+  switch (tarea.estado) {
+    case 'Completado':
+      return '#28a745'; // Verde
+    case 'En Progreso':
+      return '#0052cc'; // Azul
+    case 'Pendiente':
+    default:
+      return '#6c757d'; // Gris
+  }
+};
 
 const Calendario = ({ proyectoId }) => {
   const { proyectos } = useProjects();
   const { tareas, loading: tareasLoading } = useTareas(proyectoId);
   const [viewDate, setViewDate] = useState(new Date());
+  const [quote, setQuote] = useState(null);
 
   const proyecto = useMemo(() => {
     return proyectos.find(p => Number(p.id) === Number(proyectoId));
   }, [proyectos, proyectoId]);
+
+  useEffect(() => {
+    const fetchQuote = async () => {
+      const cotizacionId = proyecto?.cotizacion_id || Number(proyecto?.nombre?.match(/Proyecto cotizacion #(\d+)/)?.[1]);
+      if (cotizacionId) {
+        try {
+          const { data, error } = await supabase
+            .from('cotizaciones')
+            .select('*')
+            .eq('id', cotizacionId)
+            .single();
+          if (!error && data) {
+            setQuote(data);
+          }
+        } catch (err) {
+          console.error('Error fetching quote for project in calendar:', err);
+        }
+      }
+    };
+    if (proyecto) {
+      fetchQuote();
+    }
+  }, [proyecto]);
+
+  const projectDates = useMemo(() => {
+    if (!proyecto) return { start: null, end: null };
+
+    let start = null;
+    let end = null;
+
+    const rawStart = proyecto?.inicio || proyecto?.fecha_inicio || proyecto?.fecha_inicio_plan;
+    const rawEnd = proyecto?.fin || proyecto?.fecha_fin || proyecto?.fecha_fin_plan;
+
+    if (rawStart) {
+      start = parseDate(rawStart);
+    }
+    if (rawEnd) {
+      end = parseDate(rawEnd);
+    }
+
+    if (quote && (quote.fecha_inicio || quote.fecha)) {
+      start = parseDate(quote.fecha_inicio || quote.fecha);
+      if (quote.fecha_fin) {
+        end = parseDate(quote.fecha_fin);
+      } else {
+        const days = Number.parseInt(String(quote.validez || '').match(/\d+/)?.[0] || '30', 10);
+        end = addProjectDuration(start, days);
+      }
+    }
+
+    if (!start) {
+      start = parseDate(proyecto?.created_at);
+    }
+    if (!end) {
+      end = start;
+    }
+
+    return { start, end };
+  }, [proyecto, quote]);
 
   const currentYear = viewDate.getFullYear();
   const currentMonth = viewDate.getMonth();
@@ -53,16 +140,17 @@ const Calendario = ({ proyectoId }) => {
   const events = useMemo(() => {
     if (!proyecto) return [];
 
-    const projectStart = resolveProjectStart(proyecto);
-    const projectEnd = resolveProjectEnd(proyecto);
+    const todayStr = getTodayInAppTimeZone();
+    const { start: projectStart, end: projectEnd } = projectDates;
+
     const projectEvent = projectStart && projectEnd
       ? [{
           id: `project-${proyecto.id}`,
           type: 'project',
           title: proyecto.nombre,
           badge: proyecto.estado || 'Proyecto',
-          start: projectStart,
-          end: endOfDay(projectEnd),
+          startStr: toDateString(projectStart),
+          endStr: toDateString(projectEnd),
           color: '#1a3a3a'
         }]
       : [];
@@ -78,15 +166,15 @@ const Calendario = ({ proyectoId }) => {
           type: 'task',
           title: tarea.titulo,
           badge: tarea.estado,
-          start,
-          end: endOfDay(end),
-          color: tarea.color || '#ff4d8b'
+          startStr: toDateString(start),
+          endStr: toDateString(end),
+          color: getTaskColor(tarea, todayStr)
         };
       })
       .filter(Boolean);
 
     return [...projectEvent, ...taskEvents];
-  }, [proyecto, tareas]);
+  }, [proyecto, tareas, projectDates]);
 
   const calendarData = useMemo(() => {
     const firstDay = new Date(currentYear, currentMonth, 1);
@@ -102,72 +190,74 @@ const Calendario = ({ proyectoId }) => {
 
   const getEventsForDay = (date) => {
     if (!date) return [];
-    const day = parseDate(date);
-    return events.filter(event => day >= event.start && day <= event.end);
+    const dayStr = toDateString(date);
+    return events.filter(event => dayStr >= event.startStr && dayStr <= event.endStr);
   };
 
   const handlePrevMonth = () => setViewDate(new Date(currentYear, currentMonth - 1, 1));
   const handleNextMonth = () => setViewDate(new Date(currentYear, currentMonth + 1, 1));
-  const handleToday = () => setViewDate(new Date());
+  const handleToday = () => setViewDate(parseDate(getTodayInAppTimeZone()));
 
   if (tareasLoading) return <div className="loading">Cargando calendario...</div>;
   if (!proyecto) return <div className="empty-state">No hay calendario para este proyecto</div>;
 
   return (
     <div className="calendario-proyecto">
-      <div className="calendario-header">
-        <div className="nav-buttons">
-          <button type="button" onClick={handlePrevMonth}>Anterior</button>
-          <button type="button" onClick={handleToday}>Hoy</button>
-          <button type="button" onClick={handleNextMonth}>Siguiente</button>
+      <div className="calendario-inner">
+        <div className="calendario-header">
+          <div className="nav-buttons">
+            <button type="button" onClick={handlePrevMonth}>Anterior</button>
+            <button type="button" onClick={handleToday}>Hoy</button>
+            <button type="button" onClick={handleNextMonth}>Siguiente</button>
+          </div>
+          <h3>{MONTH_NAMES[currentMonth]} {currentYear}</h3>
         </div>
-        <h3>{MONTH_NAMES[currentMonth]} {currentYear}</h3>
-      </div>
 
-      <div className="calendario-grid">
-        {DAY_NAMES.map(day => (
-          <div key={day} className="day-header">{day}</div>
-        ))}
+        <div className="calendario-grid">
+          {DAY_NAMES.map(day => (
+            <div key={day} className="day-header">{day}</div>
+          ))}
 
-        {calendarData.map((date, index) => {
-          const dayEvents = getEventsForDay(date);
-          const isToday = date && new Date().toDateString() === date.toDateString();
+          {calendarData.map((date, index) => {
+            const dayEvents = getEventsForDay(date);
+            const isToday = date && toAppDateKey(date) === getTodayInAppTimeZone();
 
-          return (
-            <div
-              key={date?.toISOString() || `empty-${index}`}
-              className={`calendar-cell ${!date ? 'empty' : ''} ${isToday ? 'today' : ''}`}
-            >
-              {date && (
-                <>
-                  <span className="cell-number">{date.getDate()}</span>
-                  <div className="calendar-events">
-                    {dayEvents.map(event => (
-                      <div
-                        key={event.id}
-                        className={`calendar-event ${event.type}`}
-                        style={{ borderLeftColor: event.color }}
-                      >
-                        <span className="event-title">{event.title}</span>
-                        <span className="event-badge">{event.badge}</span>
-                      </div>
-                    ))}
-                  </div>
-                </>
-              )}
-            </div>
-          );
-        })}
-      </div>
-
-      <div className="proyecto-legend">
-        <div className="legend-item">
-          <span className="legend-color project"></span>
-          <span>{proyecto.nombre} ({proyecto.inicio || proyecto.fecha_inicio || proyecto.fecha_inicio_plan || '-'} - {proyecto.fin || proyecto.fecha_fin || proyecto.fecha_fin_plan || '-'})</span>
+            return (
+              <div
+                key={date?.toISOString() || `empty-${index}`}
+                className={`calendar-cell ${!date ? 'empty' : ''} ${isToday ? 'today' : ''}`}
+              >
+                {date && (
+                  <>
+                    <span className="cell-number">{date.getDate()}</span>
+                    <div className="calendar-events">
+                      {dayEvents.map(event => (
+                        <div
+                          key={event.id}
+                          className={`calendar-event ${event.type}`}
+                          style={{ borderLeftColor: event.color }}
+                        >
+                          <span className="event-title">{event.title}</span>
+                          <span className="event-badge">{event.badge}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+            );
+          })}
         </div>
-        <div className="legend-item">
-          <span className="legend-color task"></span>
-          <span>Tareas programadas ({events.filter(event => event.type === 'task').length})</span>
+
+        <div className="proyecto-legend">
+          <div className="legend-item">
+            <span className="legend-color project"></span>
+            <span>{proyecto.nombre} ({formatLocalCleanDate(projectDates.start)} - {formatLocalCleanDate(projectDates.end)})</span>
+          </div>
+          <div className="legend-item">
+            <span className="legend-color task"></span>
+            <span>Tareas programadas ({events.filter(event => event.type === 'task').length})</span>
+          </div>
         </div>
       </div>
     </div>

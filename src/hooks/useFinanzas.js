@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/auth/useAuth';
+import { traducirError } from '../lib/errores';
+import { validarCamposRequeridos } from '../lib/validacion';
 
 const useFinanzas = () => {
   const { user } = useAuth();
@@ -94,7 +96,7 @@ const useFinanzas = () => {
       });
     } catch (err) {
       console.error('Error cargando finanzas:', err);
-      setError(err.message);
+      setError(traducirError(err));
     } finally {
       setLoading(false);
     }
@@ -107,6 +109,14 @@ const useFinanzas = () => {
 
   const addIngreso = async (data) => {
     if (!user?.id) throw new Error('Usuario no autenticado');
+
+    const errores = validarCamposRequeridos(data, [
+      { nombre: 'concepto', etiqueta: 'Concepto' },
+      { nombre: 'monto', etiqueta: 'Monto' },
+    ]);
+    if (errores.length > 0) {
+      throw new Error(errores.join('\n'));
+    }
 
     const payload = {
       tipo: data.tipo || 'Proyecto',
@@ -125,7 +135,7 @@ const useFinanzas = () => {
       .insert([payload])
       .select()
       .single();
-    if (error) throw error;
+    if (error) throw new Error(traducirError(error));
     setIngresos(prev => [...prev, nuevo]);
     return nuevo;
   };
@@ -133,12 +143,20 @@ const useFinanzas = () => {
   const addEgreso = async (data) => {
     if (!user?.id) throw new Error('Usuario no autenticado');
     
+    const errores = validarCamposRequeridos(data, [
+      { nombre: 'concepto', etiqueta: 'Concepto' },
+      { nombre: 'monto', etiqueta: 'Monto' },
+    ]);
+    if (errores.length > 0) {
+      throw new Error(errores.join('\n'));
+    }
+
     const { data: nuevo, error } = await supabase
       .from('egresos')
       .insert([{ ...data, user_id: user.id, fecha: data.fecha || new Date().toISOString().split('T')[0] }])
       .select()
       .single();
-    if (error) throw error;
+    if (error) throw new Error(traducirError(error));
     setEgresos(prev => [...prev, nuevo]);
     return nuevo;
   };
@@ -146,6 +164,15 @@ const useFinanzas = () => {
   const addCuentaPorCobrar = async (data) => {
     if (!user?.id) throw new Error('Usuario no autenticado');
     
+    const errores = validarCamposRequeridos(data, [
+      { nombre: 'concepto', etiqueta: 'Concepto' },
+      { nombre: 'monto', etiqueta: 'Monto' },
+      { nombre: 'cliente_id', etiqueta: 'Cliente', alias: 'clienteId' },
+    ]);
+    if (errores.length > 0) {
+      throw new Error(errores.join('\n'));
+    }
+
     const { data: nueva, error } = await supabase
       .from('cuentas_por_cobrar')
       .insert([{ 
@@ -160,7 +187,7 @@ const useFinanzas = () => {
       }])
       .select()
       .single();
-    if (error) throw error;
+    if (error) throw new Error(traducirError(error));
     setCuentasPorCobrar(prev => [...prev, nueva]);
     return nueva;
   };

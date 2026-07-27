@@ -1,9 +1,39 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/auth/useAuth';
+import { traducirError } from '../lib/errores';
+
+const dedupeProjectsByQuote = (projects) => {
+  const byQuoteId = new Map();
+  const deduped = [];
+
+  projects.forEach((project) => {
+    const quoteId = project.cotizacion_id || Number(project.nombre?.match(/Proyecto cotizacion #(\d+)/)?.[1]);
+    if (!quoteId) {
+      deduped.push(project);
+      return;
+    }
+
+    const key = Number(quoteId);
+    const existing = byQuoteId.get(key);
+    if (!existing) {
+      byQuoteId.set(key, { index: deduped.length, project });
+      deduped.push(project);
+      return;
+    }
+
+    if (!existing.project.cotizacion_id && project.cotizacion_id) {
+      byQuoteId.set(key, { index: existing.index, project });
+      deduped[existing.index] = project;
+    }
+  });
+
+  return deduped;
+};
 
 const useProjects = () => {
-  const { user } = useAuth();
+  const { user, company, membership, profile } = useAuth();
+  const empresaId = company?.id || membership?.empresa_id || profile?.empresa_actual_id || null;
   const [proyectos, setProyectos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -21,14 +51,14 @@ const useProjects = () => {
       const { data, error } = await supabase
         .from('v_proyectos_completos')
         .select('*')
-        .eq('user_id', user.id)
+        .eq(empresaId ? 'empresa_id' : 'user_id', empresaId || user.id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setProyectos(data || []);
+      setProyectos(dedupeProjectsByQuote(data || []));
     } catch (err) {
       console.error('Error al cargar proyectos:', err);
-      setError(err.message);
+      setError(traducirError(err));
     } finally {
       setLoading(false);
     }
@@ -37,7 +67,7 @@ const useProjects = () => {
   useEffect(() => {
     (async () => { await fetchProjects(); })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.id]);
+  }, [user?.id, empresaId]);
 
   const updateProyecto = async (id, updates) => {
     try {

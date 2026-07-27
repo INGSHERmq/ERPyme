@@ -1,12 +1,16 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import useProjects from '../../../hooks/useProjects';
 import useTareas from '../../../hooks/useTareas';
+import { getTodayInAppTimeZone } from '../../../lib/dates';
+import { supabase } from '../../../lib/supabase';
 import './Cronograma.css';
 
-const parseDate = (dateStr) => {
-  if (!dateStr) return null;
-  const date = new Date(dateStr);
-  return Number.isNaN(date.getTime()) ? null : date;
+const parseDate = (str) => {
+  if (!str) return null;
+  if (str instanceof Date) return str;
+  const parts = String(str).slice(0, 10).split('-');
+  if (parts.length !== 3) return null;
+  return new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10), 0, 0, 0, 0);
 };
 
 const startOfDay = (date) => {
@@ -26,33 +30,83 @@ const addDays = (date, days) => {
   return result;
 };
 
-const taskFallbackEnd = (taskStart, taskEnd) => taskEnd || taskStart;
-const resolveProjectStart = (proyecto) =>
-  parseDate(
-    proyecto?.inicio ||
-    proyecto?.fecha_inicio ||
-    proyecto?.fecha_inicio_plan ||
-    proyecto?.created_at
-  );
+const formatLocalCleanDate = (date) => {
+  if (!date) return '-';
+  const day = date.getDate();
+  const month = date.getMonth() + 1;
+  const year = date.getFullYear();
+  return `${day}/${month}/${year}`;
+};
 
-const resolveProjectEnd = (proyecto) =>
-  parseDate(
-    proyecto?.fin ||
-    proyecto?.fecha_fin ||
-    proyecto?.fecha_fin_plan
-  );
+const taskFallbackEnd = (taskStart, taskEnd) => taskEnd || taskStart;
+
+const addProjectDuration = (startDate, days) => {
+  const result = new Date(startDate);
+  if (days > 0 && days % 30 === 0) {
+    const months = Math.round(days / 30);
+    result.setMonth(result.getMonth() + months);
+  } else {
+    result.setDate(result.getDate() + days);
+  }
+  return result;
+};
+
+const getTaskColor = (tarea, todayStr) => {
+  const isCompletada = tarea.estado === 'Completado';
+  const isAtrasada = !isCompletada && tarea.fecha_fin && (tarea.fecha_fin.slice(0, 10) < todayStr);
+
+  if (isAtrasada) {
+    return '#dc3545'; // Rojo
+  }
+
+  switch (tarea.estado) {
+    case 'Completado':
+      return '#28a745'; // Verde
+    case 'En Progreso':
+      return '#0052cc'; // Azul
+    case 'Pendiente':
+    default:
+      return '#6c757d'; // Gris
+  }
+};
 
 const Cronograma = ({ proyectoId }) => {
   const { proyectos } = useProjects();
   const { tareas, loading: tareasLoading } = useTareas(proyectoId);
   const [zoom, setZoom] = useState(1);
+  const [quote, setQuote] = useState(null);
 
   const proyectoData = useMemo(() => {
     return proyectos.find(p => Number(p.id) === Number(proyectoId));
   }, [proyectos, proyectoId]);
 
+  useEffect(() => {
+    const fetchQuote = async () => {
+      const cotizacionId = proyectoData?.cotizacion_id || Number(proyectoData?.nombre?.match(/Proyecto cotizacion #(\d+)/)?.[1]);
+      if (cotizacionId) {
+        try {
+          const { data, error } = await supabase
+            .from('cotizaciones')
+            .select('*')
+            .eq('id', cotizacionId)
+            .single();
+          if (!error && data) {
+            setQuote(data);
+          }
+        } catch (err) {
+          console.error('Error fetching quote for project in timeline:', err);
+        }
+      }
+    };
+    if (proyectoData) {
+      fetchQuote();
+    }
+  }, [proyectoData]);
+
   const timelineData = useMemo(() => {
     if (!proyectoData) return null;
+
+    const todayStr = getTodayInAppTimeZone();
 
     const taskItems = tareas
       .map((tarea) => {
@@ -67,7 +121,7 @@ const Cronograma = ({ proyectoId }) => {
           meta: tarea.estado,
           start,
           end,
-          color: tarea.color || '#ff4d8b',
+          color: getTaskColor(tarea, todayStr),
           progress: tarea.estado === 'Completado' ? 100 : tarea.estado === 'En Progreso' ? 50 : 0
         };
       })
@@ -80,8 +134,36 @@ const Cronograma = ({ proyectoId }) => {
       ? taskItems.reduce((max, item) => (item.end > max ? item.end : max), taskItems[0].end)
       : null;
 
-    const projectStart = resolveProjectStart(proyectoData) || taskMinStart;
-    const projectEnd = resolveProjectEnd(proyectoData) || taskMaxEnd;
+    let projectStart = null;
+    let projectEnd = null;
+
+    const rawStart = proyectoData?.inicio || proyectoData?.fecha_inicio || proyectoData?.fecha_inicio_plan;
+    const rawEnd = proyectoData?.fin || proyectoData?.fecha_fin || proyectoData?.fecha_fin_plan;
+
+    if (rawStart) {
+      projectStart = parseDate(rawStart);
+    }
+    if (rawEnd) {
+      projectEnd = parseDate(rawEnd);
+    }
+
+    if (quote && (quote.fecha_inicio || quote.fecha)) {
+      projectStart = parseDate(quote.fecha_inicio || quote.fecha);
+      if (quote.fecha_fin) {
+        projectEnd = parseDate(quote.fecha_fin);
+      } else {
+        const days = Number.parseInt(String(quote.validez || '').match(/\d+/)?.[0] || '30', 10);
+        projectEnd = addProjectDuration(projectStart, days);
+      }
+    }
+
+    if (!projectStart) {
+      projectStart = parseDate(proyectoData?.created_at) || taskMinStart;
+    }
+    if (!projectEnd) {
+      projectEnd = taskMaxEnd || projectStart;
+    }
+
     if (!projectStart || !projectEnd) return null;
 
     const projectItem = {
@@ -108,13 +190,13 @@ const Cronograma = ({ proyectoId }) => {
       actual = addDays(actual, 1);
     }
 
-    return { dias, items, proyecto: proyectoData };
-  }, [proyectoData, tareas]);
+    return { dias, items, proyecto: proyectoData, projectStart, projectEnd };
+  }, [proyectoData, tareas, quote]);
 
   if (tareasLoading) return <div className="loading">Cargando cronograma...</div>;
   if (!timelineData) return <div className="empty-state">No hay datos de cronograma</div>;
 
-  const { dias, items, proyecto } = timelineData;
+  const { dias, items, proyecto, projectStart, projectEnd } = timelineData;
   const dayWidth = 40 * zoom;
 
   return (
@@ -180,8 +262,8 @@ const Cronograma = ({ proyectoId }) => {
       <div className="proyecto-info-bar">
         <div className="info-item"><strong>Proyecto:</strong> {proyecto.nombre}</div>
         <div className="info-item"><strong>Tareas con fecha:</strong> {items.length - 1}</div>
-        <div className="info-item"><strong>Inicio:</strong> {proyecto.inicio || proyecto.fecha_inicio || proyecto.fecha_inicio_plan || '-'}</div>
-        <div className="info-item"><strong>Fin:</strong> {proyecto.fin || proyecto.fecha_fin || proyecto.fecha_fin_plan || '-'}</div>
+        <div className="info-item"><strong>Inicio:</strong> {formatLocalCleanDate(projectStart)}</div>
+        <div className="info-item"><strong>Fin:</strong> {formatLocalCleanDate(projectEnd)}</div>
       </div>
     </div>
   );

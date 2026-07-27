@@ -25,12 +25,12 @@ const Personal = ({ proyectoId }) => {
 
   return (
     <div className="vista-personal">
-      <h3>👥 Equipo Asignado</h3>
+      <h3>Equipo Asignado</h3>
       
       {equipo.length === 0 ? (
         <div className="empty-msg">
           <p>No hay personal asignado a este proyecto.</p>
-          <p className="text-muted">Asigna personal desde RRHH → Asignaciones</p>
+          <p className="text-muted">Asigna personal desde RRHH - Asignaciones</p>
         </div>
       ) : (
         <div className="cards-grid">

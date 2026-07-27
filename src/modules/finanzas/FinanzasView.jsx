@@ -1,14 +1,28 @@
 import { useState } from 'react';
+import { useAuth } from '../../context/auth/useAuth';
 import FacturasCompraView from './FacturasCompraView';
 import FacturasVentaView from './FacturasVentaView';
 import AnaliticaProyectoView from './AnaliticaProyectoView';
+import SubscriptionLock from '../../components/SubscriptionLock';
 import './FinanzasView.css';
 
-const FinanzasView = ({ onBack }) => {
-  const [tab, setTab] = useState('facturas-compra');
+const FinanzasView = ({ onBack, initialTab }) => {
+  const { canAccessFeature } = useAuth();
+  const [tab, setTab] = useState(initialTab || 'facturas-compra');
+  const tabs = [
+    { id: 'facturas-compra', feature: 'contabilidad.purchases', label: 'Facturas compra' },
+    { id: 'facturas-venta', feature: 'contabilidad.sales', label: 'Facturas venta' },
+    { id: 'analitica', feature: 'contabilidad.analytics', label: 'Analítica proyecto' }
+  ].map((item) => ({ ...item, locked: !canAccessFeature(item.feature) }));
+  const activeTab = tabs.some((item) => item.id === tab) ? tab : tabs[0]?.id;
+  const activeTabConfig = tabs.find((item) => item.id === activeTab);
 
   const renderTab = () => {
-    switch (tab) {
+    if (activeTabConfig?.locked) {
+      return <SubscriptionLock title={`${activeTabConfig.label} está bloqueado`} />;
+    }
+
+    switch (activeTab) {
       case 'facturas-compra':
         return <FacturasCompraView />;
       case 'facturas-venta':
@@ -27,13 +41,22 @@ const FinanzasView = ({ onBack }) => {
           Volver al inicio
         </button>
         <h1>Contabilidad</h1>
-        <p>Facturas de compra, facturas de venta y analitica de ganancia/perdida por proyecto.</p>
+        <p>Facturas de compra, facturas de venta y analítica de ganancia/pérdida por proyecto.</p>
       </section>
 
       <nav className="tabs-nav" role="tablist">
-        <button role="tab" aria-selected={tab === 'facturas-compra'} className={tab === 'facturas-compra' ? 'active' : ''} onClick={() => setTab('facturas-compra')}>Facturas compra</button>
-        <button role="tab" aria-selected={tab === 'facturas-venta'} className={tab === 'facturas-venta' ? 'active' : ''} onClick={() => setTab('facturas-venta')}>Facturas venta</button>
-        <button role="tab" aria-selected={tab === 'analitica'} className={tab === 'analitica' ? 'active' : ''} onClick={() => setTab('analitica')}>Analitica proyecto</button>
+        {tabs.map((item) => (
+          <button
+            key={item.id}
+            role="tab"
+            aria-selected={activeTab === item.id}
+            aria-disabled={item.locked}
+            className={`${activeTab === item.id ? 'active' : ''} ${item.locked ? 'locked' : ''}`}
+            onClick={() => setTab(item.id)}
+          >
+            {item.label}
+          </button>
+        ))}
       </nav>
 
       <main className="content-area" role="tabpanel">
