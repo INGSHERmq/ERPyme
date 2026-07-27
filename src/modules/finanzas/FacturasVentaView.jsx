@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../context/auth/useAuth';
 import { traducirError } from '../../lib/errores';
+import { uploadPrivateFile } from '../../lib/storage';
 
 const getToday = () => new Date().toISOString().split('T')[0];
 
@@ -11,6 +12,7 @@ const FacturasVentaView = () => {
   const [clientes, setClientes] = useState([]);
   const [rows, setRows] = useState([]);
   const [collectingId, setCollectingId] = useState(null);
+  const [evidencias, setEvidencias] = useState({});
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
     numero: '',
@@ -42,9 +44,20 @@ const FacturasVentaView = () => {
     
     const factura = rows.find(r => r.id === rowId);
 
+    let evidencia_pago_path = factura?.evidencia_pago_path || null;
+    const file = evidencias[rowId];
+    if (file) {
+      try {
+        evidencia_pago_path = (await uploadPrivateFile({ file, folder: 'evidencias-pago-venta', userId: user?.id })).publicUrl;
+      } catch (uploadError) {
+        setCollectingId(null);
+        alert(uploadError.message || 'No se pudo subir la evidencia de pago');
+        return;
+      }
+    }
     const { error } = await supabase
       .from('facturas_venta')
-      .update({ estado: 'cobrada' })
+      .update({ estado: 'cobrada', evidencia_pago_path })
       .eq('id', rowId);
 
     if (error) {
@@ -152,6 +165,7 @@ const FacturasVentaView = () => {
               <th>Estado factura</th>
               <th>Fecha emisión</th>
               <th>Total</th>
+              <th>Evidencia de pago</th>
               <th>Acción</th>
             </tr>
           </thead>
@@ -164,6 +178,11 @@ const FacturasVentaView = () => {
                 <td>{row.estado === 'emitida' ? 'en proceso' : row.estado}</td>
                 <td>{row.fecha_emision}</td>
                 <td>S/ {Number(row.total || 0).toLocaleString('en-US')}</td>
+                <td>
+                  {row.evidencia_pago_path ? <a href={row.evidencia_pago_path} target="_blank" rel="noreferrer">Ver evidencia</a> : row.estado !== 'cobrada' && (
+                    <input type="file" accept="image/*,.pdf" onChange={(e) => setEvidencias((prev) => ({ ...prev, [row.id]: e.target.files?.[0] }))} />
+                  )}
+                </td>
                 <td>
                   {row.estado === 'cobrada' ? (
                     <span className="badge badge-green">Cobrada</span>

@@ -70,7 +70,7 @@ const CotizaciónesView = () => {
         for (const file of adjuntos) {
           const upload = await uploadPrivateFile({
             file,
-            folder: 'cotizaciónes',
+            folder: 'cotizaciones',
             userId: user?.id
           });
           archivosPaths.push(upload.publicUrl);

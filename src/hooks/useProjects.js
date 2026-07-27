@@ -32,7 +32,8 @@ const dedupeProjectsByQuote = (projects) => {
 };
 
 const useProjects = () => {
-  const { user } = useAuth();
+  const { user, company, membership, profile } = useAuth();
+  const empresaId = company?.id || membership?.empresa_id || profile?.empresa_actual_id || null;
   const [proyectos, setProyectos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -50,7 +51,7 @@ const useProjects = () => {
       const { data, error } = await supabase
         .from('v_proyectos_completos')
         .select('*')
-        .eq('user_id', user.id)
+        .eq(empresaId ? 'empresa_id' : 'user_id', empresaId || user.id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -66,7 +67,7 @@ const useProjects = () => {
   useEffect(() => {
     (async () => { await fetchProjects(); })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.id]);
+  }, [user?.id, empresaId]);
 
   const updateProyecto = async (id, updates) => {
     try {

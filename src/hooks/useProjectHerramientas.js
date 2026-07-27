@@ -4,12 +4,14 @@ import useRRHH from './useRRHH';
 import { supabase } from '../lib/supabase';
 import { traducirError } from '../lib/errores';
 import { formatDateOnlyInAppTimeZone } from '../lib/dates';
+import { useAuth } from '../context/auth/useAuth';
 
-const ACTIVE_INVENTORY_STATES = ['asignado'];
+const ACTIVE_INVENTORY_STATES = ['asignado', 'devolucion_solicitada'];
 
 const useProjectHerramientas = (proyectoId) => {
   const { activos, asignaciones: asignacionesActivos, loading: logisticaLoading } = useLogistica();
   const { empleados, asignaciones: asignacionesRRHH, loading: rrhhLoading } = useRRHH();
+  const { user } = useAuth();
   const [inventarioObjetos, setInventarioObjetos] = useState([]);
   const [asignacionesInventario, setAsignacionesInventario] = useState([]);
   const [inventarioLoading, setInventarioLoading] = useState(true);
@@ -109,13 +111,22 @@ const useProjectHerramientas = (proyectoId) => {
     proyectoId
   ]);
 
+  const solicitarDevolucion = async (asignacionId) => {
+    const { error: requestError } = await supabase.from('asignaciones_inventario')
+      .update({ estado: 'devolucion_solicitada', fecha_devolucion: new Date().toISOString().slice(0, 10) })
+      .eq('id', asignacionId);
+    if (requestError) throw new Error(traducirError(requestError));
+    setAsignacionesInventario((prev) => prev.map((item) => item.id === asignacionId ? { ...item, estado: 'devolucion_solicitada' } : item));
+  };
+
   return {
     herramientas: herramientas.map(item => ({
       ...item,
       fechaMostrar: formatDateOnlyInAppTimeZone(item.fecha)
     })),
     loading: logisticaLoading || rrhhLoading || inventarioLoading,
-    error
+    error,
+    solicitarDevolucion
   };
 };
 

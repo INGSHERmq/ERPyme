@@ -9,6 +9,7 @@ const SimpleCrudLogisticaView = ({ title, table, fields }) => {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [asignaciones, setAsignaciones] = useState([]);
   const [formData, setFormData] = useState(() => Object.fromEntries(fields.map((f) => [f.name, f.defaultValue || ''])));
 
   const fetchRows = async () => {
@@ -22,6 +23,12 @@ const SimpleCrudLogisticaView = ({ title, table, fields }) => {
       return;
     }
     setRows(data || []);
+    if (table === 'inventario_objetos') {
+      const { data: asignacionesData } = await supabase.from('asignaciones_inventario')
+        .select('inventario_objeto_id,proyecto_id,empleado_id,estado').eq('empresa_id', membership?.empresa_id || profile?.empresa_actual_id)
+        .in('estado', ['asignado', 'devolucion_solicitada']);
+      setAsignaciones(asignacionesData || []);
+    }
     setLoading(false);
   };
 
@@ -71,6 +78,8 @@ const SimpleCrudLogisticaView = ({ title, table, fields }) => {
 
   if (loading) return <div className="loading">Cargando {title.toLowerCase()}...</div>;
 
+  const agotados = table === 'inventario_objetos' ? rows.filter((row) => Number(row.stock_actual) <= 0) : [];
+
   return (
     <div className="logistica-view">
       <div className="view-header">
@@ -79,6 +88,18 @@ const SimpleCrudLogisticaView = ({ title, table, fields }) => {
           {showForm ? 'Cancelar' : '+ Nuevo'}
         </button>
       </div>
+
+      {agotados.length > 0 && (
+        <div className="empty-state" style={{ border: '1px solid #f6465d', marginBottom: '16px' }}>
+          <strong>Stock agotado ({agotados.length})</strong>
+          {agotados.map((item) => {
+            const destinos = asignaciones.filter((a) => Number(a.inventario_objeto_id) === Number(item.id)).map((a) =>
+              proyectos.find((p) => Number(p.id) === Number(a.proyecto_id))?.nombre_mostrar || proyectos.find((p) => Number(p.id) === Number(a.proyecto_id))?.nombre || 'Asignado sin proyecto'
+            );
+            return <div key={item.id}>{item.nombre}: {destinos.length ? destinos.join(', ') : 'sin asignación activa'}</div>;
+          })}
+        </div>
+      )}
 
       {showForm && (
         <form className="simple-form" onSubmit={handleSubmit}>

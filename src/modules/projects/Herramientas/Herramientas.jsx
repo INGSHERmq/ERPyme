@@ -2,7 +2,7 @@ import useProjectHerramientas from '../../../hooks/useProjectHerramientas';
 import './Herramientas.css';
 
 const Herramientas = ({ proyectoId }) => {
-  const { herramientas, loading, error } = useProjectHerramientas(proyectoId);
+  const { herramientas, loading, error, solicitarDevolucion } = useProjectHerramientas(proyectoId);
 
   if (loading) return <div className="loading">Cargando inventario...</div>;
   if (error) return <div className="empty-msg">{error}</div>;
@@ -27,6 +27,7 @@ const Herramientas = ({ proyectoId }) => {
                 <th>Cantidad</th>
                 <th>Fecha asignación</th>
                 <th>Estado</th>
+                <th>Acción</th>
               </tr>
             </thead>
             <tbody>
@@ -41,6 +42,14 @@ const Herramientas = ({ proyectoId }) => {
                     <span className={`badge badge-${['Activa', 'asignado'].includes(herramienta.estado) ? 'green' : 'gray'}`}>
                       {herramienta.estado}
                     </span>
+                  </td>
+                  <td>
+                    {herramienta.origen === 'Inventario' && herramienta.estado === 'asignado' ? (
+                      <button className="btn-action" onClick={async () => {
+                        try { await solicitarDevolucion(Number(String(herramienta.id).replace('inventario-', ''))); }
+                        catch (err) { alert(err.message || 'No se pudo solicitar la devolución'); }
+                      }}>Solicitar devolución</button>
+                    ) : herramienta.estado === 'devolucion_solicitada' ? 'Pendiente de Logística' : '-'}
                   </td>
                 </tr>
               ))}

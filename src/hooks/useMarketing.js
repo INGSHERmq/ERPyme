@@ -30,9 +30,10 @@ const useMarketing = () => {
       setLoading(true);
       setError(null);
       const [clientesRes, cotizacionesRes, proyectosRes, oportunidadesRes] = await Promise.all([
-        supabase.from('clientes').select('*').eq('user_id', user.id).order('nombre'),
-        supabase.from('v_cotizaciones_completas').select('*').eq('user_id', user.id).order('fecha', { ascending: false }),
-        supabase.from('proyectos').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
+        empresaId ? supabase.from('clientes').select('*').eq('empresa_id', empresaId).order('nombre') : supabase.from('clientes').select('*').eq('user_id', user.id).order('nombre'),
+        // Avoid a stale reporting view dropping newer fields such as fecha_fin.
+        empresaId ? supabase.from('cotizaciones').select('*').eq('empresa_id', empresaId).order('fecha', { ascending: false }) : supabase.from('cotizaciones').select('*').eq('user_id', user.id).order('fecha', { ascending: false }),
+        empresaId ? supabase.from('proyectos').select('*').eq('empresa_id', empresaId).order('created_at', { ascending: false }) : supabase.from('proyectos').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
         supabase.from('oportunidades').select('*').eq('user_id', user.id).order('created_at', { ascending: false })
       ]);
 
@@ -43,7 +44,10 @@ const useMarketing = () => {
 
       const clientesData = clientesRes.data || [];
       setClientes(clientesData);
-      setCotizaciones(cotizacionesRes.data || []);
+      setCotizaciones((cotizacionesRes.data || []).map((cotizacion) => ({
+        ...cotizacion,
+        cliente_nombre: clientesData.find((cliente) => Number(cliente.id) === Number(cotizacion.cliente_id))?.nombre || null
+      })));
       setProyectos(proyectosRes.data || []);
       setLeads(clientesData);
       setOportunidades(oportunidadesRes.data || []);
@@ -58,7 +62,7 @@ const useMarketing = () => {
   useEffect(() => {
     (async () => { await fetchData(); })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.id]);
+  }, [user?.id, empresaId]);
 
   const addCliente = async (data) => {
     if (!user?.id) throw new Error('Usuario no autenticado');
@@ -75,7 +79,13 @@ const useMarketing = () => {
       .insert([{ ...data, user_id: user.id, empresa_id: empresaId, creado: new Date().toISOString().split('T')[0] }])
       .select()
       .single();
-    if (error) throw new Error(traducirError(error));
+    if (error) {
+      const err = new Error(traducirError(error));
+      err.code = error.code;
+      err.details = error.details;
+      err.constraint = error.constraint;
+      throw err;
+    }
     setClientes(prev => [...prev, nuevo]);
     return nuevo;
   };
@@ -91,7 +101,13 @@ const useMarketing = () => {
       .select()
       .single();
 
-    if (error) throw new Error(traducirError(error));
+    if (error) {
+      const err = new Error(traducirError(error));
+      err.code = error.code;
+      err.details = error.details;
+      err.constraint = error.constraint;
+      throw err;
+    }
     setClientes(prev => prev
       .map(cliente => (Number(cliente.id) === Number(clienteId) ? { ...cliente, ...actualizado } : cliente))
       .sort((a, b) => (a.nombre || '').localeCompare(b.nombre || ''))
@@ -137,7 +153,13 @@ const useMarketing = () => {
       .insert([{ ...data, user_id: user.id, empresa_id: empresaId, fecha: data.fecha || data.fecha_inicio || new Date().toISOString().split('T')[0] }])
       .select()
       .single();
-    if (error) throw new Error(traducirError(error));
+    if (error) {
+      const err = new Error(traducirError(error));
+      err.code = error.code;
+      err.details = error.details;
+      err.constraint = error.constraint;
+      throw err;
+    }
     setCotizaciones(prev => [...prev, nueva]);
     return nueva;
   };
@@ -252,7 +274,13 @@ const useMarketing = () => {
       .select()
       .single();
 
-    if (error) throw new Error(traducirError(error));
+    if (error) {
+      const err = new Error(traducirError(error));
+      err.code = error.code;
+      err.details = error.details;
+      err.constraint = error.constraint;
+      throw err;
+    }
     setCotizaciones(prev => prev.map(c => (
       Number(c.id) === Number(cotizacionId) ? { ...c, ...actualizada } : c
     )));
@@ -296,7 +324,7 @@ const useMarketing = () => {
           empresa_id: empresaId,
           cliente_id: cotizacionActualizada.cliente_id,
           cotizacion_id: cotizacionActualizada.id,
-          nombre: `Proyecto cotizacion #${cotizacionActualizada.id} - ${cotizacionActualizada.titulo}`,
+          nombre: `Proyecto - ${cotizacionActualizada.titulo}`,
           estado: 'En Progreso',
           prioridad: 'Media',
           inicio: cotizacionActualizada.fecha_inicio || cotizacionActualizada.fecha || new Date().toISOString().split('T')[0],
